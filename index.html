@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Analítico de Desempenho • IME Engenharia</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+              800: '#3730a3',
+              900: '#312e81',
+              navy: '#0b0f19',
+              dark: '#111827'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen antialiased selection:bg-indigo-600 selection:text-white">
+
+  <!-- Top Navigation Bar -->
+  <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-4">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center gap-3.5">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-600 p-[1px] shadow-lg shadow-indigo-500/20 flex items-center justify-center">
+          <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center font-extrabold text-indigo-400 text-lg">
+            IME
+          </div>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-2">
+              IME Analytics <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-semibold">Turma 2026</span>
+            </h1>
+          </div>
+          <p class="text-xs text-slate-400 font-medium">Painel Estratégico de Desempenho Acadêmico e Militar</p>
+        </div>
+      </div>
+
+      <!-- Quick Search & Actions -->
+      <div class="flex items-center gap-3">
+        <div class="relative hidden md:block w-72">
+          <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+          <input 
+            type="text" 
+            id="globalSearchInput"
+            placeholder="Pesquisar por aluno ou matrícula..." 
+            class="w-full pl-10 pr-4 py-2 text-xs bg-slate-900/90 border border-slate-700/70 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+          >
+          <div id="quickSearchResults" class="hidden absolute left-0 right-0 top-11 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-50 py-1"></div>
+        </div>
+
+        <!-- Export CSV Button -->
+        <button 
+          id="btnExportCSV"
+          class="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 rounded-xl text-slate-200 transition shadow-sm"
+          title="Exportar dados filtrados em CSV"
+        >
+          <i data-lucide="download" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <span class="hidden sm:inline">Exportar CSV</span>
+        </button>
+      </div>
+
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60">
+      <nav class="flex space-x-2 sm:space-x-8 overflow-x-auto py-2.5" id="navTabs">
+        <button data-tab="overview" class="tab-btn active flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-indigo-400 bg-indigo-500/10 border-indigo-500/30">
+          <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+          <span>Visão Geral & Gráficos</span>
+        </button>
+        <button data-tab="rankings" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+          <i data-lucide="trophy" class="w-4 h-4"></i>
+          <span>Ranking dos Alunos (86)</span>
+        </button>
+        <button data-tab="disciplinas" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+          <i data-lucide="book-open" class="w-4 h-4"></i>
+          <span>Raio-X de Disciplinas (112)</span>
+        </button>
+        <button data-tab="comparator" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+          <i data-lucide="git-compare" class="w-4 h-4"></i>
+          <span>Comparador 1x1</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+
+    <!-- Sticky Filter Panel -->
+    <section class="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex flex-wrap items-center gap-3 flex-1 min-w-[280px]">
+        
+        <!-- Curso Filter -->
+        <div class="flex items-center gap-2">
+          <label for="filterCurso" class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i> Especialidade:
+          </label>
+          <select id="filterCurso" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+            <option value="ALL">Todas as Especialidades (10)</option>
+            <option value="Computação">Computação (20)</option>
+            <option value="Fortificação e Construção">Fortificação e Construção (10)</option>
+            <option value="Cartografia">Cartografia (9)</option>
+            <option value="Eletrônica">Eletrônica (9)</option>
+            <option value="Química">Química (8)</option>
+            <option value="Comunicações">Comunicações (8)</option>
+            <option value="Mecânica de Armamento">Mecânica de Armamento (7)</option>
+            <option value="Mecânica de Automóveis">Mecânica de Automóveis (6)</option>
+            <option value="Elétrica">Elétrica (5)</option>
+            <option value="Materiais">Materiais (4)</option>
+          </select>
+        </div>
+
+        <!-- Vínculo Filter -->
+        <div class="flex items-center gap-2">
+          <label for="filterVinculo" class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-400"></i> Vínculo:
+          </label>
+          <select id="filterVinculo" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+            <option value="ALL">Todos os Vínculos (86)</option>
+            <option value="Ativa">Ativa (68)</option>
+            <option value="Reserva">Reserva (9)</option>
+            <option value="CG">CG (9)</option>
+          </select>
+        </div>
+
+        <!-- Reset Button -->
+        <button id="btnResetFilters" class="hidden text-xs text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1.5 rounded-lg hover:bg-indigo-500/10 transition items-center gap-1">
+          <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Limpar Filtros
+        </button>
+
+      </div>
+
+      <!-- Active Filter Summary Count -->
+      <div class="text-xs font-medium text-slate-400 flex items-center gap-2 bg-slate-900/60 px-3.5 py-1.5 rounded-xl border border-slate-800">
+        <span>Exibindo:</span>
+        <span id="filteredStudentCount" class="font-bold text-white font-mono-numbers">86 de 86</span>
+        <span>alunos</span>
+      </div>
+    </section>
+
+    <!-- 4 Key Performance Scorecards -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1: CR Geral 80/20 -->
+      <div class="glass-card p-5 rounded-2xl glow-card" style="--glow-color: #6366f1;">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="award" class="w-4 h-4 text-indigo-400"></i> CR Geral Médio
+          </span>
+          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">80% Grad + 20% Mil</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <div id="kpiMediaGeral" class="text-3xl font-extrabold text-white font-mono-numbers tracking-tight">8.01</div>
+          <span class="text-xs text-slate-400">/ 10.0</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+          <span id="kpiGeralDelta" class="text-emerald-400 font-semibold">Ponderação Oficial</span>
+          <span class="text-slate-500">•</span>
+          <span>Classificação Geral</span>
+        </p>
+      </div>
+
+      <!-- Card 2: CR Graduação -->
+      <div class="glass-card p-5 rounded-2xl glow-card" style="--glow-color: #3b82f6;">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-400"></i> CR Graduação
+          </span>
+          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">100% Engenharia</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <div id="kpiMediaGrad" class="text-3xl font-extrabold text-white font-mono-numbers tracking-tight">7.91</div>
+          <span class="text-xs text-slate-400">/ 10.0</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+          <span class="text-blue-400 font-semibold">Matérias Acadêmicas</span>
+          <span class="text-slate-500">•</span>
+          <span>Básico & Específico</span>
+        </p>
+      </div>
+
+      <!-- Card 3: CR Militar -->
+      <div class="glass-card p-5 rounded-2xl glow-card" style="--glow-color: #10b981;">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i> CR Militar
+          </span>
+          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">Ativa & Reserva</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <div id="kpiMediaMil" class="text-3xl font-extrabold text-white font-mono-numbers tracking-tight">8.64</div>
+          <span class="text-xs text-slate-400">/ 10.0</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+          <span class="text-emerald-400 font-semibold">Instrução Militar & TFM</span>
+          <span class="text-slate-500">•</span>
+          <span id="kpiMilSubtext">77 Alunos com nota</span>
+        </p>
+      </div>
+
+      <!-- Card 4: Total Alunos & Vínculos -->
+      <div class="glass-card p-5 rounded-2xl glow-card" style="--glow-color: #f59e0b;">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="users" class="w-4 h-4 text-amber-400"></i> Alunos Selecionados
+          </span>
+          <span id="kpiCursosBadge" class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">10 Cursos</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <div id="kpiTotalAlunos" class="text-3xl font-extrabold text-white font-mono-numbers tracking-tight">86</div>
+          <span class="text-xs text-slate-400">alunos</span>
+        </div>
+        <div class="flex items-center gap-1.5 mt-2 text-[10px] font-medium">
+          <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono-numbers" id="kpiCountAtiva">68 Ativa</span>
+          <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-numbers" id="kpiCountReserva">9 Reserva</span>
+          <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono-numbers" id="kpiCountCG">9 CG</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 1: VISÃO GERAL & GRÁFICOS -->
+    <section id="tab-overview" class="tab-content space-y-6 animate-fade-in">
+      
+      <!-- Top Performers Podium Banner -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
+            Top 3 Destaques Gerais da Turma (CR 80/20)
+          </h2>
+          <span class="text-xs text-slate-400">Classificação Ponderada Geral</span>
+        </div>
+        <div id="podiumContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Charts Grid 1: Desempenho por Engenharia & Evolução Semestral -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Chart 1: Média por Especialidade -->
+        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-400"></i>
+                Desempenho Médio por Especialidade
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Comparativo do CR Geral (80/20) e CR Graduação nas 10 engenharias</p>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="flex items-center gap-1 text-[11px] text-indigo-400 font-semibold"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span> CR Geral</span>
+              <span class="flex items-center gap-1 text-[11px] text-blue-400 font-semibold"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500"></span> CR Grad</span>
+            </div>
+          </div>
+          <div class="relative h-80">
+            <canvas id="chartCursos"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 2: Trajetória Semestral -->
+        <div class="glass-panel p-5 rounded-2xl border border-slate-800 flex flex-col justify-between">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+                Evolução Semestral das Médias
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">Progressão histórica ao longo dos períodos (1.1 ao 2026.1)</p>
+            </div>
+            <span class="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Média Geral Turma</span>
+          </div>
+          <div class="relative h-80">
+            <canvas id="chartEvolucao"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Charts Grid 2: Distribuição de Vínculos & Faixas de CR -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- Chart 3: Donut Distribuição de Vínculo -->
+        <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+          <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2 mb-1">
+            <i data-lucide="pie-chart" class="w-4 h-4 text-amber-400"></i>
+            Distribuição de Vínculo
+          </h3>
+          <p class="text-xs text-slate-400 mb-4">Composição da turma por tipo de vínculo</p>
+          <div class="relative h-60">
+            <canvas id="chartVinculo"></canvas>
+          </div>
+        </div>
+
+        <!-- Chart 4: Histograma de Faixas de Desempenho -->
+        <div class="glass-panel p-5 rounded-2xl border border-slate-800 md:col-span-2">
+          <div class="flex items-center justify-between mb-1">
+            <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+              <i data-lucide="activity" class="w-4 h-4 text-purple-400"></i>
+              Distribuição por Faixa de CR Geral
+            </h3>
+            <span class="text-xs text-slate-400">Densidade de Notas</span>
+          </div>
+          <p class="text-xs text-slate-400 mb-4">Quantos alunos atingiram cada intervalo de Coeficiente de Rendimento</p>
+          <div class="relative h-60">
+            <canvas id="chartDistribuicao"></canvas>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 2: RANKINGS & TABELA DE ALUNOS -->
+    <section id="tab-rankings" class="tab-content hidden space-y-4 animate-fade-in">
+      
+      <!-- Table Controls Bar -->
+      <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        
+        <div class="flex items-center gap-3 flex-1 min-w-[240px]">
+          <div class="relative w-full max-w-xs">
+            <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+            <input 
+              type="text" 
+              id="tableSearchInput" 
+              placeholder="Buscar aluno na tabela..." 
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+          </div>
+          <span id="tableResultsCount" class="text-xs text-slate-400 font-medium whitespace-nowrap">86 alunos listados</span>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 text-xs text-slate-400">
+            <span>Exibir:</span>
+            <select id="selectPageSize" class="bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-lg px-2 py-1 focus:outline-none">
+              <option value="15">15 por pág.</option>
+              <option value="30">30 por pág.</option>
+              <option value="50">50 por pág.</option>
+              <option value="ALL" selected>Todos (86)</option>
+            </select>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Responsive Table Container -->
+      <div class="glass-panel rounded-2xl border border-slate-800 overflow-hidden shadow-2xl">
+        <div class="overflow-x-auto max-h-[700px] overflow-y-auto">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="sticky top-0 bg-slate-900/95 backdrop-blur z-20 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider select-none">
+              <tr>
+                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition" data-sort="rankGeral">
+                  <div class="flex items-center gap-1.5">
+                    <span># Geral</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-3 cursor-pointer hover:text-indigo-400 transition" data-sort="rankGraduacao">
+                  <div class="flex items-center gap-1.5">
+                    <span># Grad</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-3 cursor-pointer hover:text-indigo-400 transition" data-sort="rankCurso">
+                  <div class="flex items-center gap-1.5">
+                    <span># Curso</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition" data-sort="nome">
+                  <div class="flex items-center gap-1.5">
+                    <span>Aluno</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-3 cursor-pointer hover:text-indigo-400 transition" data-sort="curso">
+                  <div class="flex items-center gap-1.5">
+                    <span>Especialidade</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-3 cursor-pointer hover:text-indigo-400 transition" data-sort="vinculo">
+                  <div class="flex items-center gap-1.5">
+                    <span>Vínculo</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition text-right" data-sort="mediaGeral">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <span>CR Geral (80/20)</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition text-right" data-sort="mediaGraduacao">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <span>CR Grad</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition text-right" data-sort="mediaMilitar">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <span>CR Mil</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-3 text-center">Disc.</th>
+                <th class="py-3.5 px-3 text-right">Maior / Menor</th>
+                <th class="py-3.5 px-4 text-center">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="rankingTableBody" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div id="paginationBar" class="p-3 bg-slate-900/80 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+          <span id="pageInfo">Exibindo todos os 86 alunos</span>
+          <div class="flex items-center gap-1" id="paginationButtons"></div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 3: RAIO-X DE DISCIPLINAS -->
+    <section id="tab-disciplinas" class="tab-content hidden space-y-6 animate-fade-in">
+      
+      <!-- Top 10 Difíceis vs Top 10 Fáceis Highlights -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- 10 Mais Difíceis -->
+        <div class="glass-panel p-5 rounded-2xl border border-rose-900/30">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-rose-400 text-sm flex items-center gap-2">
+              <i data-lucide="flame" class="w-4 h-4 text-rose-500"></i>
+              Top 10 Disciplinas Mais Desafiadoras
+            </h3>
+            <span class="text-[11px] font-semibold text-rose-300 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">Menores Médias</span>
+          </div>
+          <p class="text-xs text-slate-400 mb-4">Matérias com maior grau de retenção e menor média histórica da turma</p>
+          <div class="space-y-2.5" id="topHardDisciplinesList"></div>
+        </div>
+
+        <!-- 10 Maiores Médias -->
+        <div class="glass-panel p-5 rounded-2xl border border-emerald-900/30">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="font-bold text-emerald-400 text-sm flex items-center gap-2">
+              <i data-lucide="sparkles" class="w-4 h-4 text-emerald-500"></i>
+              Top 10 Disciplinas de Maiores Médias
+            </h3>
+            <span class="text-[11px] font-semibold text-emerald-300 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Maiores Médias</span>
+          </div>
+          <p class="text-xs text-slate-400 mb-4">Disciplinas com melhor aproveitamento geral da turma</p>
+          <div class="space-y-2.5" id="topEasyDisciplinesList"></div>
+        </div>
+
+      </div>
+
+      <!-- Tabela Completa de Disciplinas -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+              <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
+              Catálogo Completo das Disciplinas (112)
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Estatísticas descritivas, variância, desvio padrão e notas extremas</p>
+          </div>
+
+          <!-- Disciplines Search & Filters -->
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative w-64">
+              <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
+              <input 
+                type="text" 
+                id="searchDisciplinasInput" 
+                placeholder="Filtrar por nome ou código..." 
+                class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+            </div>
+            
+            <select id="filterCicloDisciplinas" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200">
+              <option value="ALL">Todos os Ciclos</option>
+              <option value="Básico">Ciclo Básico</option>
+              <option value="Profissional">Ciclo Profissional</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-[600px] overflow-y-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="sticky top-0 bg-slate-900/95 backdrop-blur z-20 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+              <tr>
+                <th class="py-3 px-3">Código</th>
+                <th class="py-3 px-4">Nome da Disciplina</th>
+                <th class="py-3 px-3">Período</th>
+                <th class="py-3 px-3">Ciclo</th>
+                <th class="py-3 px-3 text-center">Alunos</th>
+                <th class="py-3 px-4 text-right">Média</th>
+                <th class="py-3 px-3 text-right">Desvio Padrão</th>
+                <th class="py-3 px-3 text-right">Menor / Maior</th>
+                <th class="py-3 px-4 text-center">Distribuição Visual</th>
+              </tr>
+            </thead>
+            <tbody id="disciplinasTableBody" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 4: COMPARADOR 1x1 (HEAD-TO-HEAD) -->
+    <section id="tab-comparator" class="tab-content hidden space-y-6 animate-fade-in">
+      
+      <!-- Selection Bar -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2 mb-4">
+          <i data-lucide="swords" class="w-4 h-4 text-indigo-400"></i>
+          Comparador Direto de Alunos (Head-to-Head)
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Aluno 1 Selection -->
+          <div class="p-4 rounded-xl bg-slate-900/70 border border-indigo-500/30 space-y-2">
+            <label for="selectAluno1" class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Aluno 1
+            </label>
+            <select id="selectAluno1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+          </div>
+
+          <!-- Aluno 2 Selection -->
+          <div class="p-4 rounded-xl bg-slate-900/70 border border-emerald-500/30 space-y-2">
+            <label for="selectAluno2" class="text-xs font-bold text-emerald-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Aluno 2
+            </label>
+            <select id="selectAluno2" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Comparison Metrics Cards -->
+      <div id="comparatorComparisonCards" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Semester Trajectory Comparison Chart -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+              <i data-lucide="trending-up" class="w-4 h-4 text-indigo-400"></i>
+              Comparação da Trajetória Semestral
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Aluno 1 vs Aluno 2 vs Média Geral da Turma</p>
+          </div>
+          <div class="flex items-center gap-3 text-xs font-semibold">
+            <span class="flex items-center gap-1.5 text-indigo-400"><span class="w-3 h-0.5 bg-indigo-500"></span> Aluno 1</span>
+            <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-3 h-0.5 bg-emerald-500"></span> Aluno 2</span>
+            <span class="flex items-center gap-1.5 text-slate-400"><span class="w-3 h-0.5 bg-slate-500"></span> Turma</span>
+          </div>
+        </div>
+        <div class="relative h-80">
+          <canvas id="chartComparator"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- MODAL: FICHA COMPLETA DO ALUNO -->
+  <div id="studentModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-3 sm:p-6 overflow-y-auto modal-overlay">
+    <div class="relative w-full max-w-4xl bg-slate-900 border border-slate-700 rounded-3xl shadow-2xl overflow-hidden my-8 animate-fade-in flex flex-col max-h-[90vh]">
+      
+      <!-- Modal Header -->
+      <div class="p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-800 flex items-start justify-between">
+        <div class="flex items-center gap-4">
+          <div id="modalAvatar" class="w-14 h-14 rounded-2xl bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center font-extrabold text-xl text-indigo-300">
+            AL
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 id="modalStudentName" class="text-xl sm:text-2xl font-extrabold text-white tracking-tight">NOME DO ALUNO</h2>
+              <span id="modalStudentCursoBadge" class="text-xs px-2.5 py-0.5 rounded-full font-bold">Computação</span>
+              <span id="modalStudentVinculoBadge" class="text-xs px-2 py-0.5 rounded-full font-bold">Ativa</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1 flex items-center gap-3">
+              <span>Matrícula: <strong id="modalStudentNum" class="text-slate-200 font-mono-numbers">29987</strong></span>
+              <span>•</span>
+              <span id="modalStudentRanks" class="text-slate-300">#1 Geral • #1 Graduação • #1 no Curso</span>
+            </p>
+          </div>
+        </div>
+
+        <button id="btnCloseModal" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="p-6 overflow-y-auto space-y-6 flex-1">
+        
+        <!-- Student 4 Mini KPIs -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">CR Geral (80/20)</span>
+            <span id="modalCrGeral" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">9.15</span>
+            <span class="text-[10px] text-indigo-400 font-semibold" id="modalRankGeralLabel">1º de 86</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">CR Graduação</span>
+            <span id="modalCrGrad" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">9.05</span>
+            <span class="text-[10px] text-blue-400 font-semibold" id="modalRankGradLabel">1º de 86</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">CR Militar</span>
+            <span id="modalCrMil" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">9.55</span>
+            <span class="text-[10px] text-emerald-400 font-semibold">TFM & Instrução</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Disciplinas</span>
+            <span id="modalDisciplinasCount" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">55</span>
+            <span class="text-[10px] text-amber-400 font-semibold" id="modalExtremes">Max: 10 | Min: 7.5</span>
+          </div>
+        </div>
+
+        <!-- Student Semestral Evolution Chart -->
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+          <div class="flex items-center justify-between mb-3">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-indigo-400"></i>
+              Evolução Semestral do Aluno vs Turma vs Curso
+            </h4>
+            <div class="flex items-center gap-3 text-[11px] font-semibold">
+              <span class="flex items-center gap-1 text-indigo-400"><span class="w-2.5 h-0.5 bg-indigo-500"></span> Aluno</span>
+              <span class="flex items-center gap-1 text-emerald-400"><span class="w-2.5 h-0.5 bg-emerald-500"></span> Curso</span>
+              <span class="flex items-center gap-1 text-slate-400"><span class="w-2.5 h-0.5 bg-slate-500"></span> Turma</span>
+            </div>
+          </div>
+          <div class="relative h-56">
+            <canvas id="chartModalStudent"></canvas>
+          </div>
+        </div>
+
+        <!-- Student Disciplines History Table -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+              <i data-lucide="list" class="w-3.5 h-3.5 text-indigo-400"></i>
+              Histórico Completo de Disciplinas Cursadas
+            </h4>
+            <span id="modalDiscTotalCount" class="text-xs text-slate-400 font-medium">55 matérias</span>
+          </div>
+
+          <div class="overflow-x-auto max-h-80 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/40">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="sticky top-0 bg-slate-900 border-b border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <tr>
+                  <th class="py-2.5 px-3">Sem.</th>
+                  <th class="py-2.5 px-3">Código</th>
+                  <th class="py-2.5 px-4">Disciplina</th>
+                  <th class="py-2.5 px-3">Tipo</th>
+                  <th class="py-2.5 px-3 text-right">Nota Aluno</th>
+                  <th class="py-2.5 px-3 text-right">Média Turma</th>
+                  <th class="py-2.5 px-3 text-center">Delta</th>
+                  <th class="py-2.5 px-3 text-center">Situação</th>
+                </tr>
+              </thead>
+              <tbody id="modalDisciplinasBody" class="divide-y divide-slate-800/60 font-medium">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <span>Dados consolidados • Turma 2026 IME</span>
+        <button id="btnCloseModalFooter" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition">
+          Fechar
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/80 text-center text-xs text-slate-500">
+    <p>Painel de Inteligência de Dados Acadêmicos & Militares • Engenharia IME • Turma 2026</p>
+    <p class="mt-1 text-[11px]">Desenvolvido com Tailwind CSS & Chart.js • Otimizado para GitHub Pages</p>
+  </footer>
+
+  <!-- 1. Embedded / Loaded Processed Dataset -->
+  <script src="data.js"></script>
+  <!-- 2. Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
