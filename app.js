@@ -1,7 +1,7 @@
 /**
  * IME Analytics - Turma 2026
  * Interactive Dashboard Logic for GitHub Pages
- * Features: Course Evolution Comparison, 3.2 Parcial, Unified Disciplines
+ * Features: Média Semestral & Média Cumulativa, Comparador de Cursos, 3.2 Parcial
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -31,7 +31,13 @@ document.addEventListener('DOMContentLoaded', () => {
     courseB: 'Eletrônica',
     activeCoursesInChart: new Set(DATA.metadata.cursos),
     activeStudentModal: null,
-    modalSemesterFilter: 'ALL'
+    modalSemesterFilter: 'ALL',
+    
+    // Metric Modes: 'semestral' | 'cumulativo'
+    overviewMetric: 'semestral',
+    courseMetric: 'semestral',
+    modalMetric: 'semestral',
+    comparatorMetric: 'semestral'
   };
 
   // Chart instances
@@ -95,6 +101,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function fmtNum(val) {
     if (val === null || val === undefined || isNaN(val)) return '-';
     return Number(val).toFixed(2);
+  }
+
+  // Helper for metric button group styling
+  function updateToggleButtons(containerId, activeMetric, activeClass = 'bg-blue-600') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.querySelectorAll('button').forEach(btn => {
+      if (btn.getAttribute('data-metric') === activeMetric) {
+        btn.className = `px-3 py-1 text-xs font-bold rounded-lg ${activeClass} text-white transition`;
+      } else {
+        btn.className = `px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition`;
+      }
+    });
   }
 
   // --- Filtering & Metrics Calculation ---
@@ -290,11 +309,17 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // 2. Chart Evolução Semestral da Turma
+    // 2. Chart Evolução da Turma (Semestral vs Cumulativa)
     const ctxEvolucao = document.getElementById('chartEvolucao')?.getContext('2d');
     if (ctxEvolucao) {
       const semestres = DATA.metadata.semestres;
-      const mediaTurma = DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma);
+      const mediaTurma = (state.overviewMetric === 'semestral')
+        ? DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma)
+        : DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurmaCumulativa);
+
+      const label = (state.overviewMetric === 'semestral')
+        ? 'Média de Graduação da Turma (Semestral)'
+        : 'CR de Graduação Cumulativo da Turma';
 
       chartEvolucaoInstance = new Chart(ctxEvolucao, {
         type: 'line',
@@ -302,12 +327,12 @@ document.addEventListener('DOMContentLoaded', () => {
           labels: semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : s),
           datasets: [
             {
-              label: 'Média de Graduação da Turma',
+              label: label,
               data: mediaTurma,
               borderColor: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.12)',
               fill: true,
-              tension: 0.35,
+              tension: 0.3,
               pointBackgroundColor: '#10b981',
               pointBorderColor: '#fff',
               pointRadius: 5,
@@ -326,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
               padding: 12,
               callbacks: {
                 label: function(ctx) {
-                  return `Média Turma: ${ctx.parsed.y.toFixed(2)}`;
+                  return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`;
                 }
               }
             }
@@ -436,19 +461,48 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+
+    // Metric toggle for Overview
+    document.querySelectorAll('#toggleOverviewMetric button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.overviewMetric = btn.getAttribute('data-metric');
+        updateToggleButtons('toggleOverviewMetric', state.overviewMetric, 'bg-emerald-600');
+        const subtitle = (state.overviewMetric === 'semestral')
+          ? 'Média de Graduação por semestre (1.1 ao 3.2)'
+          : 'CR de Graduação Cumulativo acumulado até cada período';
+        document.getElementById('overviewEvolucaoSubtitle').textContent = subtitle;
+        updateOverviewCharts();
+      });
+    });
   }
 
   function updateOverviewCharts() {
     if (!chartEvolucaoInstance) return;
 
+    const semestres = DATA.metadata.semestres;
+    const isSem = (state.overviewMetric === 'semestral');
+
+    const cohortData = isSem
+      ? DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma)
+      : DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurmaCumulativa);
+
+    const cohortLabel = isSem ? 'Média de Graduação (Semestral)' : 'CR Cumulativo (Turma)';
+
+    chartEvolucaoInstance.data.datasets[0].label = cohortLabel;
+    chartEvolucaoInstance.data.datasets[0].data = cohortData;
+
     if (state.filterCurso !== 'ALL') {
       const courseObj = DATA.cursosComparativo.find(c => c.curso === state.filterCurso);
-      const semestres = DATA.metadata.semestres;
-      const courseData = semestres.map(s => courseObj ? courseObj.semestres[s] : null);
+      const courseData = semestres.map(s => {
+        if (!courseObj) return null;
+        return isSem ? courseObj.semestres[s] : courseObj.semestresCumulativo[s];
+      });
+
+      const courseLabel = isSem ? `Média Semestral ${state.filterCurso}` : `CR Cumulativo ${state.filterCurso}`;
 
       if (chartEvolucaoInstance.data.datasets.length === 1) {
         chartEvolucaoInstance.data.datasets.push({
-          label: `Média ${state.filterCurso}`,
+          label: courseLabel,
           data: courseData,
           borderColor: courseColors[state.filterCurso] || '#3b82f6',
           backgroundColor: 'transparent',
@@ -459,7 +513,7 @@ document.addEventListener('DOMContentLoaded', () => {
           borderWidth: 2.5
         });
       } else {
-        chartEvolucaoInstance.data.datasets[1].label = `Média ${state.filterCurso}`;
+        chartEvolucaoInstance.data.datasets[1].label = courseLabel;
         chartEvolucaoInstance.data.datasets[1].data = courseData;
         chartEvolucaoInstance.data.datasets[1].borderColor = courseColors[state.filterCurso] || '#3b82f6';
         chartEvolucaoInstance.data.datasets[1].pointBackgroundColor = courseColors[state.filterCurso] || '#3b82f6';
@@ -478,6 +532,17 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCourseEvolutionMultiLineChart();
     renderCourseMatrixTable();
     initCourseHeadToHead();
+
+    // Toggle metric for courses (Semestral vs Cumulativo)
+    document.querySelectorAll('#toggleCourseMetric button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.courseMetric = btn.getAttribute('data-metric');
+        updateToggleButtons('toggleCourseMetric', state.courseMetric, 'bg-blue-600');
+        updateCourseEvolutionChart();
+        renderCourseMatrixTable();
+        renderCourseHeadToHead();
+      });
+    });
   }
 
   function renderCourseTogglePills() {
@@ -503,7 +568,6 @@ document.addEventListener('DOMContentLoaded', () => {
       `;
     }).join('');
 
-    // Select All / Clear buttons
     document.getElementById('btnSelectAllCourses')?.addEventListener('click', () => {
       state.activeCoursesInChart = new Set(DATA.metadata.cursos);
       renderCourseTogglePills();
@@ -524,12 +588,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const semestres = DATA.metadata.semestres;
     const labels = semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`);
 
-    // Cohort baseline dataset
-    const cohortData = DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma);
+    const isSem = (state.courseMetric === 'semestral');
+    const cohortData = isSem
+      ? DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma)
+      : DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurmaCumulativa);
+
+    const cohortLabel = isSem ? 'Média da Turma (Semestral)' : 'CR Cumulativo Turma';
 
     const datasets = [
       {
-        label: 'Média Geral da Turma (Referência)',
+        label: cohortLabel,
         data: cohortData,
         borderColor: '#94a3b8',
         backgroundColor: 'transparent',
@@ -543,7 +611,10 @@ document.addEventListener('DOMContentLoaded', () => {
     DATA.cursosComparativo.forEach(c => {
       if (state.activeCoursesInChart.has(c.curso)) {
         const color = courseColors[c.curso] || '#3b82f6';
-        const vals = semestres.map(s => c.semestres[s]);
+        const vals = isSem
+          ? semestres.map(s => c.semestres[s])
+          : semestres.map(s => c.semestresCumulativo[s]);
+
         datasets.push({
           label: c.curso,
           data: vals,
@@ -597,11 +668,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!chartCursosEvolucaoInstance) return;
 
     const semestres = DATA.metadata.semestres;
-    const cohortData = DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma);
+    const isSem = (state.courseMetric === 'semestral');
+
+    const cohortData = isSem
+      ? DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma)
+      : DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurmaCumulativa);
+
+    const cohortLabel = isSem ? 'Média da Turma (Semestral)' : 'CR Cumulativo Turma';
 
     const datasets = [
       {
-        label: 'Média Geral da Turma (Referência)',
+        label: cohortLabel,
         data: cohortData,
         borderColor: '#94a3b8',
         backgroundColor: 'transparent',
@@ -615,7 +692,10 @@ document.addEventListener('DOMContentLoaded', () => {
     DATA.cursosComparativo.forEach(c => {
       if (state.activeCoursesInChart.has(c.curso)) {
         const color = courseColors[c.curso] || '#3b82f6';
-        const vals = semestres.map(s => c.semestres[s]);
+        const vals = isSem
+          ? semestres.map(s => c.semestres[s])
+          : semestres.map(s => c.semestresCumulativo[s]);
+
         datasets.push({
           label: c.curso,
           data: vals,
@@ -638,7 +718,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('courseComparisonTableBody');
     if (!tbody) return;
 
+    const isSem = (state.courseMetric === 'semestral');
+    const subtitle = document.getElementById('courseMatrixSubtitle');
+    if (subtitle) {
+      subtitle.textContent = isSem 
+        ? 'Médias de graduação por semestre (médias isoladas de cada período) e destaques por curso'
+        : 'CR de Graduação Cumulativo acumulado até cada período (evolução do histórico) e destaques por curso';
+    }
+
     tbody.innerHTML = DATA.cursosComparativo.map(c => {
+      const src = isSem ? c.semestres : c.semestresCumulativo;
       return `
         <tr class="table-hover-row border-b border-slate-800/40">
           <td class="py-3 px-4 font-bold text-white">
@@ -646,12 +735,12 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td class="py-3 px-3 text-center text-slate-400 font-mono-numbers">${c.qtdAlunos}</td>
           <td class="py-3 px-4 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">${fmtNum(c.mediaGraduacao)}</td>
-          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['1.1'])}</td>
-          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['1.2'])}</td>
-          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['2.1'])}</td>
-          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['2.2'])}</td>
-          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['3.1'])}</td>
-          <td class="py-3 px-3 text-right font-mono-numbers text-amber-400 font-bold">${fmtNum(c.semestres['3.2'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(src['1.1'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(src['1.2'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(src['2.1'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(src['2.2'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(src['3.1'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-amber-400 font-bold">${fmtNum(src['3.2'])}</td>
           <td class="py-3 px-4 text-right font-mono-numbers text-slate-400 text-[11px]">
             <span class="text-rose-400">${fmtNum(c.menorCR)}</span> / <span class="text-emerald-400">${fmtNum(c.maiorCR)}</span>
           </td>
@@ -716,14 +805,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
     }
 
-    // Chart H2H
     const ctx = document.getElementById('chartCourseHeadToHead')?.getContext('2d');
     if (ctx) {
       if (chartCourseH2HInstance) chartCourseH2HInstance.destroy();
 
       const semestres = DATA.metadata.semestres;
-      const valsA = semestres.map(s => cA.semestres[s]);
-      const valsB = semestres.map(s => cB.semestres[s]);
+      const isSem = (state.courseMetric === 'semestral');
+      const valsA = isSem ? semestres.map(s => cA.semestres[s]) : semestres.map(s => cA.semestresCumulativo[s]);
+      const valsB = isSem ? semestres.map(s => cB.semestres[s]) : semestres.map(s => cB.semestresCumulativo[s]);
 
       chartCourseH2HInstance = new Chart(ctx, {
         type: 'bar',
@@ -998,6 +1087,15 @@ document.addEventListener('DOMContentLoaded', () => {
       renderStudentComparator();
     });
 
+    // Metric Toggle for Comparator
+    document.querySelectorAll('#toggleComparatorMetric button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.comparatorMetric = btn.getAttribute('data-metric');
+        updateToggleButtons('toggleComparatorMetric', state.comparatorMetric, 'bg-blue-600');
+        renderStudentComparator();
+      });
+    });
+
     renderStudentComparator();
   }
 
@@ -1047,22 +1145,35 @@ document.addEventListener('DOMContentLoaded', () => {
       }).join('');
     }
 
-    // Chart Comparator
     const ctx = document.getElementById('chartComparator')?.getContext('2d');
     if (ctx) {
       if (chartComparatorInstance) chartComparatorInstance.destroy();
 
       const semestres = DATA.metadata.semestres;
+      const isSem = (state.comparatorMetric === 'semestral');
+
       const getTrajectory = (aluno) => {
         return semestres.map(s => {
           const ev = aluno.evolucao.find(e => e.semestre === s);
-          return ev ? ev.mediaGradSemestre : null;
+          if (!ev) return null;
+          return isSem ? ev.mediaGradSemestre : ev.mediaGradCumulativo;
         });
       };
 
       const dataA1 = getTrajectory(a1);
       const dataA2 = getTrajectory(a2);
-      const dataTurma = DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma);
+      const dataTurma = isSem
+        ? DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma)
+        : DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurmaCumulativa);
+
+      const turmaLabel = isSem ? 'Média da Turma (Semestral)' : 'CR Cumulativo Turma';
+
+      const subtitle = document.getElementById('comparatorSubtitle');
+      if (subtitle) {
+        subtitle.textContent = isSem
+          ? `${a1.nome} vs ${a2.nome} vs Média da Turma (Médias Semestrais)`
+          : `${a1.nome} vs ${a2.nome} vs Turma (CR Cumulativo Acumulado)`;
+      }
 
       chartComparatorInstance = new Chart(ctx, {
         type: 'line',
@@ -1088,7 +1199,7 @@ document.addEventListener('DOMContentLoaded', () => {
               tension: 0.25
             },
             {
-              label: 'Média da Turma (Graduação)',
+              label: turmaLabel,
               data: dataTurma,
               borderColor: '#64748b',
               backgroundColor: '#64748b',
@@ -1156,81 +1267,96 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modalExtremes').innerHTML = `Max: <strong class="text-emerald-400 font-mono-numbers">${fmtNum(aluno.maiorNota)}</strong> | Min: <strong class="text-rose-400 font-mono-numbers">${fmtNum(aluno.menorNota)}</strong>`;
 
     renderModalDisciplinesTable();
-
-    // Chart in Modal (1.1 to 3.2)
-    const ctx = document.getElementById('chartModalStudent')?.getContext('2d');
-    if (ctx) {
-      if (chartModalInstance) chartModalInstance.destroy();
-
-      const semestres = DATA.metadata.semestres;
-      const studentVals = semestres.map(s => {
-        const ev = aluno.evolucao.find(e => e.semestre === s);
-        return ev ? ev.mediaGradSemestre : null;
-      });
-      const cursoVals = semestres.map(s => {
-        const c = DATA.cursosComparativo.find(cc => cc.curso === aluno.curso);
-        return c ? c.semestres[s] : null;
-      });
-      const turmaVals = DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma);
-
-      chartModalInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`),
-          datasets: [
-            {
-              label: aluno.nome,
-              data: studentVals,
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              fill: true,
-              pointRadius: 5,
-              borderWidth: 3,
-              tension: 0.25
-            },
-            {
-              label: `Média ${aluno.curso}`,
-              data: cursoVals,
-              borderColor: '#10b981',
-              pointRadius: 4,
-              borderWidth: 2,
-              borderDash: [4, 4],
-              tension: 0.25
-            },
-            {
-              label: 'Média da Turma',
-              data: turmaVals,
-              borderColor: '#64748b',
-              pointRadius: 3,
-              borderWidth: 1.5,
-              borderDash: [2, 2],
-              tension: 0.25
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: {
-              min: 5.0,
-              max: 10.0,
-              grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
-            },
-            x: {
-              grid: { color: 'rgba(255, 255, 255, 0.03)' },
-              ticks: { color: '#cbd5e1', font: { weight: '600' } }
-            }
-          }
-        }
-      });
-    }
+    renderModalChart();
 
     modal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
     refreshIcons();
+  }
+
+  function renderModalChart() {
+    const aluno = state.activeStudentModal;
+    if (!aluno) return;
+
+    const ctx = document.getElementById('chartModalStudent')?.getContext('2d');
+    if (!ctx) return;
+
+    if (chartModalInstance) chartModalInstance.destroy();
+
+    const semestres = DATA.metadata.semestres;
+    const isSem = (state.modalMetric === 'semestral');
+
+    const studentVals = semestres.map(s => {
+      const ev = aluno.evolucao.find(e => e.semestre === s);
+      if (!ev) return null;
+      return isSem ? ev.mediaGradSemestre : ev.mediaGradCumulativo;
+    });
+
+    const cursoVals = semestres.map(s => {
+      const c = DATA.cursosComparativo.find(cc => cc.curso === aluno.curso);
+      if (!c) return null;
+      return isSem ? c.semestres[s] : c.semestresCumulativo[s];
+    });
+
+    const turmaVals = isSem
+      ? DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma)
+      : DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurmaCumulativa);
+
+    const alunoLabel = isSem ? `${aluno.nome} (Semestral)` : `${aluno.nome} (CR Cumulativo)`;
+
+    chartModalInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`),
+        datasets: [
+          {
+            label: alunoLabel,
+            data: studentVals,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            pointRadius: 5,
+            borderWidth: 3,
+            tension: 0.25
+          },
+          {
+            label: `Média ${aluno.curso}`,
+            data: cursoVals,
+            borderColor: '#10b981',
+            pointRadius: 4,
+            borderWidth: 2,
+            borderDash: [4, 4],
+            tension: 0.25
+          },
+          {
+            label: 'Média da Turma',
+            data: turmaVals,
+            borderColor: '#64748b',
+            pointRadius: 3,
+            borderWidth: 1.5,
+            borderDash: [2, 2],
+            tension: 0.25
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: {
+            min: 5.0,
+            max: 10.0,
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+          },
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+            ticks: { color: '#cbd5e1', font: { weight: '600' } }
+          }
+        }
+      }
+    });
   }
 
   function renderModalDisciplinesTable() {
@@ -1423,6 +1549,15 @@ document.addEventListener('DOMContentLoaded', () => {
       btn.classList.remove('bg-slate-800', 'text-slate-300');
       state.modalSemesterFilter = btn.getAttribute('data-sem');
       renderModalDisciplinesTable();
+    });
+  });
+
+  // Modal Metric Toggle (Semestral vs Cumulativo)
+  document.querySelectorAll('#toggleModalMetric button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.modalMetric = btn.getAttribute('data-metric');
+      updateToggleButtons('toggleModalMetric', state.modalMetric, 'bg-blue-600');
+      renderModalChart();
     });
   });
 

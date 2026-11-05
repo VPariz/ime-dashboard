@@ -1,4 +1,4 @@
-// Dataset analítico atualizado do IME com 3.2, unificação e comparador de cursos
+// Dataset analítico atualizado do IME com Média Semestral e Média Cumulativa
 window.IME_DATA = {
   "metadata": {
     "titulo": "Dashboard de Desempenho Acadêmico e Militar • IME",
@@ -56,6 +56,14 @@ window.IME_DATA = {
         "3.1": 8.29,
         "3.2": 7.68
       },
+      "semestresCumulativo": {
+        "1.1": 7.73,
+        "1.2": 8.09,
+        "2.1": 8.22,
+        "2.2": 8.29,
+        "3.1": 8.29,
+        "3.2": 8.2
+      },
       "melhorAluno": "DAVI BRAGA",
       "maiorCR": 9.3,
       "menorCR": 7.1
@@ -72,6 +80,14 @@ window.IME_DATA = {
         "2.2": 8.38,
         "3.1": 7.97,
         "3.2": 7.98
+      },
+      "semestresCumulativo": {
+        "1.1": 7.7,
+        "1.2": 8.04,
+        "2.1": 8.11,
+        "2.2": 8.18,
+        "3.1": 8.14,
+        "3.2": 8.11
       },
       "melhorAluno": "CARVALHO NETO",
       "maiorCR": 8.5,
@@ -90,6 +106,14 @@ window.IME_DATA = {
         "3.1": 9.11,
         "3.2": 8.34
       },
+      "semestresCumulativo": {
+        "1.1": 7.18,
+        "1.2": 7.77,
+        "2.1": 7.6,
+        "2.2": 7.74,
+        "3.1": 8.07,
+        "3.2": 8.12
+      },
       "melhorAluno": "PAPALÉO",
       "maiorCR": 9.11,
       "menorCR": 7.09
@@ -106,6 +130,14 @@ window.IME_DATA = {
         "2.2": 8.2,
         "3.1": 7.99,
         "3.2": 7.22
+      },
+      "semestresCumulativo": {
+        "1.1": 7.54,
+        "1.2": 7.73,
+        "2.1": 7.96,
+        "2.2": 8.03,
+        "3.1": 8.01,
+        "3.2": 7.87
       },
       "melhorAluno": "FERRAIOLO",
       "maiorCR": 8.59,
@@ -124,6 +156,14 @@ window.IME_DATA = {
         "3.1": 8.18,
         "3.2": 7.83
       },
+      "semestresCumulativo": {
+        "1.1": 7.06,
+        "1.2": 7.5,
+        "2.1": 7.58,
+        "2.2": 7.63,
+        "3.1": 7.74,
+        "3.2": 7.75
+      },
       "melhorAluno": "MATEUS ALVES",
       "maiorCR": 8.42,
       "menorCR": 7.33
@@ -140,6 +180,14 @@ window.IME_DATA = {
         "2.2": 7.52,
         "3.1": 7.98,
         "3.2": 8.18
+      },
+      "semestresCumulativo": {
+        "1.1": 7.25,
+        "1.2": 7.58,
+        "2.1": 7.59,
+        "2.2": 7.59,
+        "3.1": 7.68,
+        "3.2": 7.73
       },
       "melhorAluno": "IRINEU",
       "maiorCR": 8.14,
@@ -158,6 +206,14 @@ window.IME_DATA = {
         "3.1": 7.14,
         "3.2": 7.38
       },
+      "semestresCumulativo": {
+        "1.1": 7.46,
+        "1.2": 7.77,
+        "2.1": 7.66,
+        "2.2": 7.73,
+        "3.1": 7.61,
+        "3.2": 7.57
+      },
       "melhorAluno": "BERNARDES",
       "maiorCR": 8.68,
       "menorCR": 7.01
@@ -174,6 +230,14 @@ window.IME_DATA = {
         "2.2": 7.72,
         "3.1": 7.94,
         "3.2": 7.58
+      },
+      "semestresCumulativo": {
+        "1.1": 7.04,
+        "1.2": 7.38,
+        "2.1": 7.35,
+        "2.2": 7.47,
+        "3.1": 7.59,
+        "3.2": 7.59
       },
       "melhorAluno": "ASSIS",
       "maiorCR": 8.76,
@@ -192,6 +256,14 @@ window.IME_DATA = {
         "3.1": 7.51,
         "3.2": 5.87
       },
+      "semestresCumulativo": {
+        "1.1": 7.42,
+        "1.2": 7.66,
+        "2.1": 7.57,
+        "2.2": 7.61,
+        "3.1": 7.58,
+        "3.2": 7.3
+      },
       "melhorAluno": "COIMBRA",
       "maiorCR": 8.29,
       "menorCR": 6.95
@@ -209,6 +281,14 @@ window.IME_DATA = {
         "3.1": 7.33,
         "3.2": 6.15
       },
+      "semestresCumulativo": {
+        "1.1": 7.08,
+        "1.2": 7.24,
+        "2.1": 7.23,
+        "2.2": 7.35,
+        "3.1": 7.35,
+        "3.2": 7.18
+      },
       "melhorAluno": "RIVERO",
       "maiorCR": 7.89,
       "menorCR": 6.89
@@ -218,36 +298,42 @@ window.IME_DATA = {
     {
       "semestre": "1.1",
       "mediaGraduacaoTurma": 7.39,
+      "mediaGraduacaoTurmaCumulativa": 7.39,
       "qtdAlunos": 77,
       "isParcial": false
     },
     {
       "semestre": "1.2",
       "mediaGraduacaoTurma": 8.06,
+      "mediaGraduacaoTurmaCumulativa": 7.72,
       "qtdAlunos": 77,
       "isParcial": false
     },
     {
       "semestre": "2.1",
       "mediaGraduacaoTurma": 7.83,
+      "mediaGraduacaoTurmaCumulativa": 7.74,
       "qtdAlunos": 86,
       "isParcial": false
     },
     {
       "semestre": "2.2",
       "mediaGraduacaoTurma": 7.95,
+      "mediaGraduacaoTurmaCumulativa": 7.81,
       "qtdAlunos": 86,
       "isParcial": false
     },
     {
       "semestre": "3.1",
       "mediaGraduacaoTurma": 7.99,
+      "mediaGraduacaoTurmaCumulativa": 7.85,
       "qtdAlunos": 86,
       "isParcial": false
     },
     {
       "semestre": "3.2",
       "mediaGraduacaoTurma": 7.43,
+      "mediaGraduacaoTurmaCumulativa": 7.79,
       "qtdAlunos": 86,
       "isParcial": true
     }
@@ -3132,55 +3218,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.9,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.9,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 1.51
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 9.39,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 9.14,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 1.33
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 9.49,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 9.26,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 1.66
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 9.37,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 9.29,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 1.42
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 9.34,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 9.3,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 1.35
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 9.12,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 9.27,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 1.69
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -4314,55 +4418,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.2,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.2,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.18,
-          "deltaTurmaGrad": 0.81
+          "mediaCursoCumulativa": 7.18
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 9.13,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.67,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.36,
-          "deltaTurmaGrad": 1.07
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 9.28,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.87,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": 1.45
+          "mediaCursoCumulativa": 7.6
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 9.31,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.99,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.04,
-          "deltaTurmaGrad": 1.36
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 9.51,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 9.11,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 9.11,
-          "deltaTurmaGrad": 1.52
+          "mediaCursoCumulativa": 8.07
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 9.63,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 9.19,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.34,
-          "deltaTurmaGrad": 2.2
+          "mediaCursoCumulativa": 8.12
         }
       ],
       "disciplinas": [
@@ -5657,55 +5779,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.12,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.12,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.18,
-          "deltaTurmaGrad": 0.73
+          "mediaCursoCumulativa": 7.18
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 9.12,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.62,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.36,
-          "deltaTurmaGrad": 1.06
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.82,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.69,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": 0.99
+          "mediaCursoCumulativa": 7.6
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 9.17,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.82,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.04,
-          "deltaTurmaGrad": 1.22
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 9.6,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.99,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 9.11,
-          "deltaTurmaGrad": 1.61
+          "mediaCursoCumulativa": 8.07
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 9.23,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 9.03,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.34,
-          "deltaTurmaGrad": 1.8
+          "mediaCursoCumulativa": 8.12
         }
       ],
       "disciplinas": [
@@ -7000,55 +7140,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.56,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.56,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": 1.17
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 9.03,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.79,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.97
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.78,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.79,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": 0.95
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.61,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.74,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": 0.66
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.83,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.76,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": 0.84
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 9.16,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.83,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 1.73
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -8343,55 +8501,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.03,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.03,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.64
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.78,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.41,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.72
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 9.25,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.69,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 1.42
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.46,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.63,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.51
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.86,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.68,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.87
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.58,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.52,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 0.15
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -9663,55 +9839,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.27,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.27,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.46,
-          "deltaTurmaGrad": 0.88
+          "mediaCursoCumulativa": 7.46
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 9.08,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.68,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.08,
-          "deltaTurmaGrad": 1.02
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.85,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.73,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 1.02
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.71,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.73,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.82,
-          "deltaTurmaGrad": 0.76
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.48,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.68,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.14,
-          "deltaTurmaGrad": 0.49
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.88,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.72,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.38,
-          "deltaTurmaGrad": 1.45
+          "mediaCursoCumulativa": 7.57
         }
       ],
       "disciplinas": [
@@ -10983,55 +11177,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.23,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.23,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.84
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 9.07,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.65,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 1.01
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.93,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.74,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 1.1
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.66,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.72,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.71
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.33,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.64,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.34
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.97,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.54,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 0.54
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -12303,55 +12515,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.01,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.01,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.18,
-          "deltaTurmaGrad": 0.62
+          "mediaCursoCumulativa": 7.18
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.87,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.44,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.36,
-          "deltaTurmaGrad": 0.81
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.39,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.42,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": 0.56
+          "mediaCursoCumulativa": 7.6
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.29,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.38,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.04,
-          "deltaTurmaGrad": 0.34
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 9.41,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.61,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 9.11,
-          "deltaTurmaGrad": 1.42
+          "mediaCursoCumulativa": 8.07
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.64,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.61,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.34,
-          "deltaTurmaGrad": 1.21
+          "mediaCursoCumulativa": 8.12
         }
       ],
       "disciplinas": [
@@ -13646,55 +13876,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.32,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.32,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.93
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 9.19,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.75,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 1.13
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.84,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.78,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 1.01
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 9.05,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.86,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 1.1
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.61,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.59,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": -0.38
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.8,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.34,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": -0.63
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -14966,55 +15214,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.54
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.74,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.74,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.02,
-          "deltaTurmaGrad": 0.91
+          "mediaCursoCumulativa": 7.96
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.83,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 8.79,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.2,
-          "deltaTurmaGrad": 0.88
+          "mediaCursoCumulativa": 8.03
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.17,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.59,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 25,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.99,
-          "deltaTurmaGrad": 0.18
+          "mediaCursoCumulativa": 8.01
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.69,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.39,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 32,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.22,
-          "deltaTurmaGrad": 0.26
+          "mediaCursoCumulativa": 7.87
         }
       ],
       "disciplinas": [
@@ -15803,55 +16069,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.78,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.78,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.95
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.88,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 8.83,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.93
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.09,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 8.57,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 26,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.1
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.43,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.36,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 32,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 0.0
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -16640,55 +16924,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.15,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.15,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.76
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.55,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.35,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.49
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.58,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.43,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.75
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.66,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.49,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.71
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.7,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.54,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.71
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.2,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.49,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 0.77
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -17960,55 +18262,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.55,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.16
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.49,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.02,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.43
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 9.01,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.35,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 1.18
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.88,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.5,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.93
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.65,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.53,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.66
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.57,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.54,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 1.14
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -19280,55 +19600,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.25,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.25,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": 0.86
+          "mediaCursoCumulativa": 7.7
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.41,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.51
+          "mediaCursoCumulativa": 8.04
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.55,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.46,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.23,
-          "deltaTurmaGrad": 0.72
+          "mediaCursoCumulativa": 8.11
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.74,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.53,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.79
+          "mediaCursoCumulativa": 8.18
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.37,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.5,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.97,
-          "deltaTurmaGrad": 0.38
+          "mediaCursoCumulativa": 8.14
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.69,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.54,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 1.26
+          "mediaCursoCumulativa": 8.11
         }
       ],
       "disciplinas": [
@@ -20600,55 +20938,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.98,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.98,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": 0.59
+          "mediaCursoCumulativa": 7.54
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.52,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.25,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": 0.46
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.55,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.35,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.02,
-          "deltaTurmaGrad": 0.72
+          "mediaCursoCumulativa": 7.96
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.87,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.49,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.2,
-          "deltaTurmaGrad": 0.92
+          "mediaCursoCumulativa": 8.03
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.47,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.49,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.99,
-          "deltaTurmaGrad": 0.48
+          "mediaCursoCumulativa": 8.01
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.97,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.4,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.22,
-          "deltaTurmaGrad": 0.54
+          "mediaCursoCumulativa": 7.87
         }
       ],
       "disciplinas": [
@@ -21920,55 +22276,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.5,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.5,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 1.11
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.61,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.56,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.55
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.56,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.74
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.39,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.51,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.44
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.31,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.47,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.32
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.55,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.48,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 1.12
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -23240,55 +23614,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.26,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.26,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.13
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.84,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.05,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.78
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.87,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.32,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 1.04
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 9.31,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.59,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 1.36
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.92,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.45,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": -0.07
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.75,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.21,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": -0.68
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -24560,55 +24952,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.57,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.06,
-          "deltaTurmaGrad": 0.18
+          "mediaCursoCumulativa": 7.06
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.27,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.92,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": 0.21
+          "mediaCursoCumulativa": 7.5
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.92,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.25,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.76,
-          "deltaTurmaGrad": 1.09
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.54,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.33,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.77,
-          "deltaTurmaGrad": 0.59
+          "mediaCursoCumulativa": 7.63
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.78,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.42,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 0.79
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.75,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.46,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.83,
-          "deltaTurmaGrad": 1.32
+          "mediaCursoCumulativa": 7.75
         }
       ],
       "disciplinas": [
@@ -25719,55 +26129,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.1,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.1,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.27
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.6,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 8.36,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.65
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.51,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 8.41,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 26,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.52
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.53,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.44,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 32,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 1.1
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -26556,55 +26984,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.87,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.87,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": 0.48
+          "mediaCursoCumulativa": 7.7
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.93,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.4,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.87
+          "mediaCursoCumulativa": 8.04
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.27,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.36,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.23,
-          "deltaTurmaGrad": 0.44
+          "mediaCursoCumulativa": 8.11
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.38,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.36,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.43
+          "mediaCursoCumulativa": 8.18
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.44,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.38,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.97,
-          "deltaTurmaGrad": 0.45
+          "mediaCursoCumulativa": 8.14
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.04,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.32,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.61
+          "mediaCursoCumulativa": 8.11
         }
       ],
       "disciplinas": [
@@ -27876,55 +28322,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.65,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.65,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.26
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.11,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.51
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.23,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.15,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.4
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.56,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.26,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.61
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.66,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.35,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.67
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.6,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.24,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 0.17
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -29058,55 +29522,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.77,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.77,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": 0.38
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.47,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.12,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.41
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.24,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.16,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": 0.41
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.35,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.21,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": 0.4
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.79,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.34,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": 0.8
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 9.15,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.48,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 1.72
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -30263,55 +30745,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.12,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.12,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.73
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.44,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.28,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.38
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.14,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.23,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.31
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.45,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.29,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.5
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.48,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.33,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.49
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.73,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.25,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 0.3
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -31583,55 +32083,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.55,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.16
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.58,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.06,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.52
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.55,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.23,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.72
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.24,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.23,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.29
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.65,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.32,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.66
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.05,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.28,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 0.62
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -32903,55 +33421,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.28,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.28,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.89
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.74,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.51,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.68
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.16,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.39,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.33
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.46,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.41,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.51
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.87,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.3,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": -0.12
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.92,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.96,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": -1.51
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -34223,55 +34759,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.26,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.26,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": 0.87
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.68,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.47,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": 0.62
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.77,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.24,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.06
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.05,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.18,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": 0.1
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.72,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.29,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": 0.73
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.2,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.95,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -1.23
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -35543,55 +36097,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.77,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.77,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": 0.38
+          "mediaCursoCumulativa": 7.7
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.17,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.51
+          "mediaCursoCumulativa": 8.04
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.14,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.16,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.23,
-          "deltaTurmaGrad": 0.31
+          "mediaCursoCumulativa": 8.11
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.48,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.25,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.53
+          "mediaCursoCumulativa": 8.18
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.21,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.24,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.97,
-          "deltaTurmaGrad": 0.22
+          "mediaCursoCumulativa": 8.14
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.2,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.23,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.77
+          "mediaCursoCumulativa": 8.11
         }
       ],
       "disciplinas": [
@@ -36863,55 +37435,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.95,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.95,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.56
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.25,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.1,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.19
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.93,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.05,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.1
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.41,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.15,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.46
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.57,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.24,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.58
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.32,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.11,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": -0.11
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -38183,55 +38773,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.48,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.48,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.09
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.48,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.98,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.42
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.49,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.15,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.66
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.17,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.16,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.22
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.4,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.21,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.41
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.73,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 8.28,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": 1.3
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -39503,55 +40111,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.61,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.61,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.18,
-          "deltaTurmaGrad": -0.78
+          "mediaCursoCumulativa": 7.18
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.24,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.43,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.36,
-          "deltaTurmaGrad": 0.18
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.56,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.8,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": 0.73
+          "mediaCursoCumulativa": 7.6
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.1,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.88,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.04,
-          "deltaTurmaGrad": 0.15
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 9.1,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.15,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 9.11,
-          "deltaTurmaGrad": 1.11
+          "mediaCursoCumulativa": 8.07
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.73,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.08,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.34,
-          "deltaTurmaGrad": 0.3
+          "mediaCursoCumulativa": 8.12
         }
       ],
       "disciplinas": [
@@ -40846,55 +41472,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.72,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.72,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.11
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.5,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 8.13,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": 0.55
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.15,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 8.14,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 26,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.16
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.59,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 8.2,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 30,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 1.16
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -41706,55 +42350,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.26,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.26,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": 0.87
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.88,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.07,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.18
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.56,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.9,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.27
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.13,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.96,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": 0.18
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.19,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.01,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": 0.2
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.37,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.74,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -1.06
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -43026,55 +43688,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.36,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.36,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.03
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.79,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.58,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": -0.27
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.22,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.79,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": 0.39
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.32,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.94,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": 0.37
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.26,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.01,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.27
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.4,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.92,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": -0.03
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -44346,55 +45026,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.66,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.66,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": 0.27
+          "mediaCursoCumulativa": 7.54
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.97,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.82,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.09
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.82,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.82,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.02,
-          "deltaTurmaGrad": -0.01
+          "mediaCursoCumulativa": 7.96
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.09,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.89,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.2,
-          "deltaTurmaGrad": 0.14
+          "mediaCursoCumulativa": 8.03
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.41,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.99,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.99,
-          "deltaTurmaGrad": 0.42
+          "mediaCursoCumulativa": 8.01
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.49,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.75,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.22,
-          "deltaTurmaGrad": -0.94
+          "mediaCursoCumulativa": 7.87
         }
       ],
       "disciplinas": [
@@ -45666,55 +46364,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.53,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.53,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": 0.14
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.44,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.99,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": 0.38
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.85,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.94,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 0.02
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.96,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.95,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": 0.01
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.07,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.97,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.08
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.43,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 7.92,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 41,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 0.0
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -47009,55 +47725,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.23,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.23,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": -0.16
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.69,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.96,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.63
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.69,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.87,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": -0.14
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.69,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.82,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": -0.26
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.48,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.96,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": 0.49
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.76,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.93,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 0.33
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -48352,55 +49086,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.29,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.29,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": -0.1
+          "mediaCursoCumulativa": 7.7
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.31,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.8,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.25
+          "mediaCursoCumulativa": 8.04
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.91,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.84,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.23,
-          "deltaTurmaGrad": 0.08
+          "mediaCursoCumulativa": 8.11
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.42,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.0,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.47
+          "mediaCursoCumulativa": 8.18
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.74,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.95,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.97,
-          "deltaTurmaGrad": -0.25
+          "mediaCursoCumulativa": 8.14
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.62,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.89,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.19
+          "mediaCursoCumulativa": 8.11
         }
       ],
       "disciplinas": [
@@ -49534,55 +50286,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.81,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.81,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": -0.58
+          "mediaCursoCumulativa": 7.7
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.29,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.23
+          "mediaCursoCumulativa": 8.04
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.48,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.86,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.23,
-          "deltaTurmaGrad": 0.65
+          "mediaCursoCumulativa": 8.11
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.35,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.0,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": 0.4
+          "mediaCursoCumulativa": 8.18
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.73,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.94,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.97,
-          "deltaTurmaGrad": -0.26
+          "mediaCursoCumulativa": 8.14
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.31,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 8.01,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.88
+          "mediaCursoCumulativa": 8.11
         }
       ],
       "disciplinas": [
@@ -50854,55 +51624,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.54,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.54,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": 0.15
+          "mediaCursoCumulativa": 7.54
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.5,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.52,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.56
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.92,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.65,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.02,
-          "deltaTurmaGrad": 0.09
+          "mediaCursoCumulativa": 7.96
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.43,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.87,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.2,
-          "deltaTurmaGrad": 0.48
+          "mediaCursoCumulativa": 8.03
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.2,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.93,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.99,
-          "deltaTurmaGrad": 0.21
+          "mediaCursoCumulativa": 8.01
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.77,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.9,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.22,
-          "deltaTurmaGrad": 0.34
+          "mediaCursoCumulativa": 7.87
         }
       ],
       "disciplinas": [
@@ -52174,55 +52962,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.71,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.71,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.18,
-          "deltaTurmaGrad": -0.68
+          "mediaCursoCumulativa": 7.18
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.91,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.31,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.36,
-          "deltaTurmaGrad": -0.15
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.81,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.48,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": -0.02
+          "mediaCursoCumulativa": 7.6
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.7,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.54,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.04,
-          "deltaTurmaGrad": -0.25
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 9.32,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.92,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 9.11,
-          "deltaTurmaGrad": 1.33
+          "mediaCursoCumulativa": 8.07
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.97,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.93,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.34,
-          "deltaTurmaGrad": 0.54
+          "mediaCursoCumulativa": 8.12
         }
       ],
       "disciplinas": [
@@ -53517,55 +54323,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.08,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.08
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.4,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.24
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.04,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.04,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.79
+          "mediaCursoCumulativa": 7.23
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.34,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 7.73,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": 0.39
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.23,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.89,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 25,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.33,
-          "deltaTurmaGrad": 0.24
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.52,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.82,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 31,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 6.15,
-          "deltaTurmaGrad": 0.09
+          "mediaCursoCumulativa": 7.18
         }
       ],
       "disciplinas": [
@@ -54331,55 +55155,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.22,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.22,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.46,
-          "deltaTurmaGrad": -0.17
+          "mediaCursoCumulativa": 7.46
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.92,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.57,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.08,
-          "deltaTurmaGrad": -0.14
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.34,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.83,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": 0.51
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.32,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.96,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.82,
-          "deltaTurmaGrad": 0.37
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.36,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.85,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.14,
-          "deltaTurmaGrad": -0.63
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.64,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.81,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.38,
-          "deltaTurmaGrad": 0.21
+          "mediaCursoCumulativa": 7.57
         }
       ],
       "disciplinas": [
@@ -55651,55 +56493,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.76,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.76,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.63
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.03,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.39,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": -0.03
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.1,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.63,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 0.27
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.03,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.74,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": 0.08
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.21,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.84,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.22
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.24,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 7.88,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 41,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 0.81
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -56994,55 +57854,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 8.21,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.21,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": 0.82
+          "mediaCursoCumulativa": 7.7
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.64,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.93,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": -0.42
+          "mediaCursoCumulativa": 8.04
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.03,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.96,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.23,
-          "deltaTurmaGrad": 0.2
+          "mediaCursoCumulativa": 8.11
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.94,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.95,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.38,
-          "deltaTurmaGrad": -0.01
+          "mediaCursoCumulativa": 8.18
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.34,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.83,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.97,
-          "deltaTurmaGrad": -0.65
+          "mediaCursoCumulativa": 8.14
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.04,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.69,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": -0.39
+          "mediaCursoCumulativa": 8.11
         }
       ],
       "disciplinas": [
@@ -58314,55 +59192,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.55,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": 0.16
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.04,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.79,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": -0.02
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.05,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.78
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.24,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.74,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": 0.29
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.13,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.82,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.14
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.49,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 7.89,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 41,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 1.06
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -59657,55 +60553,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.83,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.83,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": 0.44
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.85,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.84,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.21
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.71,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.8,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.12
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.72,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.78,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": -0.23
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.32,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.69,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": -0.67
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.91,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.4,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -1.52
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -60977,55 +61891,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.92,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.92,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.46,
-          "deltaTurmaGrad": 0.53
+          "mediaCursoCumulativa": 7.46
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.83,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.88,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.08,
-          "deltaTurmaGrad": -0.23
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.76,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.84,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.07
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.94,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.87,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.82,
-          "deltaTurmaGrad": -0.01
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.8,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.66,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.14,
-          "deltaTurmaGrad": -1.19
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.64,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.47,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.38,
-          "deltaTurmaGrad": -0.79
+          "mediaCursoCumulativa": 7.57
         }
       ],
       "disciplinas": [
@@ -62297,55 +63229,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.56,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.56,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": 0.17
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.64,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.6,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": -0.42
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.97,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.72,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 0.14
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.02,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.53,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.93
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.15,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.66,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.16
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.51,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 7.65,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 41,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 0.08
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -63640,55 +64590,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.95,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.95,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.06,
-          "deltaTurmaGrad": -0.44
+          "mediaCursoCumulativa": 7.06
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.95,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.45,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": -0.11
+          "mediaCursoCumulativa": 7.5
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.32,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.41,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.76,
-          "deltaTurmaGrad": -0.51
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.74,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.5,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.77,
-          "deltaTurmaGrad": -0.21
+          "mediaCursoCumulativa": 7.63
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.32,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.66,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 0.33
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.03,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.57,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.83,
-          "deltaTurmaGrad": -0.4
+          "mediaCursoCumulativa": 7.75
         }
       ],
       "disciplinas": [
@@ -64937,55 +65905,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.31,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.31,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.08,
-          "deltaTurmaGrad": -0.08
+          "mediaCursoCumulativa": 7.08
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.29,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.3,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.4,
-          "deltaTurmaGrad": -0.77
+          "mediaCursoCumulativa": 7.24
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.7,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.43,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.13
+          "mediaCursoCumulativa": 7.23
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.79,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.53,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.16
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.12,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.65,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.33,
-          "deltaTurmaGrad": 0.13
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.95,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 6.15,
-          "deltaTurmaGrad": -0.48
+          "mediaCursoCumulativa": 7.18
         }
       ],
       "disciplinas": [
@@ -66234,55 +67220,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.73,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.73,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": 0.34
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.92,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.82,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": -0.14
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.42,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.69,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.41
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 6.86,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.46,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -1.09
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.18,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.62,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.19
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.68,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 7.72,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 41,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 1.25
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -67577,55 +68581,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.43,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.43,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": 0.04
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.45,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.94,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": 0.39
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.55,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.81,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.28
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.25,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.65,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": -0.7
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.5,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.62,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": -0.49
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.49,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.28,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -1.94
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -68897,55 +69919,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.72,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.72,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.46,
-          "deltaTurmaGrad": 0.33
+          "mediaCursoCumulativa": 7.46
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.45,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 8.09,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.08,
-          "deltaTurmaGrad": 0.39
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.45,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.87,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.38
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.13,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.67,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.82,
-          "deltaTurmaGrad": -0.82
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.14,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.57,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.14,
-          "deltaTurmaGrad": -0.85
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.78,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.61,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.38,
-          "deltaTurmaGrad": 0.35
+          "mediaCursoCumulativa": 7.57
         }
       ],
       "disciplinas": [
@@ -70217,55 +71257,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.53,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.53,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": -0.86
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.0,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.27,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.06
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.04,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.53,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": 0.21
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.66,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.56,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": -0.29
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.56,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": -0.42
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.31,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.36,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -1.12
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -71537,55 +72595,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.77,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.77,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.06,
-          "deltaTurmaGrad": -0.62
+          "mediaCursoCumulativa": 7.06
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.17,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": -0.49
+          "mediaCursoCumulativa": 7.5
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.69,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.34,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.76,
-          "deltaTurmaGrad": -0.14
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.56,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.4,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.77,
-          "deltaTurmaGrad": -0.39
+          "mediaCursoCumulativa": 7.63
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.21,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.56,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 0.22
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.45,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.54,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.83,
-          "deltaTurmaGrad": 0.02
+          "mediaCursoCumulativa": 7.75
         }
       ],
       "disciplinas": [
@@ -72834,55 +73910,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.3,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.3,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.09
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.8,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": -0.26
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.54,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.29
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.14,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.43,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.81
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.02,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.56,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": 0.03
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.57,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 7.66,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 41,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 1.14
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -74177,55 +75271,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.74,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.74,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.65
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.33,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.03,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": -0.73
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.71,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.26,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": -0.12
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.8,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.41,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": -0.15
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.11,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.56,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": 0.12
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.14,
-          "qtdDisciplinas": 5,
+          "mediaGradCumulativo": 7.51,
+          "qtdDisciplinasSemestre": 5,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": -0.29
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -75359,55 +76471,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.8,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.8,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": -0.59
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.73,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.27,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.33
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.73,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.42,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.1
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.63,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.48,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": -0.32
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.85,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": -0.14
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.13,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.32,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -1.3
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -76679,55 +77809,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.47,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.47,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.18,
-          "deltaTurmaGrad": -0.92
+          "mediaCursoCumulativa": 7.18
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 8.03,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.25,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.36,
-          "deltaTurmaGrad": -0.03
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.56,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.02,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": -1.27
+          "mediaCursoCumulativa": 7.6
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.43,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.13,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.04,
-          "deltaTurmaGrad": -0.52
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 9.0,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.54,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 9.11,
-          "deltaTurmaGrad": 1.01
+          "mediaCursoCumulativa": 8.07
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.41,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.68,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.34,
-          "deltaTurmaGrad": 0.98
+          "mediaCursoCumulativa": 8.12
         }
       ],
       "disciplinas": [
@@ -78022,55 +79170,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.74,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.74,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.08,
-          "deltaTurmaGrad": 0.35
+          "mediaCursoCumulativa": 7.08
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.49,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.61,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.4,
-          "deltaTurmaGrad": -0.57
+          "mediaCursoCumulativa": 7.24
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.53,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.59,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.3
+          "mediaCursoCumulativa": 7.23
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.39,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.53,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.56
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.2,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.47,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.33,
-          "deltaTurmaGrad": -0.79
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.58,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.34,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 6.15,
-          "deltaTurmaGrad": -0.85
+          "mediaCursoCumulativa": 7.18
         }
       ],
       "disciplinas": [
@@ -79319,55 +80485,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.34,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.34,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.08,
-          "deltaTurmaGrad": -0.05
+          "mediaCursoCumulativa": 7.08
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.22,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.28,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.4,
-          "deltaTurmaGrad": -0.84
+          "mediaCursoCumulativa": 7.24
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.43,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.33,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.4
+          "mediaCursoCumulativa": 7.23
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.71,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.43,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.24
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.64,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.47,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.33,
-          "deltaTurmaGrad": -0.35
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.5,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.34,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 6.15,
-          "deltaTurmaGrad": -0.93
+          "mediaCursoCumulativa": 7.18
         }
       ],
       "disciplinas": [
@@ -80616,55 +81800,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.37,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.37,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.02
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.67,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.52,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": -0.39
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.39,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.47,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.44
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.18,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.39,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.77
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.7,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.46,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": -0.29
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.4,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 7.55,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 41,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 0.97
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -81959,55 +83161,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.01,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.01,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.08,
-          "deltaTurmaGrad": -0.38
+          "mediaCursoCumulativa": 7.08
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.4,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.21,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.4,
-          "deltaTurmaGrad": -0.66
+          "mediaCursoCumulativa": 7.24
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.68,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.36,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.15
+          "mediaCursoCumulativa": 7.23
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.73,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.46,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.22
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.42,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.46,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.33,
-          "deltaTurmaGrad": -0.57
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.58,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.33,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 6.15,
-          "deltaTurmaGrad": -0.85
+          "mediaCursoCumulativa": 7.18
         }
       ],
       "disciplinas": [
@@ -83256,55 +84476,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.79,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.79,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.46,
-          "deltaTurmaGrad": -0.6
+          "mediaCursoCumulativa": 7.46
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.77,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.28,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.08,
-          "deltaTurmaGrad": -0.29
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.72,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.43,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.11
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 8.0,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.58,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.82,
-          "deltaTurmaGrad": 0.05
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.9,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.45,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.14,
-          "deltaTurmaGrad": -1.09
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.74,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.32,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.38,
-          "deltaTurmaGrad": -0.69
+          "mediaCursoCumulativa": 7.57
         }
       ],
       "disciplinas": [
@@ -84576,55 +85814,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.11,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.11,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": -1.28
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.48,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.79,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.58
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 8.0,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.2,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": 0.17
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.59,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.3,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": -0.36
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.99,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.45,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": 0.0
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.26,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.6,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 0.83
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -85919,55 +87175,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.75,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.75,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": -0.64
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 6.91,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.83,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -1.15
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.9,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.85,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": -0.93
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.53,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.04,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": -0.42
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.38,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.33,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": 0.39
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.86,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.42,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 0.43
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -87262,55 +88536,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.94,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.94,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.06,
-          "deltaTurmaGrad": -0.45
+          "mediaCursoCumulativa": 7.06
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.96,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.45,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": -0.1
+          "mediaCursoCumulativa": 7.5
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.1,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.33,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.76,
-          "deltaTurmaGrad": -0.73
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.24,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.31,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.77,
-          "deltaTurmaGrad": -0.71
+          "mediaCursoCumulativa": 7.63
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.41,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.33,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": -0.58
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 8.08,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.44,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.83,
-          "deltaTurmaGrad": 0.65
+          "mediaCursoCumulativa": 7.75
         }
       ],
       "disciplinas": [
@@ -88559,55 +89851,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.36,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.36,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": -0.03
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.39,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.38,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.67
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.22,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.32,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.61
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.65,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.41,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": -0.3
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.0,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.33,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": -0.99
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.24,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.99,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -2.19
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -89879,55 +91189,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.29,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.29,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": -1.1
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.37,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.83,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.69
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.15,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.94,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": -0.68
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.87,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.19,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": -0.08
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.69,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.3,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": -0.3
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.92,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.23,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.51
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -91222,55 +92550,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.46,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.46,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": -1.37
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.35,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 6.93,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": -0.6
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.89,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 7.26,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 26,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": -0.1
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.74,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.37,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 34,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": 0.31
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -92082,55 +93428,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.97,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.97,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.86
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.91,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 7.47,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": -0.04
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.8,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.25,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 25,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": -1.19
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.59,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.89,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 32,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -1.84
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -92919,55 +94283,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.09,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.09,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": -0.3
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.77,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.43,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.29
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.68,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.18,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": -1.15
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.35,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.23,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": -0.6
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.17,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.21,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": -0.82
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.5,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.91,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -1.93
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -94262,55 +95644,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.15,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.15,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.18,
-          "deltaTurmaGrad": -1.24
+          "mediaCursoCumulativa": 7.18
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.24,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.69,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.36,
-          "deltaTurmaGrad": -0.82
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.12,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.5,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": -1.71
+          "mediaCursoCumulativa": 7.6
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.54,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.79,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.04,
-          "deltaTurmaGrad": -0.41
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.57,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.17,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 9.11,
-          "deltaTurmaGrad": 0.58
+          "mediaCursoCumulativa": 8.07
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.29,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.19,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.34,
-          "deltaTurmaGrad": -0.14
+          "mediaCursoCumulativa": 8.12
         }
       ],
       "disciplinas": [
@@ -95605,55 +97005,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.73,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.73,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.66
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.39,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.06,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": -0.67
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.14,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.09,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": -0.69
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.17,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.11,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": -0.78
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.29,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.15,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": -0.7
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.32,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.17,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": -0.11
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -96787,55 +98205,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.7,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.7,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": -0.69
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.24,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.97,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.82
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.17,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": -0.26
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.11,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.15,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": -0.84
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.1,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.14,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": -0.89
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.56,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.04,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.87
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -98130,55 +99566,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.89,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.89,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.04,
-          "deltaTurmaGrad": -0.5
+          "mediaCursoCumulativa": 7.04
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 6.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.73,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -1.49
+          "mediaCursoCumulativa": 7.38
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.26,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.91,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.47,
-          "deltaTurmaGrad": -0.57
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.71,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.13,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.72,
-          "deltaTurmaGrad": -0.24
+          "mediaCursoCumulativa": 7.47
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.07,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.12,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.94,
-          "deltaTurmaGrad": -0.92
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.9,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.08,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 45,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.53
+          "mediaCursoCumulativa": 7.59
         }
       ],
       "disciplinas": [
@@ -99473,55 +100927,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.38,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.38,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -1.01
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.41,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.9,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": -0.65
+          "mediaCursoCumulativa": 8.09
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.46,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.09,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.42,
-          "deltaTurmaGrad": -0.37
+          "mediaCursoCumulativa": 8.22
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 6.93,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.04,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.44,
-          "deltaTurmaGrad": -1.02
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.29,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.1,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 8.29,
-          "deltaTurmaGrad": -0.7
+          "mediaCursoCumulativa": 8.29
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.92,
-          "qtdDisciplinas": 5,
+          "mediaGradCumulativo": 7.07,
+          "qtdDisciplinasSemestre": 5,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.68,
-          "deltaTurmaGrad": -0.51
+          "mediaCursoCumulativa": 8.2
         }
       ],
       "disciplinas": [
@@ -100655,55 +102127,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.97,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.97,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.08,
-          "deltaTurmaGrad": -0.42
+          "mediaCursoCumulativa": 7.08
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.58,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.28,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.4,
-          "deltaTurmaGrad": -0.48
+          "mediaCursoCumulativa": 7.24
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.57,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.04,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -1.26
+          "mediaCursoCumulativa": 7.23
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.41,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.14,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.54
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.89,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.09,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.33,
-          "deltaTurmaGrad": -1.1
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 4.74,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 6.76,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 6.15,
-          "deltaTurmaGrad": -2.69
+          "mediaCursoCumulativa": 7.18
         }
       ],
       "disciplinas": [
@@ -101952,55 +103442,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.18,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.18
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.36,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.03,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.03,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.7,
-          "deltaTurmaGrad": -1.8
+          "mediaCursoCumulativa": 7.6
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 6.76,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 6.42,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.04,
-          "deltaTurmaGrad": -1.19
+          "mediaCursoCumulativa": 7.74
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 8.37,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 7.09,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 26,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 9.11,
-          "deltaTurmaGrad": 0.38
+          "mediaCursoCumulativa": 8.07
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.8,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 7.23,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 32,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.34,
-          "deltaTurmaGrad": 0.37
+          "mediaCursoCumulativa": 8.12
         }
       ],
       "disciplinas": [
@@ -102812,55 +104320,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.46,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.46
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": null,
-          "qtdDisciplinas": 0,
+          "mediaGradCumulativo": null,
+          "qtdDisciplinasSemestre": 0,
+          "qtdDisciplinasCumulativo": 0,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.08,
-          "deltaTurmaGrad": null
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.82,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.82,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 8,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -1.01
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.31,
-          "qtdDisciplinas": 9,
+          "mediaGradCumulativo": 7.08,
+          "qtdDisciplinasSemestre": 9,
+          "qtdDisciplinasCumulativo": 17,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.82,
-          "deltaTurmaGrad": -0.64
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.06,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.07,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 25,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.14,
-          "deltaTurmaGrad": -0.93
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.41,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.15,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 33,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.38,
-          "deltaTurmaGrad": -0.02
+          "mediaCursoCumulativa": 7.57
         }
       ],
       "disciplinas": [
@@ -103649,55 +105175,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.0,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.0,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.39
+          "mediaCursoCumulativa": 7.54
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.63,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.32,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.43
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.09,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.24,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 8.02,
-          "deltaTurmaGrad": -0.74
+          "mediaCursoCumulativa": 7.96
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 6.8,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.12,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 8.2,
-          "deltaTurmaGrad": -1.15
+          "mediaCursoCumulativa": 8.03
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.71,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.04,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.99,
-          "deltaTurmaGrad": -1.28
+          "mediaCursoCumulativa": 8.01
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.2,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.9,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.22,
-          "deltaTurmaGrad": -1.23
+          "mediaCursoCumulativa": 7.87
         }
       ],
       "disciplinas": [
@@ -104969,55 +106513,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.23,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.23,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -1.16
+          "mediaCursoCumulativa": 7.25
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.74,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.99,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.91,
-          "deltaTurmaGrad": -0.32
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.17,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.05,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.58,
-          "deltaTurmaGrad": -0.66
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 6.79,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.98,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -1.16
+          "mediaCursoCumulativa": 7.59
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 7.23,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.03,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 37,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.98,
-          "deltaTurmaGrad": -0.76
+          "mediaCursoCumulativa": 7.68
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 7.74,
-          "qtdDisciplinas": 4,
+          "mediaGradCumulativo": 7.1,
+          "qtdDisciplinasSemestre": 4,
+          "qtdDisciplinasCumulativo": 41,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 8.18,
-          "deltaTurmaGrad": 0.31
+          "mediaCursoCumulativa": 7.73
         }
       ],
       "disciplinas": [
@@ -106312,55 +107874,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.82,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.82,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.46,
-          "deltaTurmaGrad": -0.57
+          "mediaCursoCumulativa": 7.46
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.41,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.12,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 8.08,
-          "deltaTurmaGrad": -0.65
+          "mediaCursoCumulativa": 7.77
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.17,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.13,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.73,
-          "deltaTurmaGrad": -0.66
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.36,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.2,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.82,
-          "deltaTurmaGrad": -0.59
+          "mediaCursoCumulativa": 7.73
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.26,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.01,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.14,
-          "deltaTurmaGrad": -1.73
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 6.58,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.93,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 44,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 7.38,
-          "deltaTurmaGrad": -0.85
+          "mediaCursoCumulativa": 7.57
         }
       ],
       "disciplinas": [
@@ -107632,55 +109212,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.88,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.88,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.42,
-          "deltaTurmaGrad": -0.51
+          "mediaCursoCumulativa": 7.42
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.21,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.04,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.9,
-          "deltaTurmaGrad": -0.85
+          "mediaCursoCumulativa": 7.66
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.28,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.12,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.54,
-          "deltaTurmaGrad": -0.55
+          "mediaCursoCumulativa": 7.57
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 6.79,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.03,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.64,
-          "deltaTurmaGrad": -1.16
+          "mediaCursoCumulativa": 7.61
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.64,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.95,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.51,
-          "deltaTurmaGrad": -1.35
+          "mediaCursoCumulativa": 7.58
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.63,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.74,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 43,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 5.87,
-          "deltaTurmaGrad": -1.8
+          "mediaCursoCumulativa": 7.3
         }
       ],
       "disciplinas": [
@@ -108814,55 +110412,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 7.01,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.01,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.08,
-          "deltaTurmaGrad": -0.38
+          "mediaCursoCumulativa": 7.08
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.49,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.25,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.4,
-          "deltaTurmaGrad": -0.57
+          "mediaCursoCumulativa": 7.24
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 6.61,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 7.04,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -1.22
+          "mediaCursoCumulativa": 7.23
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 7.12,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 7.06,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -0.83
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.33,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.92,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.33,
-          "deltaTurmaGrad": -1.66
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.18,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 6.67,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 6.15,
-          "deltaTurmaGrad": -2.25
+          "mediaCursoCumulativa": 7.18
         }
       ],
       "disciplinas": [
@@ -110111,55 +111727,73 @@ window.IME_DATA = {
           "semestre": "1.1",
           "ordem": 1,
           "mediaGradSemestre": 6.16,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.16,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 7,
           "mediaTurmaGrad": 7.39,
+          "mediaTurmaCumulativa": 7.39,
           "mediaCursoGrad": 7.08,
-          "deltaTurmaGrad": -1.23
+          "mediaCursoCumulativa": 7.08
         },
         {
           "semestre": "1.2",
           "ordem": 2,
           "mediaGradSemestre": 7.36,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.76,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 14,
           "mediaTurmaGrad": 8.06,
+          "mediaTurmaCumulativa": 7.72,
           "mediaCursoGrad": 7.4,
-          "deltaTurmaGrad": -0.7
+          "mediaCursoCumulativa": 7.24
         },
         {
           "semestre": "2.1",
           "ordem": 3,
           "mediaGradSemestre": 7.43,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.98,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 21,
           "mediaTurmaGrad": 7.83,
+          "mediaTurmaCumulativa": 7.74,
           "mediaCursoGrad": 7.25,
-          "deltaTurmaGrad": -0.4
+          "mediaCursoCumulativa": 7.23
         },
         {
           "semestre": "2.2",
           "ordem": 4,
           "mediaGradSemestre": 6.71,
-          "qtdDisciplinas": 8,
+          "mediaGradCumulativo": 6.91,
+          "qtdDisciplinasSemestre": 8,
+          "qtdDisciplinasCumulativo": 29,
           "mediaTurmaGrad": 7.95,
+          "mediaTurmaCumulativa": 7.81,
           "mediaCursoGrad": 7.52,
-          "deltaTurmaGrad": -1.24
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.1",
           "ordem": 5,
           "mediaGradSemestre": 6.81,
-          "qtdDisciplinas": 7,
+          "mediaGradCumulativo": 6.89,
+          "qtdDisciplinasSemestre": 7,
+          "qtdDisciplinasCumulativo": 36,
           "mediaTurmaGrad": 7.99,
+          "mediaTurmaCumulativa": 7.85,
           "mediaCursoGrad": 7.33,
-          "deltaTurmaGrad": -1.18
+          "mediaCursoCumulativa": 7.35
         },
         {
           "semestre": "3.2",
           "ordem": 6,
           "mediaGradSemestre": 5.13,
-          "qtdDisciplinas": 6,
+          "mediaGradCumulativo": 6.64,
+          "qtdDisciplinasSemestre": 6,
+          "qtdDisciplinasCumulativo": 42,
           "mediaTurmaGrad": 7.43,
+          "mediaTurmaCumulativa": 7.79,
           "mediaCursoGrad": 6.15,
-          "deltaTurmaGrad": -2.3
+          "mediaCursoCumulativa": 7.18
         }
       ],
       "disciplinas": [
