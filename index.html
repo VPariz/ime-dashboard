@@ -57,10 +57,10 @@
         <div>
           <div class="flex items-center gap-2">
             <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-2">
-              IME Analytics <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 font-semibold">Turma 2026</span>
+              IME Analytics <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold">Turma 2026</span>
             </h1>
           </div>
-          <p class="text-xs text-slate-400 font-medium">Painel Estratégico de Desempenho Acadêmico e Militar</p>
+          <p class="text-xs text-slate-400 font-medium">Painel Estratégico de Desempenho Acadêmico • Foco em Graduação</p>
         </div>
       </div>
 
@@ -71,8 +71,8 @@
           <input 
             type="text" 
             id="globalSearchInput"
-            placeholder="Pesquisar por aluno ou matrícula..." 
-            class="w-full pl-10 pr-4 py-2 text-xs bg-slate-900/90 border border-slate-700/70 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+            placeholder="Pesquisar aluno ou matrícula..." 
+            class="w-full pl-10 pr-4 py-2 text-xs bg-slate-900/90 border border-slate-700/70 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           >
           <div id="quickSearchResults" class="hidden absolute left-0 right-0 top-11 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl max-h-72 overflow-y-auto z-50 py-1"></div>
         </div>
@@ -83,7 +83,7 @@
           class="flex items-center gap-2 px-3.5 py-2 text-xs font-semibold bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700 rounded-xl text-slate-200 transition shadow-sm"
           title="Exportar dados filtrados em CSV"
         >
-          <i data-lucide="download" class="w-3.5 h-3.5 text-indigo-400"></i>
+          <i data-lucide="download" class="w-3.5 h-3.5 text-blue-400"></i>
           <span class="hidden sm:inline">Exportar CSV</span>
         </button>
       </div>
@@ -92,22 +92,26 @@
 
     <!-- Navigation Tabs -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60">
-      <nav class="flex space-x-2 sm:space-x-8 overflow-x-auto py-2.5" id="navTabs">
-        <button data-tab="overview" class="tab-btn active flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-indigo-400 bg-indigo-500/10 border-indigo-500/30">
+      <nav class="flex space-x-2 sm:space-x-6 overflow-x-auto py-2.5" id="navTabs">
+        <button data-tab="overview" class="tab-btn active flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-blue-400 bg-blue-500/10 border-blue-500/30">
           <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-          <span>Visão Geral & Gráficos</span>
+          <span>Visão Geral</span>
+        </button>
+        <button data-tab="cursos" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+          <i data-lucide="line-chart" class="w-4 h-4 text-emerald-400"></i>
+          <span>Comparador de Cursos (Evolução)</span>
         </button>
         <button data-tab="rankings" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
-          <i data-lucide="trophy" class="w-4 h-4"></i>
+          <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
           <span>Ranking dos Alunos (86)</span>
         </button>
         <button data-tab="disciplinas" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
-          <i data-lucide="book-open" class="w-4 h-4"></i>
-          <span>Raio-X de Disciplinas (112)</span>
+          <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i>
+          <span>Raio-X de Disciplinas (168)</span>
         </button>
         <button data-tab="comparator" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
-          <i data-lucide="git-compare" class="w-4 h-4"></i>
-          <span>Comparador 1x1</span>
+          <i data-lucide="git-compare" class="w-4 h-4 text-indigo-400"></i>
+          <span>Comparador 1x1 Alunos</span>
         </button>
       </nav>
     </div>
@@ -123,9 +127,9 @@
         <!-- Curso Filter -->
         <div class="flex items-center gap-2">
           <label for="filterCurso" class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="cpu" class="w-3.5 h-3.5 text-indigo-400"></i> Especialidade:
+            <i data-lucide="cpu" class="w-3.5 h-3.5 text-blue-400"></i> Especialidade:
           </label>
-          <select id="filterCurso" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+          <select id="filterCurso" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
             <option value="ALL">Todas as Especialidades (10)</option>
             <option value="Computação">Computação (20)</option>
             <option value="Fortificação e Construção">Fortificação e Construção (10)</option>
@@ -145,7 +149,7 @@
           <label for="filterVinculo" class="text-xs font-semibold text-slate-400 flex items-center gap-1.5">
             <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-400"></i> Vínculo:
           </label>
-          <select id="filterVinculo" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-medium">
+          <select id="filterVinculo" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
             <option value="ALL">Todos os Vínculos (86)</option>
             <option value="Ativa">Ativa (68)</option>
             <option value="Reserva">Reserva (9)</option>
@@ -154,7 +158,7 @@
         </div>
 
         <!-- Reset Button -->
-        <button id="btnResetFilters" class="hidden text-xs text-indigo-400 hover:text-indigo-300 font-semibold px-2 py-1.5 rounded-lg hover:bg-indigo-500/10 transition items-center gap-1">
+        <button id="btnResetFilters" class="hidden text-xs text-blue-400 hover:text-blue-300 font-semibold px-2 py-1.5 rounded-lg hover:bg-blue-500/10 transition items-center gap-1">
           <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Limpar Filtros
         </button>
 
@@ -249,7 +253,7 @@
 
     </section>
 
-    <!-- TAB 1: VISÃO GERAL & GRÁFICOS -->
+    <!-- TAB 1: VISÃO GERAL -->
     <section id="tab-overview" class="tab-content space-y-6 animate-fade-in">
       
       <!-- Top Performers Podium Banner -->
@@ -274,14 +278,14 @@
           <div class="flex items-center justify-between mb-4">
             <div>
               <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
-                <i data-lucide="bar-chart-2" class="w-4 h-4 text-indigo-400"></i>
-                Desempenho Médio por Especialidade
+                <i data-lucide="bar-chart-2" class="w-4 h-4 text-blue-400"></i>
+                Desempenho Acadêmico por Especialidade
               </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Comparativo do CR Geral (80/20) e CR Graduação nas 10 engenharias</p>
+              <p class="text-xs text-slate-400 mt-0.5">Ordenado pelo maior CR de Graduação Médio</p>
             </div>
             <div class="flex items-center gap-2 text-xs">
-              <span class="flex items-center gap-1 text-[11px] text-indigo-400 font-semibold"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span> CR Geral</span>
               <span class="flex items-center gap-1 text-[11px] text-blue-400 font-semibold"><span class="w-2.5 h-2.5 rounded-sm bg-blue-500"></span> CR Grad</span>
+              <span class="flex items-center gap-1 text-[11px] text-indigo-400 font-semibold"><span class="w-2.5 h-2.5 rounded-sm bg-indigo-500"></span> CR Geral</span>
             </div>
           </div>
           <div class="relative h-80">
@@ -295,11 +299,11 @@
             <div>
               <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
                 <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
-                Evolução Semestral das Médias
+                Evolução Semestral da Turma
               </h3>
-              <p class="text-xs text-slate-400 mt-0.5">Progressão histórica ao longo dos períodos (1.1 ao 2026.1)</p>
+              <p class="text-xs text-slate-400 mt-0.5">Média de Graduação ao longo dos semestres (1.1 ao 3.2 Parcial)</p>
             </div>
-            <span class="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Média Geral Turma</span>
+            <span class="text-[11px] font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">Média Graduação Turma</span>
           </div>
           <div class="relative h-80">
             <canvas id="chartEvolucao"></canvas>
@@ -328,11 +332,11 @@
           <div class="flex items-center justify-between mb-1">
             <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
               <i data-lucide="activity" class="w-4 h-4 text-purple-400"></i>
-              Distribuição por Faixa de CR Geral
+              Distribuição por Faixa de CR Graduação
             </h3>
-            <span class="text-xs text-slate-400">Densidade de Notas</span>
+            <span class="text-xs text-slate-400">Densidade Acadêmica</span>
           </div>
-          <p class="text-xs text-slate-400 mb-4">Quantos alunos atingiram cada intervalo de Coeficiente de Rendimento</p>
+          <p class="text-xs text-slate-400 mb-4">Quantos alunos atingiram cada intervalo de Coeficiente de Rendimento na Graduação</p>
           <div class="relative h-60">
             <canvas id="chartDistribuicao"></canvas>
           </div>
@@ -342,7 +346,108 @@
 
     </section>
 
-    <!-- TAB 2: RANKINGS & TABELA DE ALUNOS -->
+    <!-- TAB 2: COMPARADOR DE CURSOS (NOVA ABA DEDICADA) -->
+    <section id="tab-cursos" class="tab-content hidden space-y-6 animate-fade-in">
+      
+      <!-- Multi-Line Course Evolution Chart -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h3 class="font-bold text-slate-100 text-base flex items-center gap-2">
+              <i data-lucide="line-chart" class="w-5 h-5 text-emerald-400"></i>
+              Evolução Semestral das 10 Especialidades de Engenharia
+            </h3>
+            <p class="text-xs text-slate-400 mt-1">
+              Compare o rendimento acadêmico de cada curso através dos semestres (1.1, 1.2, 2.1, 2.2, 3.1 e 3.2 Parcial). Clique nos botões para isolar ou comparar especialidades.
+            </p>
+          </div>
+          
+          <div class="flex items-center gap-2">
+            <button id="btnSelectAllCourses" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
+              Todos os Cursos
+            </button>
+            <button id="btnClearCourses" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-400 hover:text-white transition">
+              Limpar Seleção
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Course Toggle Pills -->
+        <div id="courseTogglePills" class="flex flex-wrap gap-2 pt-2 border-t border-slate-800">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="relative h-96 mt-4">
+          <canvas id="chartCursosEvolucao"></canvas>
+        </div>
+      </div>
+
+      <!-- Course Comparison Matrix Table -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+              <i data-lucide="table" class="w-4 h-4 text-blue-400"></i>
+              Matriz Comparativa das Especialidades
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Médias de graduação consolidadas por período e destaques por especialidade</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-900 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+              <tr>
+                <th class="py-3 px-4">Especialidade</th>
+                <th class="py-3 px-3 text-center">Alunos</th>
+                <th class="py-3 px-4 text-right text-blue-400">CR Graduação</th>
+                <th class="py-3 px-3 text-right">Sem. 1.1</th>
+                <th class="py-3 px-3 text-right">Sem. 1.2</th>
+                <th class="py-3 px-3 text-right">Sem. 2.1</th>
+                <th class="py-3 px-3 text-right">Sem. 2.2</th>
+                <th class="py-3 px-3 text-right">Sem. 3.1</th>
+                <th class="py-3 px-3 text-right text-amber-400">Sem. 3.2 (Parcial)</th>
+                <th class="py-3 px-4 text-right">Extremos (Min / Max)</th>
+                <th class="py-3 px-4">Aluno #1 (Destaque)</th>
+              </tr>
+            </thead>
+            <tbody id="courseComparisonTableBody" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Head to Head Courses Comparison -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+          <i data-lucide="swords" class="w-4 h-4 text-indigo-400"></i>
+          Confronto Direto: Curso A vs Curso B
+        </h3>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700">
+            <label class="text-xs font-bold text-blue-400 block mb-1">Especialidade A:</label>
+            <select id="selectCourseA" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-white"></select>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-900 border border-slate-700">
+            <label class="text-xs font-bold text-emerald-400 block mb-1">Especialidade B:</label>
+            <select id="selectCourseB" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-white"></select>
+          </div>
+        </div>
+
+        <div id="courseHeadToHeadCards" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Populated by JS -->
+        </div>
+
+        <div class="relative h-72">
+          <canvas id="chartCourseHeadToHead"></canvas>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 3: RANKINGS & TABELA DE ALUNOS -->
     <section id="tab-rankings" class="tab-content hidden space-y-4 animate-fade-in">
       
       <!-- Table Controls Bar -->
@@ -355,7 +460,7 @@
               type="text" 
               id="tableSearchInput" 
               placeholder="Buscar aluno na tabela..." 
-              class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
           </div>
           <span id="tableResultsCount" class="text-xs text-slate-400 font-medium whitespace-nowrap">86 alunos listados</span>
@@ -429,9 +534,9 @@
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
-                <th class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition text-right text-slate-400" data-sort="mediaMilitar">
+                <th class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition text-right text-amber-400" data-sort="media32">
                   <div class="flex items-center justify-end gap-1.5">
-                    <span>CR Mil</span>
+                    <span>3.2 (Parcial)</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
@@ -456,9 +561,20 @@
 
     </section>
 
-    <!-- TAB 3: RAIO-X DE DISCIPLINAS -->
+    <!-- TAB 4: RAIO-X DE DISCIPLINAS (168 MATÉRIAS) -->
     <section id="tab-disciplinas" class="tab-content hidden space-y-6 animate-fade-in">
       
+      <!-- Split Codes Clarification Banner -->
+      <div class="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/30 flex items-start gap-3">
+        <i data-lucide="info" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
+        <div class="text-xs text-slate-300 space-y-1">
+          <p class="font-bold text-blue-300">Esclarecimento de Matérias com Códigos de Turma Divididos:</p>
+          <p>
+            Disciplinas como <strong>Álgebra Linear I e II</strong>, <strong>Cálculo III e IV</strong>, <strong>Física III e IV</strong> e <strong>Mecânica I e II</strong> foram cadastradas no portal acadêmico do IME sob códigos separados (ex: <code>01580</code> / <code>01060</code> / <code>01582</code>). <strong>Todos os 86 alunos cursaram e concluíram Álgebra Linear I e II</strong>. As matérias do <strong>3.2 (6º Semestre)</strong> estão listadas abaixo com as notas parciais das avaliações em andamento (VC / VE).
+          </p>
+        </div>
+      </div>
+
       <!-- Top 10 Difíceis vs Top 10 Fáceis Highlights -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         
@@ -471,7 +587,7 @@
             </h3>
             <span class="text-[11px] font-semibold text-rose-300 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">Menores Médias</span>
           </div>
-          <p class="text-xs text-slate-400 mb-4">Matérias com maior grau de retenção e menor média histórica da turma</p>
+          <p class="text-xs text-slate-400 mb-4">Matérias com menor média histórica da turma</p>
           <div class="space-y-2.5" id="topHardDisciplinesList"></div>
         </div>
 
@@ -490,16 +606,16 @@
 
       </div>
 
-      <!-- Tabela Completa de Disciplinas -->
+      <!-- Tabela Completa de Disciplinas (168) -->
       <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
         
         <div class="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
-              <i data-lucide="layers" class="w-4 h-4 text-indigo-400"></i>
-              Catálogo Completo das Disciplinas (112)
+              <i data-lucide="layers" class="w-4 h-4 text-blue-400"></i>
+              Catálogo Completo das Disciplinas (168)
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">Estatísticas descritivas, variância, desvio padrão e notas extremas</p>
+            <p class="text-xs text-slate-400 mt-0.5">Todas as disciplinas do 1.1 ao 3.2 (6º Semestre)</p>
           </div>
 
           <!-- Disciplines Search & Filters -->
@@ -509,15 +625,19 @@
               <input 
                 type="text" 
                 id="searchDisciplinasInput" 
-                placeholder="Filtrar por nome ou código..." 
-                class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="Filtrar disciplina ou código..." 
+                class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
             </div>
             
-            <select id="filterCicloDisciplinas" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200">
-              <option value="ALL">Todos os Ciclos</option>
-              <option value="Básico">Ciclo Básico</option>
-              <option value="Profissional">Ciclo Profissional</option>
+            <select id="filterSemestreDisciplinas" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200">
+              <option value="ALL">Todos os Semestres</option>
+              <option value="1.1">1º Semestre (1.1)</option>
+              <option value="1.2">2º Semestre (1.2)</option>
+              <option value="2.1">3º Semestre (2.1)</option>
+              <option value="2.2">4º Semestre (2.2)</option>
+              <option value="3.1">5º Semestre (3.1)</option>
+              <option value="3.2">6º Semestre (3.2 Parcial)</option>
             </select>
           </div>
         </div>
@@ -534,7 +654,7 @@
                 <th class="py-3 px-4 text-right">Média</th>
                 <th class="py-3 px-3 text-right">Desvio Padrão</th>
                 <th class="py-3 px-3 text-right">Menor / Maior</th>
-                <th class="py-3 px-4 text-center">Distribuição Visual</th>
+                <th class="py-3 px-4 text-center">Aproveitamento</th>
               </tr>
             </thead>
             <tbody id="disciplinasTableBody" class="divide-y divide-slate-800/60 font-medium">
@@ -547,23 +667,23 @@
 
     </section>
 
-    <!-- TAB 4: COMPARADOR 1x1 (HEAD-TO-HEAD) -->
+    <!-- TAB 5: COMPARADOR 1x1 ALUNOS -->
     <section id="tab-comparator" class="tab-content hidden space-y-6 animate-fade-in">
       
       <!-- Selection Bar -->
       <div class="glass-panel p-5 rounded-2xl border border-slate-800">
         <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2 mb-4">
-          <i data-lucide="swords" class="w-4 h-4 text-indigo-400"></i>
+          <i data-lucide="swords" class="w-4 h-4 text-blue-400"></i>
           Comparador Direto de Alunos (Head-to-Head)
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           <!-- Aluno 1 Selection -->
-          <div class="p-4 rounded-xl bg-slate-900/70 border border-indigo-500/30 space-y-2">
-            <label for="selectAluno1" class="text-xs font-bold text-indigo-400 flex items-center gap-1.5">
-              <span class="w-2 h-2 rounded-full bg-indigo-500"></span> Aluno 1
+          <div class="p-4 rounded-xl bg-slate-900/70 border border-blue-500/30 space-y-2">
+            <label for="selectAluno1" class="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+              <span class="w-2 h-2 rounded-full bg-blue-500"></span> Aluno 1
             </label>
-            <select id="selectAluno1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"></select>
+            <select id="selectAluno1" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
           </div>
 
           <!-- Aluno 2 Selection -->
@@ -587,13 +707,13 @@
         <div class="flex items-center justify-between mb-4">
           <div>
             <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
-              <i data-lucide="trending-up" class="w-4 h-4 text-indigo-400"></i>
+              <i data-lucide="trending-up" class="w-4 h-4 text-blue-400"></i>
               Comparação da Trajetória Semestral
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">Aluno 1 vs Aluno 2 vs Média Geral da Turma</p>
+            <p class="text-xs text-slate-400 mt-0.5">Aluno 1 vs Aluno 2 vs Média Geral da Turma (1.1 ao 3.2)</p>
           </div>
           <div class="flex items-center gap-3 text-xs font-semibold">
-            <span class="flex items-center gap-1.5 text-indigo-400"><span class="w-3 h-0.5 bg-indigo-500"></span> Aluno 1</span>
+            <span class="flex items-center gap-1.5 text-blue-400"><span class="w-3 h-0.5 bg-blue-500"></span> Aluno 1</span>
             <span class="flex items-center gap-1.5 text-emerald-400"><span class="w-3 h-0.5 bg-emerald-500"></span> Aluno 2</span>
             <span class="flex items-center gap-1.5 text-slate-400"><span class="w-3 h-0.5 bg-slate-500"></span> Turma</span>
           </div>
@@ -614,7 +734,7 @@
       <!-- Modal Header -->
       <div class="p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-800 flex items-start justify-between">
         <div class="flex items-center gap-4">
-          <div id="modalAvatar" class="w-14 h-14 rounded-2xl bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center font-extrabold text-xl text-indigo-300 shrink-0">
+          <div id="modalAvatar" class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-500/50 flex items-center justify-center font-extrabold text-xl text-blue-300 shrink-0">
             AL
           </div>
           <div>
@@ -626,7 +746,7 @@
             <p class="text-xs text-slate-400 mt-1 flex items-center gap-3">
               <span>Matrícula: <strong id="modalStudentNum" class="text-slate-200 font-mono-numbers">29987</strong></span>
               <span>•</span>
-              <span id="modalStudentRanks" class="text-slate-300">#1 Geral • #1 Graduação • #1 no Curso</span>
+              <span id="modalStudentRanks" class="text-slate-300">#1 Graduação • #1 Geral • #1 no Curso</span>
             </p>
           </div>
         </div>
@@ -663,14 +783,14 @@
             <span class="text-[10px] text-indigo-400 font-semibold" id="modalRankGeralLabel">1º de 86</span>
           </div>
           <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">CR Militar</span>
-            <span id="modalCrMil" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">9.55</span>
-            <span class="text-[10px] text-emerald-400 font-semibold">TFM & Instrução</span>
+            <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider block">3.2 (6º Sem. Parcial)</span>
+            <span id="modalCr32" class="text-2xl font-extrabold text-amber-400 font-mono-numbers mt-1 block">8.50</span>
+            <span class="text-[10px] text-slate-400 font-semibold">Em Andamento</span>
           </div>
           <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Disciplinas</span>
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Disciplinas Cursadas</span>
             <span id="modalDisciplinasCount" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">55</span>
-            <span class="text-[10px] text-amber-400 font-semibold" id="modalExtremes">Max: 10 | Min: 7.5</span>
+            <span class="text-[10px] text-emerald-400 font-semibold" id="modalExtremes">Max: 10 | Min: 7.5</span>
           </div>
         </div>
 
@@ -678,11 +798,11 @@
         <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
           <div class="flex items-center justify-between mb-3">
             <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-indigo-400"></i>
-              Evolução Semestral do Aluno vs Turma vs Curso
+              <i data-lucide="trending-up" class="w-3.5 h-3.5 text-blue-400"></i>
+              Evolução Semestral do Aluno vs Turma vs Curso (1.1 ao 3.2)
             </h4>
             <div class="flex items-center gap-3 text-[11px] font-semibold">
-              <span class="flex items-center gap-1 text-indigo-400"><span class="w-2.5 h-0.5 bg-indigo-500"></span> Aluno</span>
+              <span class="flex items-center gap-1 text-blue-400"><span class="w-2.5 h-0.5 bg-blue-500"></span> Aluno</span>
               <span class="flex items-center gap-1 text-emerald-400"><span class="w-2.5 h-0.5 bg-emerald-500"></span> Curso</span>
               <span class="flex items-center gap-1 text-slate-400"><span class="w-2.5 h-0.5 bg-slate-500"></span> Turma</span>
             </div>
@@ -694,12 +814,22 @@
 
         <!-- Student Disciplines History Table -->
         <div class="space-y-3">
-          <div class="flex items-center justify-between">
+          <div class="flex flex-wrap items-center justify-between gap-3">
             <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <i data-lucide="list" class="w-3.5 h-3.5 text-indigo-400"></i>
-              Histórico Completo de Disciplinas Cursadas (com Parciais VE / VC / VF)
+              <i data-lucide="list" class="w-3.5 h-3.5 text-blue-400"></i>
+              Histórico Completo por Semestre (com Parciais VE / VC)
             </h4>
-            <span id="modalDiscTotalCount" class="text-xs text-slate-400 font-medium">55 matérias</span>
+            
+            <!-- Modal Semester Filter Pills -->
+            <div class="flex flex-wrap gap-1 text-xs" id="modalSemestrePills">
+              <button data-sem="ALL" class="modal-sem-pill active px-2.5 py-0.5 rounded-lg bg-blue-600 text-white font-bold text-[11px]">Todos</button>
+              <button data-sem="1.1" class="modal-sem-pill px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-[11px]">1.1</button>
+              <button data-sem="1.2" class="modal-sem-pill px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-[11px]">1.2</button>
+              <button data-sem="2.1" class="modal-sem-pill px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-[11px]">2.1</button>
+              <button data-sem="2.2" class="modal-sem-pill px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-[11px]">2.2</button>
+              <button data-sem="3.1" class="modal-sem-pill px-2 py-0.5 rounded-lg bg-slate-800 text-slate-300 hover:bg-slate-700 text-[11px]">3.1</button>
+              <button data-sem="3.2" class="modal-sem-pill px-2 py-0.5 rounded-lg bg-slate-800 text-amber-400 hover:bg-slate-700 text-[11px]">3.2 (6º Sem)</button>
+            </div>
           </div>
 
           <div class="overflow-x-auto max-h-80 overflow-y-auto rounded-xl border border-slate-800 bg-slate-950/40">
@@ -712,7 +842,7 @@
                   <th class="py-2.5 px-2 text-center">VE</th>
                   <th class="py-2.5 px-2 text-center">VC</th>
                   <th class="py-2.5 px-2 text-center">VF</th>
-                  <th class="py-2.5 px-3 text-right">NF Final</th>
+                  <th class="py-2.5 px-3 text-right">Nota Efetiva</th>
                   <th class="py-2.5 px-3 text-right">Média Turma</th>
                   <th class="py-2.5 px-3 text-center">Delta</th>
                   <th class="py-2.5 px-3 text-center">Situação</th>
@@ -741,10 +871,10 @@
   <!-- Footer -->
   <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/80 text-center text-xs text-slate-500">
     <p>Painel de Inteligência de Dados Acadêmicos & Militares • Engenharia IME • Turma 2026</p>
-    <p class="mt-1 text-[11px]">Desenvolvido com Tailwind CSS & Chart.js • Otimizado para GitHub Pages</p>
+    <p class="mt-1 text-[11px]">Desenvolvido com Tailwind CSS & Chart.js • Hospedado no GitHub Pages</p>
   </footer>
 
-  <!-- 1. Embedded / Loaded Processed Dataset -->
+  <!-- 1. Embedded Processed Dataset -->
   <script src="data.js"></script>
   <!-- 2. Application Logic -->
   <script src="app.js"></script>

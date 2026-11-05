@@ -1,6 +1,7 @@
 /**
  * IME Analytics - Turma 2026
  * Interactive Dashboard Logic for GitHub Pages
+ * Features: Course Evolution Comparison, 3.2 Parcial, Unified Disciplines
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const DATA = window.IME_DATA;
   let filteredAlunos = [...DATA.alunos];
   
-  // App State - Focado em Média de Graduação
+  // App State
   const state = {
     currentTab: 'overview',
     filterCurso: 'ALL',
@@ -23,31 +24,49 @@ document.addEventListener('DOMContentLoaded', () => {
     pageSize: 'ALL',
     currentPage: 1,
     disciplinasSearch: '',
-    disciplinasCiclo: 'ALL',
-    comparatorA: DATA.alunos.find(a => a.rankGraduacao === 1)?.numero || DATA.alunos[0]?.numero,
-    comparatorB: DATA.alunos.find(a => a.rankGraduacao === 2)?.numero || DATA.alunos[1]?.numero,
-    activeStudentModal: null
+    disciplinasSemestre: 'ALL',
+    comparatorA: DATA.alunos[0]?.numero || null,
+    comparatorB: DATA.alunos[1]?.numero || null,
+    courseA: 'Computação',
+    courseB: 'Eletrônica',
+    activeCoursesInChart: new Set(DATA.metadata.cursos),
+    activeStudentModal: null,
+    modalSemesterFilter: 'ALL'
   };
 
-  // References to Chart instances
+  // Chart instances
   let chartCursosInstance = null;
   let chartEvolucaoInstance = null;
   let chartVinculoInstance = null;
   let chartDistribuicaoInstance = null;
-  let chartModalInstance = null;
+  let chartCursosEvolucaoInstance = null;
+  let chartCourseH2HInstance = null;
   let chartComparatorInstance = null;
+  let chartModalInstance = null;
 
-  // Lucide Icons Helper
+  // Lucide helper
   function refreshIcons() {
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons();
     }
   }
 
-  // Initial Lucide Icons run
   refreshIcons();
 
-  // Course Color Helper
+  // Course Color Mapping & Badges
+  const courseColors = {
+    'Computação': '#3b82f6',
+    'Fortificação e Construção': '#f59e0b',
+    'Cartografia': '#10b981',
+    'Eletrônica': '#a855f7',
+    'Química': '#ec4899',
+    'Comunicações': '#0ea5e9',
+    'Mecânica de Armamento': '#ef4444',
+    'Mecânica de Automóveis': '#f97316',
+    'Elétrica': '#eab308',
+    'Materiais': '#14b8a6'
+  };
+
   const courseClassMap = {
     'Computação': 'badge-computacao',
     'Fortificação e Construção': 'badge-fortificacao',
@@ -73,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return `<span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${cls}">${vinculo}</span>`;
   }
 
-  // Formatting helpers
   function fmtNum(val) {
     if (val === null || val === undefined || isNaN(val)) return '-';
     return Number(val).toFixed(2);
@@ -82,11 +100,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Filtering & Metrics Calculation ---
   function applyFilters() {
     filteredAlunos = DATA.alunos.filter(aluno => {
-      // Course filter
       if (state.filterCurso !== 'ALL' && aluno.curso !== state.filterCurso) return false;
-      // Vinculo filter
       if (state.filterVinculo !== 'ALL' && aluno.vinculo !== state.filterVinculo) return false;
-      // Search filter
       if (state.tableSearch.trim()) {
         const query = state.tableSearch.toLowerCase();
         const matchesName = aluno.nome.toLowerCase().includes(query);
@@ -99,7 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateKPIs();
     renderPodium();
-    updateCharts();
+    updateOverviewCharts();
     renderRankingsTable();
     updateFilterResetButton();
   }
@@ -110,8 +125,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('kpiTotalAlunos').textContent = total;
 
     if (total === 0) {
-      document.getElementById('kpiMediaGeral').textContent = '-';
       document.getElementById('kpiMediaGrad').textContent = '-';
+      document.getElementById('kpiMediaGeral').textContent = '-';
       document.getElementById('kpiMediaMil').textContent = '-';
       document.getElementById('kpiCountAtiva').textContent = '0 Ativa';
       document.getElementById('kpiCountReserva').textContent = '0 Reserva';
@@ -119,17 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Media Geral (80/20)
-    const sumGeral = filteredAlunos.reduce((acc, a) => acc + (a.mediaGeral || 0), 0);
-    const avgGeral = (sumGeral / total).toFixed(2);
-    document.getElementById('kpiMediaGeral').textContent = avgGeral;
-
-    // Media Graduação
     const sumGrad = filteredAlunos.reduce((acc, a) => acc + (a.mediaGraduacao || 0), 0);
     const avgGrad = (sumGrad / total).toFixed(2);
     document.getElementById('kpiMediaGrad').textContent = avgGrad;
 
-    // Media Militar (students with militar grades)
+    const sumGeral = filteredAlunos.reduce((acc, a) => acc + (a.mediaGeral || 0), 0);
+    const avgGeral = (sumGeral / total).toFixed(2);
+    document.getElementById('kpiMediaGeral').textContent = avgGeral;
+
     const milStudents = filteredAlunos.filter(a => a.mediaMilitar !== null && a.mediaMilitar !== undefined);
     if (milStudents.length > 0) {
       const sumMil = milStudents.reduce((acc, a) => acc + a.mediaMilitar, 0);
@@ -141,7 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('kpiMilSubtext').textContent = 'Sem notas militares (CG)';
     }
 
-    // Vinculos count in filtered set
     const countAtiva = filteredAlunos.filter(a => a.vinculo === 'Ativa').length;
     const countReserva = filteredAlunos.filter(a => a.vinculo === 'Reserva').length;
     const countCG = filteredAlunos.filter(a => a.vinculo === 'CG').length;
@@ -168,7 +179,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('podiumContainer');
     if (!container) return;
 
-    // Foco na Média de Graduação
     const top3 = [...filteredAlunos].sort((a, b) => a.rankGraduacao - b.rankGraduacao).slice(0, 3);
     
     if (top3.length === 0) {
@@ -221,12 +231,11 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIcons();
   }
 
-  // --- CHARTS INITIALIZATION ---
-  function initCharts() {
-    // 1. Chart Cursos (Horizontal Bar Chart) - Ordenado por Média de Graduação
+  function initOverviewCharts() {
+    // 1. Chart Cursos (Horizontal Bar Chart)
     const ctxCursos = document.getElementById('chartCursos')?.getContext('2d');
     if (ctxCursos) {
-      const sortedCursos = [...DATA.cursosSummary].sort((a, b) => b.mediaGraduacao - a.mediaGraduacao);
+      const sortedCursos = [...DATA.cursosComparativo].sort((a, b) => b.mediaGraduacao - a.mediaGraduacao);
       const labels = sortedCursos.map(c => c.curso);
       const dataGrad = sortedCursos.map(c => c.mediaGraduacao);
       const dataGeral = sortedCursos.map(c => c.mediaGeral);
@@ -262,11 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
             legend: { display: false },
             tooltip: {
               backgroundColor: 'rgba(15, 23, 42, 0.95)',
-              padding: 12,
-              titleFont: { size: 12, weight: 'bold' },
-              bodyFont: { size: 12 },
-              borderWidth: 1,
-              borderColor: 'rgba(255,255,255,0.1)'
+              padding: 12
             }
           },
           scales: {
@@ -285,19 +290,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // 2. Chart Evolução Semestral
+    // 2. Chart Evolução Semestral da Turma
     const ctxEvolucao = document.getElementById('chartEvolucao')?.getContext('2d');
     if (ctxEvolucao) {
       const semestres = DATA.metadata.semestres;
-      const mediaTurma = DATA.semestresSummary.map(s => s.mediaTurma);
+      const mediaTurma = DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma);
 
       chartEvolucaoInstance = new Chart(ctxEvolucao, {
         type: 'line',
         data: {
-          labels: semestres,
+          labels: semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : s),
           datasets: [
             {
-              label: 'Média Geral da Turma',
+              label: 'Média de Graduação da Turma',
               data: mediaTurma,
               borderColor: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.12)',
@@ -342,7 +347,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // 3. Chart Distribuição Vínculo (Donut)
+    // 3. Chart Distribuição Vínculo
     const ctxVinculo = document.getElementById('chartVinculo')?.getContext('2d');
     if (ctxVinculo) {
       chartVinculoInstance = new Chart(ctxVinculo, {
@@ -357,8 +362,7 @@ document.addEventListener('DOMContentLoaded', () => {
               'rgba(245, 158, 11, 0.85)'
             ],
             borderColor: '#0b0f19',
-            borderWidth: 3,
-            hoverOffset: 4
+            borderWidth: 3
           }]
         },
         options: {
@@ -368,18 +372,14 @@ document.addEventListener('DOMContentLoaded', () => {
           plugins: {
             legend: {
               position: 'bottom',
-              labels: {
-                color: '#cbd5e1',
-                font: { size: 11, weight: '600' },
-                padding: 16
-              }
+              labels: { color: '#cbd5e1', font: { size: 11, weight: '600' } }
             }
           }
         }
       });
     }
 
-    // 4. Chart Distribuição de CRs (Histogram)
+    // 4. Chart Distribuição Faixas CR Graduação
     const ctxDist = document.getElementById('chartDistribuicao')?.getContext('2d');
     if (ctxDist) {
       const ranges = {
@@ -422,9 +422,7 @@ document.addEventListener('DOMContentLoaded', () => {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
+          plugins: { legend: { display: false } },
           scales: {
             y: {
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
@@ -440,66 +438,340 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function updateCharts() {
-    // 1. Highlight / update chart Cursos
-    if (chartCursosInstance) {
-      if (state.filterCurso !== 'ALL') {
-        const bgColors = DATA.cursosSummary.map(c => 
-          c.curso === state.filterCurso ? 'rgba(245, 158, 11, 0.95)' : 'rgba(99, 102, 241, 0.35)'
-        );
-        const borderColors = DATA.cursosSummary.map(c => 
-          c.curso === state.filterCurso ? '#f59e0b' : 'rgba(99, 102, 241, 0.3)'
-        );
-        chartCursosInstance.data.datasets[0].backgroundColor = bgColors;
-        chartCursosInstance.data.datasets[0].borderColor = borderColors;
+  function updateOverviewCharts() {
+    if (!chartEvolucaoInstance) return;
+
+    if (state.filterCurso !== 'ALL') {
+      const courseObj = DATA.cursosComparativo.find(c => c.curso === state.filterCurso);
+      const semestres = DATA.metadata.semestres;
+      const courseData = semestres.map(s => courseObj ? courseObj.semestres[s] : null);
+
+      if (chartEvolucaoInstance.data.datasets.length === 1) {
+        chartEvolucaoInstance.data.datasets.push({
+          label: `Média ${state.filterCurso}`,
+          data: courseData,
+          borderColor: courseColors[state.filterCurso] || '#3b82f6',
+          backgroundColor: 'transparent',
+          borderDash: [5, 5],
+          pointBackgroundColor: courseColors[state.filterCurso] || '#3b82f6',
+          pointBorderColor: '#fff',
+          pointRadius: 5,
+          borderWidth: 2.5
+        });
       } else {
-        chartCursosInstance.data.datasets[0].backgroundColor = 'rgba(99, 102, 241, 0.85)';
-        chartCursosInstance.data.datasets[0].borderColor = '#6366f1';
+        chartEvolucaoInstance.data.datasets[1].label = `Média ${state.filterCurso}`;
+        chartEvolucaoInstance.data.datasets[1].data = courseData;
+        chartEvolucaoInstance.data.datasets[1].borderColor = courseColors[state.filterCurso] || '#3b82f6';
+        chartEvolucaoInstance.data.datasets[1].pointBackgroundColor = courseColors[state.filterCurso] || '#3b82f6';
       }
-      chartCursosInstance.update();
+    } else {
+      if (chartEvolucaoInstance.data.datasets.length > 1) {
+        chartEvolucaoInstance.data.datasets.pop();
+      }
+    }
+    chartEvolucaoInstance.update();
+  }
+
+  // --- TAB 2: COMPARADOR DE CURSOS (EVOLUÇÃO) ---
+  function initCursosComparisonTab() {
+    renderCourseTogglePills();
+    renderCourseEvolutionMultiLineChart();
+    renderCourseMatrixTable();
+    initCourseHeadToHead();
+  }
+
+  function renderCourseTogglePills() {
+    const container = document.getElementById('courseTogglePills');
+    if (!container) return;
+
+    container.innerHTML = DATA.cursosComparativo.map(c => {
+      const active = state.activeCoursesInChart.has(c.curso);
+      const color = courseColors[c.curso] || '#3b82f6';
+      const border = active ? `border-color: ${color};` : 'border-color: rgba(255,255,255,0.1); opacity: 0.5;';
+      const bg = active ? `background-color: ${color}22;` : 'background-color: transparent;';
+
+      return `
+        <button 
+          class="course-pill px-3 py-1 rounded-xl text-xs font-bold border transition flex items-center gap-1.5"
+          style="${border} ${bg} color: ${color};"
+          data-course="${c.curso}"
+          onclick="window.app.toggleCourseInChart('${c.curso}')"
+        >
+          <span class="w-2 h-2 rounded-full" style="background-color: ${color};"></span>
+          <span>${c.curso}</span>
+        </button>
+      `;
+    }).join('');
+
+    // Select All / Clear buttons
+    document.getElementById('btnSelectAllCourses')?.addEventListener('click', () => {
+      state.activeCoursesInChart = new Set(DATA.metadata.cursos);
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
+    });
+
+    document.getElementById('btnClearCourses')?.addEventListener('click', () => {
+      state.activeCoursesInChart = new Set();
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
+    });
+  }
+
+  function renderCourseEvolutionMultiLineChart() {
+    const ctx = document.getElementById('chartCursosEvolucao')?.getContext('2d');
+    if (!ctx) return;
+
+    const semestres = DATA.metadata.semestres;
+    const labels = semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`);
+
+    // Cohort baseline dataset
+    const cohortData = DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma);
+
+    const datasets = [
+      {
+        label: 'Média Geral da Turma (Referência)',
+        data: cohortData,
+        borderColor: '#94a3b8',
+        backgroundColor: 'transparent',
+        borderDash: [6, 6],
+        pointRadius: 4,
+        borderWidth: 2,
+        order: 99
+      }
+    ];
+
+    DATA.cursosComparativo.forEach(c => {
+      if (state.activeCoursesInChart.has(c.curso)) {
+        const color = courseColors[c.curso] || '#3b82f6';
+        const vals = semestres.map(s => c.semestres[s]);
+        datasets.push({
+          label: c.curso,
+          data: vals,
+          borderColor: color,
+          backgroundColor: color,
+          pointBackgroundColor: color,
+          pointBorderColor: '#fff',
+          pointRadius: 5,
+          borderWidth: 2.5,
+          tension: 0.25
+        });
+      }
+    });
+
+    chartCursosEvolucaoInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: datasets
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { color: '#cbd5e1', font: { size: 11, weight: '600' }, boxWidth: 12 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            padding: 12
+          }
+        },
+        scales: {
+          y: {
+            min: 5.5,
+            max: 9.5,
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+          },
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.03)' },
+            ticks: { color: '#cbd5e1', font: { weight: '600' } }
+          }
+        }
+      }
+    });
+  }
+
+  function updateCourseEvolutionChart() {
+    if (!chartCursosEvolucaoInstance) return;
+
+    const semestres = DATA.metadata.semestres;
+    const cohortData = DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma);
+
+    const datasets = [
+      {
+        label: 'Média Geral da Turma (Referência)',
+        data: cohortData,
+        borderColor: '#94a3b8',
+        backgroundColor: 'transparent',
+        borderDash: [6, 6],
+        pointRadius: 4,
+        borderWidth: 2,
+        order: 99
+      }
+    ];
+
+    DATA.cursosComparativo.forEach(c => {
+      if (state.activeCoursesInChart.has(c.curso)) {
+        const color = courseColors[c.curso] || '#3b82f6';
+        const vals = semestres.map(s => c.semestres[s]);
+        datasets.push({
+          label: c.curso,
+          data: vals,
+          borderColor: color,
+          backgroundColor: color,
+          pointBackgroundColor: color,
+          pointBorderColor: '#fff',
+          pointRadius: 5,
+          borderWidth: 2.5,
+          tension: 0.25
+        });
+      }
+    });
+
+    chartCursosEvolucaoInstance.data.datasets = datasets;
+    chartCursosEvolucaoInstance.update();
+  }
+
+  function renderCourseMatrixTable() {
+    const tbody = document.getElementById('courseComparisonTableBody');
+    if (!tbody) return;
+
+    tbody.innerHTML = DATA.cursosComparativo.map(c => {
+      return `
+        <tr class="table-hover-row border-b border-slate-800/40">
+          <td class="py-3 px-4 font-bold text-white">
+            ${getCourseBadge(c.curso)}
+          </td>
+          <td class="py-3 px-3 text-center text-slate-400 font-mono-numbers">${c.qtdAlunos}</td>
+          <td class="py-3 px-4 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">${fmtNum(c.mediaGraduacao)}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['1.1'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['1.2'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['2.1'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['2.2'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-slate-300">${fmtNum(c.semestres['3.1'])}</td>
+          <td class="py-3 px-3 text-right font-mono-numbers text-amber-400 font-bold">${fmtNum(c.semestres['3.2'])}</td>
+          <td class="py-3 px-4 text-right font-mono-numbers text-slate-400 text-[11px]">
+            <span class="text-rose-400">${fmtNum(c.menorCR)}</span> / <span class="text-emerald-400">${fmtNum(c.maiorCR)}</span>
+          </td>
+          <td class="py-3 px-4 font-bold text-slate-200">
+            🥇 ${c.melhorAluno}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function initCourseHeadToHead() {
+    const selA = document.getElementById('selectCourseA');
+    const selB = document.getElementById('selectCourseB');
+    if (!selA || !selB) return;
+
+    const opts = DATA.metadata.cursos.map(c => `<option value="${c}">${c}</option>`).join('');
+    selA.innerHTML = opts;
+    selB.innerHTML = opts;
+
+    selA.value = state.courseA;
+    selB.value = state.courseB;
+
+    selA.addEventListener('change', (e) => {
+      state.courseA = e.target.value;
+      renderCourseHeadToHead();
+    });
+
+    selB.addEventListener('change', (e) => {
+      state.courseB = e.target.value;
+      renderCourseHeadToHead();
+    });
+
+    renderCourseHeadToHead();
+  }
+
+  function renderCourseHeadToHead() {
+    const cA = DATA.cursosComparativo.find(c => c.curso === state.courseA) || DATA.cursosComparativo[0];
+    const cB = DATA.cursosComparativo.find(c => c.curso === state.courseB) || DATA.cursosComparativo[1];
+
+    const cardsContainer = document.getElementById('courseHeadToHeadCards');
+    if (cardsContainer) {
+      cardsContainer.innerHTML = [cA, cB].map((c, idx) => {
+        const color = idx === 0 ? 'text-blue-400' : 'text-emerald-400';
+        const border = idx === 0 ? 'border-blue-500/40' : 'border-emerald-500/40';
+        return `
+          <div class="glass-card p-4 rounded-xl border ${border} space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase ${color}">Especialidade ${idx === 0 ? 'A' : 'B'}</span>
+              <span class="text-xs font-mono-numbers text-slate-400">${c.qtdAlunos} Alunos</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <h4 class="font-extrabold text-base text-white">${c.curso}</h4>
+              <span class="text-lg font-extrabold ${color} font-mono-numbers">${fmtNum(c.mediaGraduacao)}</span>
+            </div>
+            <div class="pt-2 border-t border-slate-800 text-xs flex justify-between text-slate-400">
+              <span>Top 1: <strong class="text-slate-200">${c.melhorAluno}</strong></span>
+              <span>Maior CR: <strong class="text-emerald-400 font-mono-numbers">${fmtNum(c.maiorCR)}</strong></span>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
-    // 2. Trajetória Semestral
-    if (chartEvolucaoInstance) {
-      if (state.filterCurso !== 'ALL') {
-        const courseBench = DATA.benchmarkCursosSemestre.filter(b => b.curso === state.filterCurso);
-        const semestres = DATA.metadata.semestres;
-        const courseData = semestres.map(s => {
-          const found = courseBench.find(b => b.semestre === s);
-          return found ? found.mediaCurso : null;
-        });
+    // Chart H2H
+    const ctx = document.getElementById('chartCourseHeadToHead')?.getContext('2d');
+    if (ctx) {
+      if (chartCourseH2HInstance) chartCourseH2HInstance.destroy();
 
-        if (chartEvolucaoInstance.data.datasets.length === 1) {
-          chartEvolucaoInstance.data.datasets.push({
-            label: `Média ${state.filterCurso}`,
-            data: courseData,
-            borderColor: '#6366f1',
-            backgroundColor: 'transparent',
-            borderDash: [5, 5],
-            pointBackgroundColor: '#6366f1',
-            pointBorderColor: '#fff',
-            pointRadius: 5,
-            borderWidth: 2.5
-          });
-        } else {
-          chartEvolucaoInstance.data.datasets[1].label = `Média ${state.filterCurso}`;
-          chartEvolucaoInstance.data.datasets[1].data = courseData;
+      const semestres = DATA.metadata.semestres;
+      const valsA = semestres.map(s => cA.semestres[s]);
+      const valsB = semestres.map(s => cB.semestres[s]);
+
+      chartCourseH2HInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`),
+          datasets: [
+            {
+              label: cA.curso,
+              data: valsA,
+              backgroundColor: 'rgba(59, 130, 246, 0.85)',
+              borderRadius: 6
+            },
+            {
+              label: cB.curso,
+              data: valsB,
+              backgroundColor: 'rgba(16, 185, 129, 0.85)',
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top', labels: { color: '#cbd5e1', font: { weight: 'bold' } } }
+          },
+          scales: {
+            y: {
+              min: 5.0,
+              max: 10.0,
+              grid: { color: 'rgba(255, 255, 255, 0.05)' },
+              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+            },
+            x: {
+              grid: { display: false },
+              ticks: { color: '#cbd5e1' }
+            }
+          }
         }
-      } else {
-        if (chartEvolucaoInstance.data.datasets.length > 1) {
-          chartEvolucaoInstance.data.datasets.pop();
-        }
-      }
-      chartEvolucaoInstance.update();
+      });
     }
   }
 
-  // --- TAB 2: RANKINGS TABLE ---
+  // --- TAB 3: RANKINGS TABLE ---
   function renderRankingsTable() {
     const tbody = document.getElementById('rankingTableBody');
     if (!tbody) return;
 
-    // Sort filtered students
     const sorted = [...filteredAlunos].sort((a, b) => {
       let valA = a[state.sortColumn];
       let valB = b[state.sortColumn];
@@ -508,16 +780,13 @@ document.addEventListener('DOMContentLoaded', () => {
       if (valB === null || valB === undefined) valB = -9999;
 
       if (typeof valA === 'string') {
-        return state.sortAsc 
-          ? valA.localeCompare(valB) 
-          : valB.localeCompare(valA);
+        return state.sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
       }
       return state.sortAsc ? (valA - valB) : (valB - valA);
     });
 
     document.getElementById('tableResultsCount').textContent = `${sorted.length} alunos listados`;
 
-    // Pagination
     let displayed = sorted;
     if (state.pageSize !== 'ALL') {
       const limit = parseInt(state.pageSize);
@@ -540,9 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (aluno.rankGraduacao === 2) rankIcon = '🥈 ';
       else if (aluno.rankGraduacao === 3) rankIcon = '🥉 ';
 
-      const milDisplay = aluno.vinculo === 'CG' 
-        ? `<span class="text-slate-500 text-center block">-</span>` 
-        : `<span class="font-mono-numbers text-slate-300">${fmtNum(aluno.mediaMilitar)}</span>`;
+      const m32 = aluno.media32 !== null ? fmtNum(aluno.media32) : '-';
 
       return `
         <tr class="table-hover-row border-b border-slate-800/40">
@@ -570,11 +837,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="py-3 px-4 text-right font-bold text-slate-300 font-mono-numbers">
             ${fmtNum(aluno.mediaGeral)}
           </td>
-          <td class="py-3 px-4 text-right">
-            ${milDisplay}
+          <td class="py-3 px-4 text-right font-mono-numbers text-amber-400 font-bold">
+            ${m32}
           </td>
           <td class="py-3 px-3 text-center text-slate-400 font-mono-numbers">
-            ${aluno.disciplinasConcluidas}
+            ${aluno.concluidas}
           </td>
           <td class="py-3 px-3 text-right font-mono-numbers text-slate-400 text-[11px]">
             <span class="text-emerald-400">${fmtNum(aluno.maiorNota)}</span> / <span class="text-rose-400">${fmtNum(aluno.menorNota)}</span>
@@ -602,17 +869,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let btns = '';
     for (let i = 1; i <= totalPages; i++) {
       const active = (i === state.currentPage) 
-        ? 'bg-indigo-600 text-white font-bold' 
+        ? 'bg-blue-600 text-white font-bold' 
         : 'bg-slate-800 text-slate-300 hover:bg-slate-700';
       btns += `<button class="px-2.5 py-1 rounded-md text-xs ${active}" onclick="window.app.changePage(${i})">${i}</button>`;
     }
     container.innerHTML = btns;
   }
 
-  // --- TAB 3: RAIO-X DE DISCIPLINAS ---
+  // --- TAB 4: RAIO-X DE DISCIPLINAS (168) ---
   function renderDisciplinasTab() {
-    // 1. Top 10 Hardest (Lowest Averages)
-    const topHard = [...DATA.disciplinas].slice(0, 10);
+    const topHard = DATA.disciplinas.filter(d => d.media !== null && d.qtdAlunos >= 5).slice(0, 10);
     const listHard = document.getElementById('topHardDisciplinesList');
     if (listHard) {
       listHard.innerHTML = topHard.map((d, idx) => `
@@ -634,8 +900,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     }
 
-    // 2. Top 10 Easiest (Highest Averages)
-    const topEasy = [...DATA.disciplinas].sort((a, b) => b.media - a.media).slice(0, 10);
+    const topEasy = [...DATA.disciplinas.filter(d => d.media !== null && d.qtdAlunos >= 5)].sort((a, b) => b.media - a.media).slice(0, 10);
     const listEasy = document.getElementById('topEasyDisciplinesList');
     if (listEasy) {
       listEasy.innerHTML = topEasy.map((d, idx) => `
@@ -667,8 +932,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let filtered = DATA.disciplinas;
 
-    if (state.disciplinasCiclo !== 'ALL') {
-      filtered = filtered.filter(d => d.ciclo === state.disciplinasCiclo);
+    if (state.disciplinasSemestre !== 'ALL') {
+      filtered = filtered.filter(d => d.semestre === state.disciplinasSemestre);
     }
 
     if (state.disciplinasSearch.trim()) {
@@ -677,7 +942,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tbody.innerHTML = filtered.map(d => {
-      const pct = Math.min(100, Math.max(0, (d.media / 10) * 100));
+      const is32 = (d.semestre === '3.2');
+      const badge32 = is32 ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-bold border border-amber-500/20">3.2 Parcial</span>' : '';
+
+      const pct = d.media !== null ? Math.min(100, Math.max(0, (d.media / 10) * 100)) : 0;
       let barColor = 'bg-rose-500';
       if (d.media >= 8.5) barColor = 'bg-emerald-500';
       else if (d.media >= 7.5) barColor = 'bg-blue-500';
@@ -686,7 +954,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <tr class="table-hover-row border-b border-slate-800/40">
           <td class="py-2.5 px-3 font-mono-numbers text-slate-400 text-[11px]">${d.codigo}</td>
-          <td class="py-2.5 px-4 font-bold text-slate-200">${d.nome}</td>
+          <td class="py-2.5 px-4 font-bold text-slate-200">
+            ${d.nome} ${badge32}
+          </td>
           <td class="py-2.5 px-3 text-slate-400 font-mono-numbers">${d.semestre}</td>
           <td class="py-2.5 px-3 text-slate-400 text-[11px]">${d.ciclo}</td>
           <td class="py-2.5 px-3 text-center text-slate-400 font-mono-numbers">${d.qtdAlunos}</td>
@@ -705,13 +975,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  // --- TAB 4: COMPARADOR HEAD-TO-HEAD ---
-  function initComparator() {
+  // --- TAB 5: COMPARADOR 1x1 ALUNOS ---
+  function initStudentComparator() {
     const select1 = document.getElementById('selectAluno1');
     const select2 = document.getElementById('selectAluno2');
     if (!select1 || !select2) return;
 
-    const options = DATA.alunos.map(a => `<option value="${a.numero}">#${a.rankGeral} ${a.nome} (${a.curso})</option>`).join('');
+    const options = DATA.alunos.map(a => `<option value="${a.numero}">#${a.rankGraduacao} ${a.nome} (${a.curso})</option>`).join('');
     select1.innerHTML = options;
     select2.innerHTML = options;
 
@@ -720,33 +990,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
     select1.addEventListener('change', (e) => {
       state.comparatorA = parseInt(e.target.value);
-      renderComparator();
+      renderStudentComparator();
     });
 
     select2.addEventListener('change', (e) => {
       state.comparatorB = parseInt(e.target.value);
-      renderComparator();
+      renderStudentComparator();
     });
 
-    renderComparator();
+    renderStudentComparator();
   }
 
-  function renderComparator() {
+  function renderStudentComparator() {
     const a1 = DATA.alunos.find(a => a.numero === state.comparatorA) || DATA.alunos[0];
     const a2 = DATA.alunos.find(a => a.numero === state.comparatorB) || DATA.alunos[1];
 
     const cardsContainer = document.getElementById('comparatorComparisonCards');
     if (cardsContainer) {
       cardsContainer.innerHTML = [a1, a2].map((aluno, idx) => {
-        const color = idx === 0 ? 'text-indigo-400' : 'text-emerald-400';
-        const border = idx === 0 ? 'border-indigo-500/40' : 'border-emerald-500/40';
+        const color = idx === 0 ? 'text-blue-400' : 'text-emerald-400';
+        const border = idx === 0 ? 'border-blue-500/40' : 'border-emerald-500/40';
         return `
           <div class="glass-card p-5 rounded-2xl border ${border}">
             <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2">
-                <span class="text-xs font-bold uppercase tracking-wider ${color}">Aluno ${idx + 1}</span>
-              </div>
-              <span class="text-xs font-mono-numbers text-slate-400">#${aluno.rankGeral} Geral</span>
+              <span class="text-xs font-bold uppercase tracking-wider ${color}">Aluno ${idx + 1}</span>
+              <span class="text-xs font-mono-numbers text-slate-400">#${aluno.rankGraduacao} Graduação</span>
             </div>
             <div class="flex items-center gap-3 mb-4">
               <div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center font-extrabold text-white text-lg">
@@ -762,16 +1030,16 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="grid grid-cols-3 gap-2 pt-3 border-t border-slate-800 text-center">
               <div class="p-2 rounded-xl bg-slate-900/60">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block">CR Geral</span>
-                <span class="text-base font-extrabold text-white font-mono-numbers">${fmtNum(aluno.mediaGeral)}</span>
-              </div>
-              <div class="p-2 rounded-xl bg-slate-900/60">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block">CR Grad</span>
+                <span class="text-[10px] font-bold text-blue-400 uppercase block">CR Graduação</span>
                 <span class="text-base font-extrabold text-blue-400 font-mono-numbers">${fmtNum(aluno.mediaGraduacao)}</span>
               </div>
               <div class="p-2 rounded-xl bg-slate-900/60">
-                <span class="text-[10px] font-bold text-slate-400 uppercase block">CR Mil</span>
-                <span class="text-base font-extrabold text-emerald-400 font-mono-numbers">${aluno.vinculo === 'CG' ? '-' : fmtNum(aluno.mediaMilitar)}</span>
+                <span class="text-[10px] font-bold text-slate-400 uppercase block">CR Geral</span>
+                <span class="text-base font-extrabold text-slate-200 font-mono-numbers">${fmtNum(aluno.mediaGeral)}</span>
+              </div>
+              <div class="p-2 rounded-xl bg-slate-900/60">
+                <span class="text-[10px] font-bold text-amber-400 uppercase block">3.2 (Parcial)</span>
+                <span class="text-base font-extrabold text-amber-400 font-mono-numbers">${fmtNum(aluno.media32)}</span>
               </div>
             </div>
           </div>
@@ -788,27 +1056,27 @@ document.addEventListener('DOMContentLoaded', () => {
       const getTrajectory = (aluno) => {
         return semestres.map(s => {
           const ev = aluno.evolucao.find(e => e.semestre === s);
-          return ev ? ev.mediaSemestre : null;
+          return ev ? ev.mediaGradSemestre : null;
         });
       };
 
       const dataA1 = getTrajectory(a1);
       const dataA2 = getTrajectory(a2);
-      const dataTurma = DATA.semestresSummary.map(s => s.mediaTurma);
+      const dataTurma = DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma);
 
       chartComparatorInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: semestres,
+          labels: semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`),
           datasets: [
             {
               label: a1.nome,
               data: dataA1,
-              borderColor: '#6366f1',
-              backgroundColor: '#6366f1',
+              borderColor: '#3b82f6',
+              backgroundColor: '#3b82f6',
               pointRadius: 5,
               borderWidth: 3,
-              tension: 0.3
+              tension: 0.25
             },
             {
               label: a2.nome,
@@ -817,26 +1085,24 @@ document.addEventListener('DOMContentLoaded', () => {
               backgroundColor: '#10b981',
               pointRadius: 5,
               borderWidth: 3,
-              tension: 0.3
+              tension: 0.25
             },
             {
-              label: 'Média da Turma',
+              label: 'Média da Turma (Graduação)',
               data: dataTurma,
               borderColor: '#64748b',
               backgroundColor: '#64748b',
               borderDash: [5, 5],
               pointRadius: 3,
               borderWidth: 2,
-              tension: 0.3
+              tension: 0.25
             }
           ]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: {
-            legend: { display: false }
-          },
+          plugins: { legend: { display: false } },
           scales: {
             y: {
               min: 5.0,
@@ -862,6 +1128,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!aluno) return;
 
     state.activeStudentModal = aluno;
+    state.modalSemesterFilter = 'ALL';
     const modal = document.getElementById('studentModal');
     
     document.getElementById('modalStudentName').textContent = aluno.nome;
@@ -876,52 +1143,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modalStudentVinculoBadge').className = `text-xs px-2 py-0.5 rounded-full font-bold ${vCls}`;
     document.getElementById('modalStudentVinculoBadge').textContent = aluno.vinculo;
 
-    document.getElementById('modalStudentRanks').textContent = `#${aluno.rankGeral} Geral • #${aluno.rankGraduacao} Graduação • #${aluno.rankCurso} no Curso`;
-
-    document.getElementById('modalCrGeral').textContent = fmtNum(aluno.mediaGeral);
-    document.getElementById('modalRankGeralLabel').textContent = `${aluno.rankGeral}º de 86 alunos`;
+    document.getElementById('modalStudentRanks').textContent = `#${aluno.rankGraduacao} Graduação • #${aluno.rankGeral} Geral • #${aluno.rankCurso} no Curso`;
 
     document.getElementById('modalCrGrad').textContent = fmtNum(aluno.mediaGraduacao);
     document.getElementById('modalRankGradLabel').textContent = `${aluno.rankGraduacao}º de 86 alunos`;
 
-    document.getElementById('modalCrMil').textContent = aluno.vinculo === 'CG' ? '-' : fmtNum(aluno.mediaMilitar);
-    document.getElementById('modalDisciplinasCount').textContent = aluno.disciplinasConcluidas;
+    document.getElementById('modalCrGeral').textContent = fmtNum(aluno.mediaGeral);
+    document.getElementById('modalRankGeralLabel').textContent = `${aluno.rankGeral}º de 86 alunos`;
+
+    document.getElementById('modalCr32').textContent = fmtNum(aluno.media32);
+    document.getElementById('modalDisciplinasCount').textContent = aluno.totalDisciplinas;
     document.getElementById('modalExtremes').innerHTML = `Max: <strong class="text-emerald-400 font-mono-numbers">${fmtNum(aluno.maiorNota)}</strong> | Min: <strong class="text-rose-400 font-mono-numbers">${fmtNum(aluno.menorNota)}</strong>`;
 
-    document.getElementById('modalDiscTotalCount').textContent = `${aluno.disciplinas.length} matérias cursadas`;
+    renderModalDisciplinesTable();
 
-    // Populate Disciplines Table with Parciais VE / VC / VF
-    const discBody = document.getElementById('modalDisciplinasBody');
-    discBody.innerHTML = aluno.disciplinas.map(d => {
-      let deltaBadge = `<span class="text-slate-500 font-mono-numbers">-</span>`;
-      if (d.delta !== null && d.delta !== undefined) {
-        const sign = d.delta >= 0 ? '+' : '';
-        const cls = d.delta >= 0 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
-        deltaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold font-mono-numbers border ${cls}">${sign}${d.delta.toFixed(2)}</span>`;
-      }
-
-      const sitCls = d.situacao === 'Aprovado' ? 'text-emerald-400' : (d.situacao === 'Matriculado' ? 'text-amber-400' : 'text-slate-400');
-
-      return `
-        <tr class="table-hover-row border-b border-slate-800/40">
-          <td class="py-2 px-3 text-slate-400 font-mono-numbers">${d.semestre}</td>
-          <td class="py-2 px-2 text-slate-400 font-mono-numbers text-[11px]">${d.codigo}</td>
-          <td class="py-2 px-4 font-bold text-slate-200">
-            ${d.nome}
-            ${d.militar ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">Militar</span>' : ''}
-          </td>
-          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.ve !== null ? fmtNum(d.ve) : '-'}</td>
-          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vc !== null ? fmtNum(d.vc) : '-'}</td>
-          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vf !== null ? fmtNum(d.vf) : '-'}</td>
-          <td class="py-2 px-3 text-right font-extrabold text-indigo-400 font-mono-numbers text-sm">${fmtNum(d.nf)}</td>
-          <td class="py-2 px-3 text-right text-slate-400 font-mono-numbers">${fmtNum(d.mediaTurma)}</td>
-          <td class="py-2 px-3 text-center">${deltaBadge}</td>
-          <td class="py-2 px-3 text-center font-bold text-[11px] ${sitCls}">${d.situacao}</td>
-        </tr>
-      `;
-    }).join('');
-
-    // Render Student Evolution Chart in Modal
+    // Chart in Modal (1.1 to 3.2)
     const ctx = document.getElementById('chartModalStudent')?.getContext('2d');
     if (ctx) {
       if (chartModalInstance) chartModalInstance.destroy();
@@ -929,28 +1165,28 @@ document.addEventListener('DOMContentLoaded', () => {
       const semestres = DATA.metadata.semestres;
       const studentVals = semestres.map(s => {
         const ev = aluno.evolucao.find(e => e.semestre === s);
-        return ev ? ev.mediaSemestre : null;
+        return ev ? ev.mediaGradSemestre : null;
       });
       const cursoVals = semestres.map(s => {
-        const b = DATA.benchmarkCursosSemestre.find(bc => bc.curso === aluno.curso && bc.semestre === s);
-        return b ? b.mediaCurso : null;
+        const c = DATA.cursosComparativo.find(cc => cc.curso === aluno.curso);
+        return c ? c.semestres[s] : null;
       });
-      const turmaVals = DATA.semestresSummary.map(s => s.mediaTurma);
+      const turmaVals = DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma);
 
       chartModalInstance = new Chart(ctx, {
         type: 'line',
         data: {
-          labels: semestres,
+          labels: semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`),
           datasets: [
             {
               label: aluno.nome,
               data: studentVals,
-              borderColor: '#6366f1',
-              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
               fill: true,
               pointRadius: 5,
               borderWidth: 3,
-              tension: 0.35
+              tension: 0.25
             },
             {
               label: `Média ${aluno.curso}`,
@@ -959,7 +1195,7 @@ document.addEventListener('DOMContentLoaded', () => {
               pointRadius: 4,
               borderWidth: 2,
               borderDash: [4, 4],
-              tension: 0.35
+              tension: 0.25
             },
             {
               label: 'Média da Turma',
@@ -968,7 +1204,7 @@ document.addEventListener('DOMContentLoaded', () => {
               pointRadius: 3,
               borderWidth: 1.5,
               borderDash: [2, 2],
-              tension: 0.35
+              tension: 0.25
             }
           ]
         },
@@ -997,6 +1233,53 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIcons();
   }
 
+  function renderModalDisciplinesTable() {
+    const aluno = state.activeStudentModal;
+    if (!aluno) return;
+
+    let discs = aluno.disciplinas;
+    if (state.modalSemesterFilter !== 'ALL') {
+      discs = discs.filter(d => d.semestre === state.modalSemesterFilter);
+    }
+
+    const discBody = document.getElementById('modalDisciplinasBody');
+    if (!discBody) return;
+
+    discBody.innerHTML = discs.map(d => {
+      let deltaBadge = `<span class="text-slate-500 font-mono-numbers">-</span>`;
+      if (d.delta !== null && d.delta !== undefined) {
+        const sign = d.delta >= 0 ? '+' : '';
+        const cls = d.delta >= 0 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+        deltaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold font-mono-numbers border ${cls}">${sign}${d.delta.toFixed(2)}</span>`;
+      }
+
+      let sitCls = 'text-slate-400';
+      if (d.situacao === 'Aprovado') sitCls = 'text-emerald-400';
+      else if (d.situacao.includes('Parcial')) sitCls = 'text-amber-400';
+      else if (d.situacao === 'Reprovado') sitCls = 'text-rose-400';
+
+      const semBadge = d.semestre === '3.2' ? '<span class="text-amber-400 font-bold">3.2</span>' : d.semestre;
+
+      return `
+        <tr class="table-hover-row border-b border-slate-800/40">
+          <td class="py-2 px-3 text-slate-400 font-mono-numbers">${semBadge}</td>
+          <td class="py-2 px-2 text-slate-400 font-mono-numbers text-[11px]">${d.codigo}</td>
+          <td class="py-2 px-4 font-bold text-slate-200">
+            ${d.nome}
+            ${d.militar ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">Militar</span>' : ''}
+          </td>
+          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.ve !== null ? fmtNum(d.ve) : '-'}</td>
+          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vc !== null ? fmtNum(d.vc) : '-'}</td>
+          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vf !== null ? fmtNum(d.vf) : '-'}</td>
+          <td class="py-2 px-3 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">${d.notaEfetiva !== null ? fmtNum(d.notaEfetiva) : '-'}</td>
+          <td class="py-2 px-3 text-right text-slate-400 font-mono-numbers">${fmtNum(d.mediaTurma)}</td>
+          <td class="py-2 px-3 text-center">${deltaBadge}</td>
+          <td class="py-2 px-3 text-center font-bold text-[11px] ${sitCls}">${d.situacao}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
   function closeStudentModal() {
     const modal = document.getElementById('studentModal');
     modal.classList.add('hidden');
@@ -1006,19 +1289,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- CSV EXPORT ---
   function exportFilteredCSV() {
-    const headers = ['Rank_Geral', 'Rank_Graduacao', 'Rank_Curso', 'Numero', 'Nome', 'Curso', 'Vinculo', 'CR_Geral_80_20', 'CR_Graduacao', 'CR_Militar', 'Disciplinas_Concluidas', 'Maior_Nota', 'Menor_Nota'];
+    const headers = ['Rank_Graduacao', 'Rank_Geral', 'Rank_Curso', 'Numero', 'Nome', 'Curso', 'Vinculo', 'CR_Graduacao', 'CR_Geral_80_20', 'CR_32_Parcial', 'Disciplinas_Concluidas', 'Maior_Nota', 'Menor_Nota'];
     const rows = filteredAlunos.map(a => [
-      a.rankGeral,
       a.rankGraduacao,
+      a.rankGeral,
       a.rankCurso,
       a.numero,
       `"${a.nome}"`,
       `"${a.curso}"`,
       a.vinculo,
-      a.mediaGeral,
       a.mediaGraduacao,
-      a.mediaMilitar !== null ? a.mediaMilitar : '',
-      a.disciplinasConcluidas,
+      a.mediaGeral,
+      a.media32 !== null ? a.media32 : '',
+      a.concluidas,
       a.maiorNota,
       a.menorNota
     ]);
@@ -1040,25 +1323,27 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetTab = btn.getAttribute('data-tab');
       state.currentTab = targetTab;
 
-      // Update button styles
       document.querySelectorAll('#navTabs button').forEach(b => {
-        b.classList.remove('active', 'text-indigo-400', 'bg-indigo-500/10', 'border-indigo-500/30');
+        b.classList.remove('active', 'text-blue-400', 'bg-blue-500/10', 'border-blue-500/30');
         b.classList.add('text-slate-400');
       });
-      btn.classList.add('active', 'text-indigo-400', 'bg-indigo-500/10', 'border-indigo-500/30');
+      btn.classList.add('active', 'text-blue-400', 'bg-blue-500/10', 'border-blue-500/30');
       btn.classList.remove('text-slate-400');
 
-      // Show tab content
       document.querySelectorAll('.tab-content').forEach(section => section.classList.add('hidden'));
       const activeSection = document.getElementById(`tab-${targetTab}`);
       if (activeSection) {
         activeSection.classList.remove('hidden');
       }
 
-      if (targetTab === 'disciplinas') {
+      if (targetTab === 'cursos') {
+        if (!chartCursosEvolucaoInstance) {
+          initCursosComparisonTab();
+        }
+      } else if (targetTab === 'disciplinas') {
         renderDisciplinasTab();
       } else if (targetTab === 'comparator') {
-        initComparator();
+        initStudentComparator();
       }
 
       refreshIcons();
@@ -1122,9 +1407,23 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDisciplinasFullTable();
   });
 
-  document.getElementById('filterCicloDisciplinas')?.addEventListener('change', (e) => {
-    state.disciplinasCiclo = e.target.value;
+  document.getElementById('filterSemestreDisciplinas')?.addEventListener('change', (e) => {
+    state.disciplinasSemestre = e.target.value;
     renderDisciplinasFullTable();
+  });
+
+  // Modal Semester Filter Pills
+  document.querySelectorAll('.modal-sem-pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.modal-sem-pill').forEach(b => {
+        b.classList.remove('active', 'bg-blue-600', 'text-white', 'font-bold');
+        b.classList.add('bg-slate-800', 'text-slate-300');
+      });
+      btn.classList.add('active', 'bg-blue-600', 'text-white', 'font-bold');
+      btn.classList.remove('bg-slate-800', 'text-slate-300');
+      state.modalSemesterFilter = btn.getAttribute('data-sem');
+      renderModalDisciplinesTable();
+    });
   });
 
   // Global Quick Search Autocomplete
@@ -1153,7 +1452,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="font-bold text-white">${a.nome}</span>
               <span class="text-slate-400 text-[10px] ml-1.5">${a.curso}</span>
             </div>
-            <span class="font-bold text-indigo-400 font-mono-numbers">${fmtNum(a.mediaGeral)}</span>
+            <span class="font-bold text-blue-400 font-mono-numbers">${fmtNum(a.mediaGraduacao)}</span>
           </div>
         `).join('');
       }
@@ -1189,11 +1488,20 @@ document.addEventListener('DOMContentLoaded', () => {
     changePage: (page) => {
       state.currentPage = page;
       renderRankingsTable();
+    },
+    toggleCourseInChart: (curso) => {
+      if (state.activeCoursesInChart.has(curso)) {
+        state.activeCoursesInChart.delete(curso);
+      } else {
+        state.activeCoursesInChart.add(curso);
+      }
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
     }
   };
 
   // Initial Run
-  initCharts();
+  initOverviewCharts();
   applyFilters();
   renderDisciplinasTab();
 });
