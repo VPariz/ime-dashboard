@@ -23,7 +23,7 @@ body {
   font-feature-settings: "tnum" 1;
 }
 
-/* Glassmorphism Cards */
+/* Glassmorphism Panels */
 .glass-panel {
   background: rgba(17, 24, 39, 0.7);
   backdrop-filter: blur(16px);
@@ -41,7 +41,7 @@ body {
 }
 
 .glass-card:hover {
-  border-color: rgba(99, 102, 241, 0.3);
+  border-color: rgba(99, 102, 241, 0.35);
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
   transform: translateY(-2px);
 }
@@ -121,11 +121,46 @@ body {
   transition: background-color 0.15s ease;
 }
 .table-hover-row:hover {
-  background-color: rgba(255, 255, 255, 0.04);
+  background-color: rgba(255, 255, 255, 0.05);
 }
 
-/* Modal Backdrop */
+/* Modal Overlay */
 .modal-overlay {
-  background: rgba(7, 10, 19, 0.82);
-  backdrop-filter: blur(8px);
+  background: rgba(7, 10, 19, 0.85);
+  backdrop-filter: blur(10px);
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+  }
+  header, #btnExportCSV, #btnResetFilters, .tab-btn, footer {
+    display: none !important;
+  }
+  #studentModal {
+    position: static !important;
+    display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+  }
+  #studentModal > div {
+    max-height: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #111827 !important;
+  }
+  .modal-overlay {
+    backdrop-filter: none !important;
+    background: transparent !important;
+  }
+  table {
+    border: 1px solid #e5e7eb !important;
+  }
+  th, td {
+    color: #111827 !important;
+    border-color: #e5e7eb !important;
+  }
 }

@@ -37,10 +37,15 @@ document.addEventListener('DOMContentLoaded', () => {
   let chartModalInstance = null;
   let chartComparatorInstance = null;
 
-  // Initialize Lucide Icons
-  if (window.lucide) {
-    window.lucide.createIcons();
+  // Lucide Icons Helper
+  function refreshIcons() {
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
+    }
   }
+
+  // Initial Lucide Icons run
+  refreshIcons();
 
   // Course Color Helper
   const courseClassMap = {
@@ -81,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.filterCurso !== 'ALL' && aluno.curso !== state.filterCurso) return false;
       // Vinculo filter
       if (state.filterVinculo !== 'ALL' && aluno.vinculo !== state.filterVinculo) return false;
-      // Search filter if applied globally
+      // Search filter
       if (state.tableSearch.trim()) {
         const query = state.tableSearch.toLowerCase();
         const matchesName = aluno.nome.toLowerCase().includes(query);
@@ -211,6 +216,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
       `;
     }).join('');
+
+    refreshIcons();
   }
 
   // --- CHARTS INITIALIZATION ---
@@ -432,40 +439,57 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateCharts() {
-    if (!chartEvolucaoInstance) return;
-
-    // If a specific course is selected, show that course's line in Chart 2
-    if (state.filterCurso !== 'ALL') {
-      const courseBench = DATA.benchmarkCursosSemestre.filter(b => b.curso === state.filterCurso);
-      const semestres = DATA.metadata.semestres;
-      const courseData = semestres.map(s => {
-        const found = courseBench.find(b => b.semestre === s);
-        return found ? found.mediaCurso : null;
-      });
-
-      if (chartEvolucaoInstance.data.datasets.length === 1) {
-        chartEvolucaoInstance.data.datasets.push({
-          label: `Média ${state.filterCurso}`,
-          data: courseData,
-          borderColor: '#6366f1',
-          backgroundColor: 'transparent',
-          borderDash: [5, 5],
-          pointBackgroundColor: '#6366f1',
-          pointBorderColor: '#fff',
-          pointRadius: 5,
-          borderWidth: 2.5
-        });
+    // 1. Highlight / update chart Cursos
+    if (chartCursosInstance) {
+      if (state.filterCurso !== 'ALL') {
+        const bgColors = DATA.cursosSummary.map(c => 
+          c.curso === state.filterCurso ? 'rgba(245, 158, 11, 0.95)' : 'rgba(99, 102, 241, 0.35)'
+        );
+        const borderColors = DATA.cursosSummary.map(c => 
+          c.curso === state.filterCurso ? '#f59e0b' : 'rgba(99, 102, 241, 0.3)'
+        );
+        chartCursosInstance.data.datasets[0].backgroundColor = bgColors;
+        chartCursosInstance.data.datasets[0].borderColor = borderColors;
       } else {
-        chartEvolucaoInstance.data.datasets[1].label = `Média ${state.filterCurso}`;
-        chartEvolucaoInstance.data.datasets[1].data = courseData;
+        chartCursosInstance.data.datasets[0].backgroundColor = 'rgba(99, 102, 241, 0.85)';
+        chartCursosInstance.data.datasets[0].borderColor = '#6366f1';
       }
-    } else {
-      if (chartEvolucaoInstance.data.datasets.length > 1) {
-        chartEvolucaoInstance.data.datasets.pop();
-      }
+      chartCursosInstance.update();
     }
 
-    chartEvolucaoInstance.update();
+    // 2. Trajetória Semestral
+    if (chartEvolucaoInstance) {
+      if (state.filterCurso !== 'ALL') {
+        const courseBench = DATA.benchmarkCursosSemestre.filter(b => b.curso === state.filterCurso);
+        const semestres = DATA.metadata.semestres;
+        const courseData = semestres.map(s => {
+          const found = courseBench.find(b => b.semestre === s);
+          return found ? found.mediaCurso : null;
+        });
+
+        if (chartEvolucaoInstance.data.datasets.length === 1) {
+          chartEvolucaoInstance.data.datasets.push({
+            label: `Média ${state.filterCurso}`,
+            data: courseData,
+            borderColor: '#6366f1',
+            backgroundColor: 'transparent',
+            borderDash: [5, 5],
+            pointBackgroundColor: '#6366f1',
+            pointBorderColor: '#fff',
+            pointRadius: 5,
+            borderWidth: 2.5
+          });
+        } else {
+          chartEvolucaoInstance.data.datasets[1].label = `Média ${state.filterCurso}`;
+          chartEvolucaoInstance.data.datasets[1].data = courseData;
+        }
+      } else {
+        if (chartEvolucaoInstance.data.datasets.length > 1) {
+          chartEvolucaoInstance.data.datasets.pop();
+        }
+      }
+      chartEvolucaoInstance.update();
+    }
   }
 
   // --- TAB 2: RANKINGS TABLE ---
@@ -509,7 +533,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tbody.innerHTML = displayed.map(aluno => {
-      // Rank icons
       let rankIcon = '';
       if (aluno.rankGeral === 1) rankIcon = '🥇 ';
       else if (aluno.rankGeral === 2) rankIcon = '🥈 ';
@@ -565,6 +588,8 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `;
     }).join('');
+
+    refreshIcons();
   }
 
   function renderPaginationControls(total, limit) {
@@ -631,6 +656,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     renderDisciplinasFullTable();
+    refreshIcons();
   }
 
   function renderDisciplinasFullTable() {
@@ -649,7 +675,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tbody.innerHTML = filtered.map(d => {
-      // Progress bar percentage based on media (scale 0-10)
       const pct = Math.min(100, Math.max(0, (d.media / 10) * 100));
       let barColor = 'bg-rose-500';
       if (d.media >= 8.5) barColor = 'bg-emerald-500';
@@ -825,6 +850,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
+
+    refreshIcons();
   }
 
   // --- MODAL: FICHA COMPLETA DO ALUNO ---
@@ -861,7 +888,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('modalDiscTotalCount').textContent = `${aluno.disciplinas.length} matérias cursadas`;
 
-    // Populate Disciplines Table
+    // Populate Disciplines Table with Parciais VE / VC / VF
     const discBody = document.getElementById('modalDisciplinasBody');
     discBody.innerHTML = aluno.disciplinas.map(d => {
       let deltaBadge = `<span class="text-slate-500 font-mono-numbers">-</span>`;
@@ -876,12 +903,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return `
         <tr class="table-hover-row border-b border-slate-800/40">
           <td class="py-2 px-3 text-slate-400 font-mono-numbers">${d.semestre}</td>
-          <td class="py-2 px-3 text-slate-400 font-mono-numbers">${d.codigo}</td>
+          <td class="py-2 px-2 text-slate-400 font-mono-numbers text-[11px]">${d.codigo}</td>
           <td class="py-2 px-4 font-bold text-slate-200">
             ${d.nome}
             ${d.militar ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">Militar</span>' : ''}
           </td>
-          <td class="py-2 px-3 text-slate-400 text-[11px]">${d.tipo}</td>
+          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.ve !== null ? fmtNum(d.ve) : '-'}</td>
+          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vc !== null ? fmtNum(d.vc) : '-'}</td>
+          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vf !== null ? fmtNum(d.vf) : '-'}</td>
           <td class="py-2 px-3 text-right font-extrabold text-indigo-400 font-mono-numbers text-sm">${fmtNum(d.nf)}</td>
           <td class="py-2 px-3 text-right text-slate-400 font-mono-numbers">${fmtNum(d.mediaTurma)}</td>
           <td class="py-2 px-3 text-center">${deltaBadge}</td>
@@ -963,6 +992,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     modal.classList.remove('hidden');
     document.body.classList.add('overflow-hidden');
+    refreshIcons();
   }
 
   function closeStudentModal() {
@@ -1029,7 +1059,7 @@ document.addEventListener('DOMContentLoaded', () => {
         initComparator();
       }
 
-      if (window.lucide) window.lucide.createIcons();
+      refreshIcons();
     });
   });
 
@@ -1135,6 +1165,11 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+
+  // Print Transcript Button
+  document.getElementById('btnPrintModal')?.addEventListener('click', () => {
+    window.print();
+  });
 
   // Modal Close Events
   document.getElementById('btnCloseModal')?.addEventListener('click', closeStudentModal);
