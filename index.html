@@ -171,41 +171,41 @@
     <!-- 4 Key Performance Scorecards -->
     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       
-      <!-- Card 1: CR Geral 80/20 -->
-      <div class="glass-card p-5 rounded-2xl glow-card" style="--glow-color: #6366f1;">
-        <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="award" class="w-4 h-4 text-indigo-400"></i> CR Geral Médio
-          </span>
-          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">80% Grad + 20% Mil</span>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <div id="kpiMediaGeral" class="text-3xl font-extrabold text-white font-mono-numbers tracking-tight">8.01</div>
-          <span class="text-xs text-slate-400">/ 10.0</span>
-        </div>
-        <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
-          <span id="kpiGeralDelta" class="text-emerald-400 font-semibold">Ponderação Oficial</span>
-          <span class="text-slate-500">•</span>
-          <span>Classificação Geral</span>
-        </p>
-      </div>
-
-      <!-- Card 2: CR Graduação -->
+      <!-- Card 1: CR Graduação (MÉTRICA PRINCIPAL) -->
       <div class="glass-card p-5 rounded-2xl glow-card" style="--glow-color: #3b82f6;">
         <div class="flex items-center justify-between mb-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-            <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-400"></i> CR Graduação
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <i data-lucide="graduation-cap" class="w-4 h-4 text-blue-400"></i> CR Graduação Médio
           </span>
-          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">100% Engenharia</span>
+          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30">Métrica Principal</span>
         </div>
         <div class="flex items-baseline gap-2">
           <div id="kpiMediaGrad" class="text-3xl font-extrabold text-white font-mono-numbers tracking-tight">7.91</div>
           <span class="text-xs text-slate-400">/ 10.0</span>
         </div>
         <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
-          <span class="text-blue-400 font-semibold">Matérias Acadêmicas</span>
+          <span class="text-blue-400 font-semibold">100% Engenharia</span>
           <span class="text-slate-500">•</span>
-          <span>Básico & Específico</span>
+          <span>Desempenho Acadêmico</span>
+        </p>
+      </div>
+
+      <!-- Card 2: CR Geral 80/20 -->
+      <div class="glass-card p-5 rounded-2xl glow-card" style="--glow-color: #6366f1;">
+        <div class="flex items-center justify-between mb-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+            <i data-lucide="award" class="w-4 h-4 text-indigo-400"></i> CR Geral (80/20)
+          </span>
+          <span class="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Ponderado</span>
+        </div>
+        <div class="flex items-baseline gap-2">
+          <div id="kpiMediaGeral" class="text-3xl font-extrabold text-white font-mono-numbers tracking-tight">8.01</div>
+          <span class="text-xs text-slate-400">/ 10.0</span>
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
+          <span id="kpiGeralDelta" class="text-indigo-400 font-semibold">80% Grad + 20% Mil</span>
+          <span class="text-slate-500">•</span>
+          <span>Militar Integrado</span>
         </p>
       </div>
 
@@ -257,9 +257,9 @@
         <div class="flex items-center justify-between mb-4">
           <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
             <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
-            Top 3 Destaques Gerais da Turma (CR 80/20)
+            Top 3 Destaques Acadêmicos da Turma (CR Graduação)
           </h2>
-          <span class="text-xs text-slate-400">Classificação Ponderada Geral</span>
+          <span class="text-xs text-blue-400 font-semibold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Classificação Acadêmica</span>
         </div>
         <div id="podiumContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Populated by JS -->
@@ -381,55 +381,55 @@
           <table class="w-full text-left border-collapse text-xs">
             <thead class="sticky top-0 bg-slate-900/95 backdrop-blur z-20 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider select-none">
               <tr>
-                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition" data-sort="rankGeral">
+                <th class="py-3.5 px-4 cursor-pointer hover:text-blue-400 text-blue-400 transition" data-sort="rankGraduacao">
+                  <div class="flex items-center gap-1.5">
+                    <span># Grad</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-blue-400"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-3 cursor-pointer hover:text-slate-200 transition text-slate-400" data-sort="rankGeral">
                   <div class="flex items-center gap-1.5">
                     <span># Geral</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
-                <th class="py-3.5 px-3 cursor-pointer hover:text-indigo-400 transition" data-sort="rankGraduacao">
-                  <div class="flex items-center gap-1.5">
-                    <span># Grad</span>
-                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
-                  </div>
-                </th>
-                <th class="py-3.5 px-3 cursor-pointer hover:text-indigo-400 transition" data-sort="rankCurso">
+                <th class="py-3.5 px-3 cursor-pointer hover:text-slate-200 transition text-slate-400" data-sort="rankCurso">
                   <div class="flex items-center gap-1.5">
                     <span># Curso</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
-                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition" data-sort="nome">
+                <th class="py-3.5 px-4 cursor-pointer hover:text-blue-400 transition" data-sort="nome">
                   <div class="flex items-center gap-1.5">
                     <span>Aluno</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
-                <th class="py-3.5 px-3 cursor-pointer hover:text-indigo-400 transition" data-sort="curso">
+                <th class="py-3.5 px-3 cursor-pointer hover:text-blue-400 transition" data-sort="curso">
                   <div class="flex items-center gap-1.5">
                     <span>Especialidade</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
-                <th class="py-3.5 px-3 cursor-pointer hover:text-indigo-400 transition" data-sort="vinculo">
+                <th class="py-3.5 px-3 cursor-pointer hover:text-blue-400 transition" data-sort="vinculo">
                   <div class="flex items-center gap-1.5">
                     <span>Vínculo</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
-                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition text-right" data-sort="mediaGeral">
+                <th class="py-3.5 px-4 cursor-pointer hover:text-blue-400 transition text-right text-blue-400" data-sort="mediaGraduacao">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <span>CR Graduação</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-blue-400"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition text-right text-slate-400" data-sort="mediaGeral">
                   <div class="flex items-center justify-end gap-1.5">
                     <span>CR Geral (80/20)</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
-                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition text-right" data-sort="mediaGraduacao">
-                  <div class="flex items-center justify-end gap-1.5">
-                    <span>CR Grad</span>
-                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
-                  </div>
-                </th>
-                <th class="py-3.5 px-4 cursor-pointer hover:text-indigo-400 transition text-right" data-sort="mediaMilitar">
+                <th class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition text-right text-slate-400" data-sort="mediaMilitar">
                   <div class="flex items-center justify-end gap-1.5">
                     <span>CR Mil</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
@@ -652,15 +652,15 @@
         
         <!-- Student 4 Mini KPIs -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-blue-500/40">
+            <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider block">CR Graduação (Principal)</span>
+            <span id="modalCrGrad" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">9.05</span>
+            <span class="text-[10px] text-blue-400 font-semibold" id="modalRankGradLabel">1º de 86</span>
+          </div>
           <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">CR Geral (80/20)</span>
             <span id="modalCrGeral" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">9.15</span>
             <span class="text-[10px] text-indigo-400 font-semibold" id="modalRankGeralLabel">1º de 86</span>
-          </div>
-          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
-            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">CR Graduação</span>
-            <span id="modalCrGrad" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">9.05</span>
-            <span class="text-[10px] text-blue-400 font-semibold" id="modalRankGradLabel">1º de 86</span>
           </div>
           <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
             <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">CR Militar</span>

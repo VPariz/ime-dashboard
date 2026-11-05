@@ -12,20 +12,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const DATA = window.IME_DATA;
   let filteredAlunos = [...DATA.alunos];
   
-  // App State
+  // App State - Focado em Média de Graduação
   const state = {
     currentTab: 'overview',
     filterCurso: 'ALL',
     filterVinculo: 'ALL',
     tableSearch: '',
-    sortColumn: 'rankGeral',
+    sortColumn: 'rankGraduacao',
     sortAsc: true,
     pageSize: 'ALL',
     currentPage: 1,
     disciplinasSearch: '',
     disciplinasCiclo: 'ALL',
-    comparatorA: DATA.alunos[0]?.numero || null,
-    comparatorB: DATA.alunos[1]?.numero || null,
+    comparatorA: DATA.alunos.find(a => a.rankGraduacao === 1)?.numero || DATA.alunos[0]?.numero,
+    comparatorB: DATA.alunos.find(a => a.rankGraduacao === 2)?.numero || DATA.alunos[1]?.numero,
     activeStudentModal: null
   };
 
@@ -168,7 +168,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('podiumContainer');
     if (!container) return;
 
-    const top3 = [...filteredAlunos].sort((a, b) => a.rankGeral - b.rankGeral).slice(0, 3);
+    // Foco na Média de Graduação
+    const top3 = [...filteredAlunos].sort((a, b) => a.rankGraduacao - b.rankGraduacao).slice(0, 3);
     
     if (top3.length === 0) {
       container.innerHTML = `<div class="col-span-3 text-center py-6 text-slate-500">Nenhum aluno encontrado para os filtros selecionados.</div>`;
@@ -176,9 +177,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const medals = [
-      { rank: 1, icon: '🥇', label: '1º Lugar Geral', border: 'border-amber-500/40', glow: 'bg-amber-500/10', text: 'text-amber-400' },
-      { rank: 2, icon: '🥈', label: '2º Lugar Geral', border: 'border-slate-400/40', glow: 'bg-slate-400/10', text: 'text-slate-300' },
-      { rank: 3, icon: '🥉', label: '3º Lugar Geral', border: 'border-amber-700/40', glow: 'bg-amber-700/10', text: 'text-amber-600' }
+      { rank: 1, icon: '🥇', label: '1º Lugar Graduação', border: 'border-blue-500/50', glow: 'bg-blue-500/10', text: 'text-blue-400' },
+      { rank: 2, icon: '🥈', label: '2º Lugar Graduação', border: 'border-slate-400/50', glow: 'bg-slate-400/10', text: 'text-slate-300' },
+      { rank: 3, icon: '🥉', label: '3º Lugar Graduação', border: 'border-amber-700/50', glow: 'bg-amber-700/10', text: 'text-amber-500' }
     ];
 
     container.innerHTML = top3.map((aluno, idx) => {
@@ -189,7 +190,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="text-xs font-bold ${m.text} flex items-center gap-1.5 px-2.5 py-0.5 rounded-full ${m.glow}">
               <span>${m.icon}</span> ${m.label}
             </span>
-            <span class="text-[11px] text-slate-400 font-mono-numbers">#${aluno.rankGeral} Geral</span>
+            <span class="text-[11px] text-slate-400 font-mono-numbers">#${aluno.rankGraduacao} Grad</span>
           </div>
           <div class="flex items-center gap-3">
             <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-extrabold text-white text-base">
@@ -205,12 +206,12 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
             <div>
-              <span class="text-slate-400 text-[10px] uppercase font-bold block">CR Geral (80/20)</span>
-              <span class="text-lg font-extrabold text-indigo-400 font-mono-numbers">${fmtNum(aluno.mediaGeral)}</span>
+              <span class="text-blue-400 text-[10px] uppercase font-bold block">CR Graduação (Principal)</span>
+              <span class="text-xl font-extrabold text-blue-400 font-mono-numbers">${fmtNum(aluno.mediaGraduacao)}</span>
             </div>
             <div class="text-right">
-              <span class="text-slate-400 text-[10px] uppercase font-bold block">CR Graduação</span>
-              <span class="text-base font-bold text-slate-200 font-mono-numbers">${fmtNum(aluno.mediaGraduacao)}</span>
+              <span class="text-slate-400 text-[10px] uppercase font-bold block">CR Geral (80/20)</span>
+              <span class="text-base font-bold text-slate-300 font-mono-numbers">${fmtNum(aluno.mediaGeral)}</span>
             </div>
           </div>
         </div>
@@ -222,12 +223,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- CHARTS INITIALIZATION ---
   function initCharts() {
-    // 1. Chart Cursos (Horizontal Bar Chart)
+    // 1. Chart Cursos (Horizontal Bar Chart) - Ordenado por Média de Graduação
     const ctxCursos = document.getElementById('chartCursos')?.getContext('2d');
     if (ctxCursos) {
-      const labels = DATA.cursosSummary.map(c => c.curso);
-      const dataGeral = DATA.cursosSummary.map(c => c.mediaGeral);
-      const dataGrad = DATA.cursosSummary.map(c => c.mediaGraduacao);
+      const sortedCursos = [...DATA.cursosSummary].sort((a, b) => b.mediaGraduacao - a.mediaGraduacao);
+      const labels = sortedCursos.map(c => c.curso);
+      const dataGrad = sortedCursos.map(c => c.mediaGraduacao);
+      const dataGeral = sortedCursos.map(c => c.mediaGeral);
 
       chartCursosInstance = new Chart(ctxCursos, {
         type: 'bar',
@@ -235,18 +237,18 @@ document.addEventListener('DOMContentLoaded', () => {
           labels: labels,
           datasets: [
             {
-              label: 'CR Geral (80/20)',
-              data: dataGeral,
-              backgroundColor: 'rgba(99, 102, 241, 0.85)',
-              borderColor: '#6366f1',
+              label: 'CR Graduação (Principal)',
+              data: dataGrad,
+              backgroundColor: 'rgba(59, 130, 246, 0.85)',
+              borderColor: '#3b82f6',
               borderWidth: 1,
               borderRadius: 6
             },
             {
-              label: 'CR Graduação',
-              data: dataGrad,
-              backgroundColor: 'rgba(59, 130, 246, 0.6)',
-              borderColor: '#3b82f6',
+              label: 'CR Geral (80/20)',
+              data: dataGeral,
+              backgroundColor: 'rgba(99, 102, 241, 0.45)',
+              borderColor: '#6366f1',
               borderWidth: 1,
               borderRadius: 6
             }
@@ -390,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       DATA.alunos.forEach(a => {
-        const cr = a.mediaGeral;
+        const cr = a.mediaGraduacao;
         if (cr >= 9.0) ranges['>= 9.0 (Excelente)']++;
         else if (cr >= 8.5) ranges['8.5 - 8.99 (Muito Bom)']++;
         else if (cr >= 8.0) ranges['8.0 - 8.49 (Bom)']++;
@@ -534,26 +536,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tbody.innerHTML = displayed.map(aluno => {
       let rankIcon = '';
-      if (aluno.rankGeral === 1) rankIcon = '🥇 ';
-      else if (aluno.rankGeral === 2) rankIcon = '🥈 ';
-      else if (aluno.rankGeral === 3) rankIcon = '🥉 ';
+      if (aluno.rankGraduacao === 1) rankIcon = '🥇 ';
+      else if (aluno.rankGraduacao === 2) rankIcon = '🥈 ';
+      else if (aluno.rankGraduacao === 3) rankIcon = '🥉 ';
 
       const milDisplay = aluno.vinculo === 'CG' 
         ? `<span class="text-slate-500 text-center block">-</span>` 
-        : `<span class="font-mono-numbers text-slate-200">${fmtNum(aluno.mediaMilitar)}</span>`;
+        : `<span class="font-mono-numbers text-slate-300">${fmtNum(aluno.mediaMilitar)}</span>`;
 
       return `
         <tr class="table-hover-row border-b border-slate-800/40">
           <td class="py-3 px-4 font-bold text-white font-mono-numbers">
-            ${rankIcon}#${aluno.rankGeral}
+            ${rankIcon}#${aluno.rankGraduacao}
           </td>
           <td class="py-3 px-3 text-slate-400 font-mono-numbers">
-            #${aluno.rankGraduacao}
+            #${aluno.rankGeral}
           </td>
           <td class="py-3 px-3 text-slate-400 font-mono-numbers">
             #${aluno.rankCurso}
           </td>
-          <td class="py-3 px-4 font-bold text-slate-100 hover:text-indigo-400 cursor-pointer" onclick="window.app.openStudentModal(${aluno.numero})">
+          <td class="py-3 px-4 font-bold text-slate-100 hover:text-blue-400 cursor-pointer" onclick="window.app.openStudentModal(${aluno.numero})">
             ${aluno.nome}
           </td>
           <td class="py-3 px-3">
@@ -562,11 +564,11 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="py-3 px-3">
             ${getVinculoBadge(aluno.vinculo)}
           </td>
-          <td class="py-3 px-4 text-right font-extrabold text-indigo-400 font-mono-numbers text-sm">
-            ${fmtNum(aluno.mediaGeral)}
+          <td class="py-3 px-4 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">
+            ${fmtNum(aluno.mediaGraduacao)}
           </td>
           <td class="py-3 px-4 text-right font-bold text-slate-300 font-mono-numbers">
-            ${fmtNum(aluno.mediaGraduacao)}
+            ${fmtNum(aluno.mediaGeral)}
           </td>
           <td class="py-3 px-4 text-right">
             ${milDisplay}
@@ -579,7 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
           <td class="py-3 px-4 text-center">
             <button 
-              class="px-2.5 py-1 text-[11px] font-semibold bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/40 hover:border-indigo-500 text-indigo-300 hover:text-white rounded-lg transition"
+              class="px-2.5 py-1 text-[11px] font-semibold bg-blue-600/20 hover:bg-blue-600 border border-blue-500/40 hover:border-blue-500 text-blue-300 hover:text-white rounded-lg transition"
               onclick="window.app.openStudentModal(${aluno.numero})"
             >
               Ver Ficha
