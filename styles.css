@@ -130,6 +130,140 @@ body {
   backdrop-filter: blur(10px);
 }
 
+/* Mobile Optimization & Responsive Experience */
+button, select, input, a {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.safe-area-pb {
+  padding-bottom: calc(0.6rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* Mode Mobile */
+body.is-mobile {
+  font-size: 15px;
+}
+
+body.is-mobile header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.is-mobile #navTabs {
+  display: none !important;
+}
+
+body.is-mobile #mobileBottomNav {
+  display: flex !important;
+}
+
+body.is-mobile main {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  padding-top: 1rem !important;
+}
+
+body.is-mobile select,
+body.is-mobile input,
+body.is-mobile button {
+  min-height: 38px;
+}
+
+body.is-mobile .text-xs {
+  font-size: 13px !important;
+  line-height: 1.25rem !important;
+}
+
+body.is-mobile .text-\[11px\],
+body.is-mobile .text-\[10px\] {
+  font-size: 12px !important;
+}
+
+body.is-mobile .glass-card {
+  padding: 1rem !important;
+  border-radius: 1rem !important;
+}
+
+/* Student Modal Mobile Bottom Sheet */
+body.is-mobile #studentModal {
+  padding: 0 !important;
+  align-items: flex-end !important;
+}
+
+body.is-mobile #studentModal > div {
+  max-height: 94vh !important;
+  height: 94vh !important;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  margin: 0 !important;
+  width: 100% !important;
+}
+
+body.is-mobile #studentModal .overflow-y-auto {
+  padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+@media (max-width: 768px) {
+  #studentModal {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  #studentModal > div {
+    max-height: 94vh !important;
+    height: 94vh !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+  }
+
+  #studentModal .overflow-y-auto {
+    padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body:not(.is-desktop) {
+    font-size: 15px;
+  }
+
+  body:not(.is-desktop) #navTabs {
+    display: none !important;
+  }
+
+  body:not(.is-desktop) #mobileBottomNav {
+    display: flex !important;
+  }
+
+  body:not(.is-desktop) main {
+    padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  body:not(.is-desktop) select,
+  body:not(.is-desktop) input,
+  body:not(.is-desktop) button {
+    min-height: 38px;
+  }
+
+  body:not(.is-desktop) .text-xs {
+    font-size: 13px !important;
+    line-height: 1.25rem !important;
+  }
+
+  body:not(.is-desktop) .text-\[11px\],
+  body:not(.is-desktop) .text-\[10px\] {
+    font-size: 12px !important;
+  }
+}
+
+/* Touch Card Interactions */
+.ranking-card {
+  transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.ranking-card:active {
+  transform: scale(0.985);
+}
+
 /* Print Styles */
 @media print {
   body {

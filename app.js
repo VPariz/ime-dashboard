@@ -37,7 +37,13 @@ document.addEventListener('DOMContentLoaded', () => {
     overviewMetric: 'semestral',
     courseMetric: 'semestral',
     modalMetric: 'semestral',
-    comparatorMetric: 'semestral'
+    comparatorMetric: 'semestral',
+
+    // Device & View Modes
+    deviceMode: 'auto',
+    rankingView: 'cards',
+    courseView: 'table',
+    modalDisciplineView: 'cards'
   };
 
   // Chart instances
@@ -114,6 +120,52 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.className = `px-3 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition`;
       }
     });
+  }
+
+  // --- Device Detection & Responsive View Management ---
+  function isMobileDevice() {
+    return window.innerWidth <= 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }
+
+  function applyDeviceMode(mode) {
+    state.deviceMode = mode;
+    const isMobile = mode === 'mobile' || (mode === 'auto' && isMobileDevice());
+
+    if (isMobile) {
+      document.body.classList.add('is-mobile');
+      document.body.classList.remove('is-desktop');
+      state.rankingView = 'cards';
+      state.modalDisciplineView = 'cards';
+      state.courseView = 'cards';
+    } else {
+      document.body.classList.remove('is-mobile');
+      document.body.classList.add('is-desktop');
+      state.rankingView = 'table';
+      state.modalDisciplineView = 'table';
+      state.courseView = 'table';
+    }
+
+    // Update Device Switcher Buttons in Header
+    const btnMobile = document.getElementById('btnModeMobile');
+    const btnDesktop = document.getElementById('btnModeDesktop');
+    if (btnMobile && btnDesktop) {
+      if (isMobile) {
+        btnMobile.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white transition flex items-center gap-1.5 shadow-sm';
+        btnDesktop.className = 'px-2.5 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5';
+      } else {
+        btnDesktop.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white transition flex items-center gap-1.5 shadow-sm';
+        btnMobile.className = 'px-2.5 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5';
+      }
+    }
+
+    renderRankingsTable();
+    if (state.currentTab === 'cursos') {
+      renderCourseMatrixTable();
+    }
+    if (state.activeStudentModal) {
+      renderModalDisciplinesTable();
+    }
+    refreshIcons();
   }
 
   // --- Filtering & Metrics Calculation ---
@@ -714,6 +766,76 @@ document.addEventListener('DOMContentLoaded', () => {
     chartCursosEvolucaoInstance.update();
   }
 
+  function renderCourseCards() {
+    const container = document.getElementById('courseCardsContainer');
+    if (!container) return;
+
+    const isSem = (state.courseMetric === 'semestral');
+
+    container.innerHTML = DATA.cursosComparativo.map(c => {
+      const src = isSem ? c.semestres : c.semestresCumulativo;
+      return `
+        <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-3 shadow-md">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              ${getCourseBadge(c.curso)}
+              <span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold font-mono-numbers">${c.qtdAlunos} alunos</span>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 uppercase font-semibold block">Média Graduação</span>
+              <span class="text-lg font-black text-blue-400 font-mono-numbers">${fmtNum(c.mediaGraduacao)}</span>
+            </div>
+          </div>
+
+          <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1.5 text-xs">
+            <div class="flex items-center justify-between text-slate-300">
+              <span class="text-slate-400 flex items-center gap-1">🥇 1º Lugar:</span>
+              <span class="font-bold text-slate-200 truncate max-w-[170px]">${c.melhorAluno}</span>
+            </div>
+            <div class="flex items-center justify-between text-slate-300">
+              <span class="text-slate-400">Faixa de CR:</span>
+              <span class="font-mono-numbers">
+                <span class="text-rose-400 font-bold">${fmtNum(c.menorCR)}</span> a <span class="text-emerald-400 font-bold">${fmtNum(c.maiorCR)}</span>
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <span class="text-[10px] text-slate-400 uppercase font-semibold block mb-1">
+              ${isSem ? 'Médias por Período' : 'CR Acumulado até o Período'}
+            </span>
+            <div class="grid grid-cols-6 gap-1 text-center">
+              <div class="p-1 rounded-lg bg-slate-900 border border-slate-800">
+                <span class="text-[9px] text-slate-400 block font-semibold">1.1</span>
+                <span class="font-bold text-xs font-mono-numbers text-slate-200">${fmtNum(src['1.1'])}</span>
+              </div>
+              <div class="p-1 rounded-lg bg-slate-900 border border-slate-800">
+                <span class="text-[9px] text-slate-400 block font-semibold">1.2</span>
+                <span class="font-bold text-xs font-mono-numbers text-slate-200">${fmtNum(src['1.2'])}</span>
+              </div>
+              <div class="p-1 rounded-lg bg-slate-900 border border-slate-800">
+                <span class="text-[9px] text-slate-400 block font-semibold">2.1</span>
+                <span class="font-bold text-xs font-mono-numbers text-slate-200">${fmtNum(src['2.1'])}</span>
+              </div>
+              <div class="p-1 rounded-lg bg-slate-900 border border-slate-800">
+                <span class="text-[9px] text-slate-400 block font-semibold">2.2</span>
+                <span class="font-bold text-xs font-mono-numbers text-slate-200">${fmtNum(src['2.2'])}</span>
+              </div>
+              <div class="p-1 rounded-lg bg-slate-900 border border-slate-800">
+                <span class="text-[9px] text-slate-400 block font-semibold">3.1</span>
+                <span class="font-bold text-xs font-mono-numbers text-slate-200">${fmtNum(src['3.1'])}</span>
+              </div>
+              <div class="p-1 rounded-lg bg-slate-900 border border-amber-500/30 bg-amber-500/10">
+                <span class="text-[9px] text-amber-400 block font-bold">3.2</span>
+                <span class="font-bold text-xs font-mono-numbers text-amber-400">${fmtNum(src['3.2'])}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
   function renderCourseMatrixTable() {
     const tbody = document.getElementById('courseComparisonTableBody');
     if (!tbody) return;
@@ -750,6 +872,35 @@ document.addEventListener('DOMContentLoaded', () => {
         </tr>
       `;
     }).join('');
+
+    renderCourseCards();
+
+    // Toggle Visibility (Cards vs Table)
+    const cardsEl = document.getElementById('courseCardsContainer');
+    const tableEl = document.getElementById('courseTableContainer');
+    if (cardsEl && tableEl) {
+      if (state.courseView === 'cards') {
+        cardsEl.classList.remove('hidden');
+        tableEl.classList.add('hidden');
+      } else {
+        cardsEl.classList.add('hidden');
+        tableEl.classList.remove('hidden');
+      }
+    }
+
+    // Toggle button styling
+    const toggleEl = document.getElementById('toggleCourseView');
+    if (toggleEl) {
+      toggleEl.querySelectorAll('button').forEach(btn => {
+        if (btn.getAttribute('data-cview') === state.courseView) {
+          btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white transition flex items-center gap-1 shadow-sm';
+        } else {
+          btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1';
+        }
+      });
+    }
+
+    refreshIcons();
   }
 
   function initCourseHeadToHead() {
@@ -856,7 +1007,87 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- TAB 3: RANKINGS TABLE ---
+  // --- TAB 3: RANKINGS TABLE & CARDS ---
+  function renderRankingCards(displayed) {
+    const container = document.getElementById('rankingCardsContainer');
+    if (!container) return;
+
+    if (displayed.length === 0) {
+      container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-500 glass-panel rounded-2xl border border-slate-800">Nenhum aluno encontrado para os filtros selecionados.</div>`;
+      return;
+    }
+
+    container.innerHTML = displayed.map(aluno => {
+      let rankBadge = `#${aluno.rankGraduacao}`;
+      let posBorder = 'border-slate-700 bg-slate-800/80 text-slate-200';
+      if (aluno.rankGraduacao === 1) {
+        rankBadge = '🥇 1º';
+        posBorder = 'border-amber-400/50 bg-amber-500/10 text-amber-300';
+      } else if (aluno.rankGraduacao === 2) {
+        rankBadge = '🥈 2º';
+        posBorder = 'border-slate-300/50 bg-slate-400/10 text-slate-200';
+      } else if (aluno.rankGraduacao === 3) {
+        rankBadge = '🥉 3º';
+        posBorder = 'border-amber-600/50 bg-amber-700/10 text-amber-400';
+      }
+
+      const m32 = aluno.media32 !== null ? fmtNum(aluno.media32) : '-';
+
+      return `
+        <div class="ranking-card glass-panel p-4 rounded-2xl border border-slate-800 space-y-3 cursor-pointer hover:border-blue-500/50 shadow-lg relative overflow-hidden" onclick="window.app.openStudentModal(${aluno.numero})">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-start gap-3 min-w-0">
+              <div class="shrink-0 w-11 h-11 rounded-xl flex items-center justify-center font-extrabold text-sm border ${posBorder} shadow-sm font-mono-numbers">
+                ${rankBadge}
+              </div>
+              <div class="min-w-0">
+                <h4 class="font-bold text-slate-100 text-sm leading-snug hover:text-blue-400 transition truncate">
+                  ${aluno.nome}
+                </h4>
+                <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                  <span class="text-[11px] font-mono text-slate-400 font-semibold">#${aluno.numero}</span>
+                  ${getCourseBadge(aluno.curso)}
+                  ${getVinculoBadge(aluno.vinculo)}
+                </div>
+              </div>
+            </div>
+
+            <div class="text-right shrink-0">
+              <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">CR Grad</span>
+              <span class="text-xl font-black text-blue-400 font-mono-numbers">${fmtNum(aluno.mediaGraduacao)}</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 text-center">
+            <div>
+              <span class="block text-[10px] text-slate-400 uppercase font-semibold">Geral</span>
+              <span class="font-bold text-slate-200 text-xs font-mono-numbers">#${aluno.rankGeral}</span>
+            </div>
+            <div>
+              <span class="block text-[10px] text-slate-400 uppercase font-semibold">No Curso</span>
+              <span class="font-bold text-indigo-400 text-xs font-mono-numbers">#${aluno.rankCurso}</span>
+            </div>
+            <div>
+              <span class="block text-[10px] text-slate-400 uppercase font-semibold">CR 3.2 (6º)</span>
+              <span class="font-bold text-amber-400 text-xs font-mono-numbers">${m32}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs pt-1 text-slate-400 border-t border-slate-800/60">
+            <div class="font-mono-numbers text-[11px]">
+              <span>Maior: <strong class="text-emerald-400">${fmtNum(aluno.maiorNota)}</strong></span>
+              <span class="mx-1 text-slate-600">•</span>
+              <span>Menor: <strong class="text-rose-400">${fmtNum(aluno.menorNota)}</strong></span>
+            </div>
+            <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400">
+              Ver Ficha <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+            </span>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
   function renderRankingsTable() {
     const tbody = document.getElementById('rankingTableBody');
     if (!tbody) return;
@@ -889,63 +1120,89 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (displayed.length === 0) {
       tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-slate-500">Nenhum aluno encontrado para os filtros selecionados.</td></tr>`;
-      return;
+    } else {
+      tbody.innerHTML = displayed.map(aluno => {
+        let rankIcon = '';
+        if (aluno.rankGraduacao === 1) rankIcon = '🥇 ';
+        else if (aluno.rankGraduacao === 2) rankIcon = '🥈 ';
+        else if (aluno.rankGraduacao === 3) rankIcon = '🥉 ';
+
+        const m32 = aluno.media32 !== null ? fmtNum(aluno.media32) : '-';
+
+        return `
+          <tr class="table-hover-row border-b border-slate-800/40">
+            <td class="py-3 px-4 font-bold text-white font-mono-numbers">
+              ${rankIcon}#${aluno.rankGraduacao}
+            </td>
+            <td class="py-3 px-3 text-slate-400 font-mono-numbers">
+              #${aluno.rankGeral}
+            </td>
+            <td class="py-3 px-3 text-slate-400 font-mono-numbers">
+              #${aluno.rankCurso}
+            </td>
+            <td class="py-3 px-4 font-bold text-slate-100 hover:text-blue-400 cursor-pointer" onclick="window.app.openStudentModal(${aluno.numero})">
+              ${aluno.nome}
+            </td>
+            <td class="py-3 px-3">
+              ${getCourseBadge(aluno.curso)}
+            </td>
+            <td class="py-3 px-3">
+              ${getVinculoBadge(aluno.vinculo)}
+            </td>
+            <td class="py-3 px-4 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">
+              ${fmtNum(aluno.mediaGraduacao)}
+            </td>
+            <td class="py-3 px-4 text-right font-bold text-slate-300 font-mono-numbers">
+              ${fmtNum(aluno.mediaGeral)}
+            </td>
+            <td class="py-3 px-4 text-right font-mono-numbers text-amber-400 font-bold">
+              ${m32}
+            </td>
+            <td class="py-3 px-3 text-center text-slate-400 font-mono-numbers">
+              ${aluno.concluidas}
+            </td>
+            <td class="py-3 px-3 text-right font-mono-numbers text-slate-400 text-[11px]">
+              <span class="text-emerald-400">${fmtNum(aluno.maiorNota)}</span> / <span class="text-rose-400">${fmtNum(aluno.menorNota)}</span>
+            </td>
+            <td class="py-3 px-4 text-center">
+              <button 
+                class="px-2.5 py-1 text-[11px] font-semibold bg-blue-600/20 hover:bg-blue-600 border border-blue-500/40 hover:border-blue-500 text-blue-300 hover:text-white rounded-lg transition"
+                onclick="window.app.openStudentModal(${aluno.numero})"
+              >
+                Ver Ficha
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
 
-    tbody.innerHTML = displayed.map(aluno => {
-      let rankIcon = '';
-      if (aluno.rankGraduacao === 1) rankIcon = '🥇 ';
-      else if (aluno.rankGraduacao === 2) rankIcon = '🥈 ';
-      else if (aluno.rankGraduacao === 3) rankIcon = '🥉 ';
+    renderRankingCards(displayed);
 
-      const m32 = aluno.media32 !== null ? fmtNum(aluno.media32) : '-';
+    // Toggle Visibility (Cards vs Table)
+    const cardsEl = document.getElementById('rankingCardsContainer');
+    const tableEl = document.getElementById('rankingTableContainer');
+    if (cardsEl && tableEl) {
+      if (state.rankingView === 'cards') {
+        cardsEl.classList.remove('hidden');
+        tableEl.classList.add('hidden');
+      } else {
+        cardsEl.classList.add('hidden');
+        tableEl.classList.remove('hidden');
+      }
+    }
 
-      return `
-        <tr class="table-hover-row border-b border-slate-800/40">
-          <td class="py-3 px-4 font-bold text-white font-mono-numbers">
-            ${rankIcon}#${aluno.rankGraduacao}
-          </td>
-          <td class="py-3 px-3 text-slate-400 font-mono-numbers">
-            #${aluno.rankGeral}
-          </td>
-          <td class="py-3 px-3 text-slate-400 font-mono-numbers">
-            #${aluno.rankCurso}
-          </td>
-          <td class="py-3 px-4 font-bold text-slate-100 hover:text-blue-400 cursor-pointer" onclick="window.app.openStudentModal(${aluno.numero})">
-            ${aluno.nome}
-          </td>
-          <td class="py-3 px-3">
-            ${getCourseBadge(aluno.curso)}
-          </td>
-          <td class="py-3 px-3">
-            ${getVinculoBadge(aluno.vinculo)}
-          </td>
-          <td class="py-3 px-4 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">
-            ${fmtNum(aluno.mediaGraduacao)}
-          </td>
-          <td class="py-3 px-4 text-right font-bold text-slate-300 font-mono-numbers">
-            ${fmtNum(aluno.mediaGeral)}
-          </td>
-          <td class="py-3 px-4 text-right font-mono-numbers text-amber-400 font-bold">
-            ${m32}
-          </td>
-          <td class="py-3 px-3 text-center text-slate-400 font-mono-numbers">
-            ${aluno.concluidas}
-          </td>
-          <td class="py-3 px-3 text-right font-mono-numbers text-slate-400 text-[11px]">
-            <span class="text-emerald-400">${fmtNum(aluno.maiorNota)}</span> / <span class="text-rose-400">${fmtNum(aluno.menorNota)}</span>
-          </td>
-          <td class="py-3 px-4 text-center">
-            <button 
-              class="px-2.5 py-1 text-[11px] font-semibold bg-blue-600/20 hover:bg-blue-600 border border-blue-500/40 hover:border-blue-500 text-blue-300 hover:text-white rounded-lg transition"
-              onclick="window.app.openStudentModal(${aluno.numero})"
-            >
-              Ver Ficha
-            </button>
-          </td>
-        </tr>
-      `;
-    }).join('');
+    // Toggle button styling
+    const toggleEl = document.getElementById('toggleRankingView');
+    if (toggleEl) {
+      toggleEl.querySelectorAll('button').forEach(btn => {
+        if (btn.getAttribute('data-view') === state.rankingView) {
+          btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg bg-blue-600 text-white transition flex items-center gap-1.5 shadow-sm';
+        } else {
+          btn.className = 'px-2.5 py-1 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition flex items-center gap-1.5';
+        }
+      });
+    }
 
     refreshIcons();
   }
@@ -1359,20 +1616,17 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function renderModalDisciplinesTable() {
-    const aluno = state.activeStudentModal;
-    if (!aluno) return;
+  function renderModalDisciplinesCards(discs) {
+    const container = document.getElementById('modalDisciplinesCardsContainer');
+    if (!container) return;
 
-    let discs = aluno.disciplinas;
-    if (state.modalSemesterFilter !== 'ALL') {
-      discs = discs.filter(d => d.semestre === state.modalSemesterFilter);
+    if (discs.length === 0) {
+      container.innerHTML = `<div class="py-6 text-center text-slate-500 text-xs">Nenhuma disciplina cadastrada neste período.</div>`;
+      return;
     }
 
-    const discBody = document.getElementById('modalDisciplinasBody');
-    if (!discBody) return;
-
-    discBody.innerHTML = discs.map(d => {
-      let deltaBadge = `<span class="text-slate-500 font-mono-numbers">-</span>`;
+    container.innerHTML = discs.map(d => {
+      let deltaBadge = `<span class="text-slate-500 font-mono-numbers text-xs">-</span>`;
       if (d.delta !== null && d.delta !== undefined) {
         const sign = d.delta >= 0 ? '+' : '';
         const cls = d.delta >= 0 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
@@ -1384,26 +1638,122 @@ document.addEventListener('DOMContentLoaded', () => {
       else if (d.situacao.includes('Parcial')) sitCls = 'text-amber-400';
       else if (d.situacao === 'Reprovado') sitCls = 'text-rose-400';
 
-      const semBadge = d.semestre === '3.2' ? '<span class="text-amber-400 font-bold">3.2</span>' : d.semestre;
+      const is32 = d.semestre === '3.2';
+      const semBadge = is32 
+        ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">Semestre 3.2</span>`
+        : `<span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 font-mono">Semestre ${d.semestre}</span>`;
 
       return `
-        <tr class="table-hover-row border-b border-slate-800/40">
-          <td class="py-2 px-3 text-slate-400 font-mono-numbers">${semBadge}</td>
-          <td class="py-2 px-2 text-slate-400 font-mono-numbers text-[11px]">${d.codigo}</td>
-          <td class="py-2 px-4 font-bold text-slate-200">
-            ${d.nome}
-            ${d.militar ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">Militar</span>' : (d.isPratica ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 text-[10px] font-semibold border border-indigo-500/20">Prática (MVE)</span>' : '')}
-          </td>
-          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.ve !== null ? fmtNum(d.ve) : '-'}</td>
-          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vc !== null ? fmtNum(d.vc) : '-'}</td>
-          <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vf !== null ? fmtNum(d.vf) : '-'}</td>
-          <td class="py-2 px-3 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">${d.notaEfetiva !== null ? fmtNum(d.notaEfetiva) : '-'}</td>
-          <td class="py-2 px-3 text-right text-slate-400 font-mono-numbers">${fmtNum(d.mediaTurma)}</td>
-          <td class="py-2 px-3 text-center">${deltaBadge}</td>
-          <td class="py-2 px-3 text-center font-bold text-[11px] ${sitCls}">${d.situacao}</td>
-        </tr>
+        <div class="p-3.5 rounded-xl bg-slate-950/70 border border-slate-800/90 space-y-2.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                ${semBadge}
+                <span class="text-[11px] font-mono text-slate-400 font-semibold">${d.codigo}</span>
+                ${d.militar ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">Militar</span>' : (d.isPratica ? '<span class="px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 text-[10px] font-semibold border border-indigo-500/20">Prática (MVE)</span>' : '')}
+              </div>
+              <h5 class="font-bold text-slate-100 text-xs sm:text-sm mt-1 leading-snug">${d.nome}</h5>
+            </div>
+            <div class="text-right shrink-0">
+              <span class="text-[10px] uppercase font-bold text-slate-400 block">Nota</span>
+              <span class="text-base font-extrabold text-blue-400 font-mono-numbers">${d.notaEfetiva !== null ? fmtNum(d.notaEfetiva) : '-'}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-xs bg-slate-900/80 px-2.5 py-1.5 rounded-lg border border-slate-800/60 font-mono-numbers flex-wrap gap-2">
+            <div class="text-slate-300 text-[11px] space-x-2">
+              <span>VE: <strong class="text-slate-100">${d.ve !== null ? fmtNum(d.ve) : '-'}</strong></span>
+              <span>VC: <strong class="text-slate-100">${d.vc !== null ? fmtNum(d.vc) : '-'}</strong></span>
+              <span>VF: <strong class="text-slate-100">${d.vf !== null ? fmtNum(d.vf) : '-'}</strong></span>
+            </div>
+            <div class="flex items-center gap-2 text-[11px]">
+              <span class="text-slate-400">Turma: ${fmtNum(d.mediaTurma)}</span>
+              ${deltaBadge}
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-[11px] pt-0.5">
+            <span class="font-semibold ${sitCls}">● ${d.situacao}</span>
+          </div>
+        </div>
       `;
     }).join('');
+  }
+
+  function renderModalDisciplinesTable() {
+    const aluno = state.activeStudentModal;
+    if (!aluno) return;
+
+    let discs = aluno.disciplinas;
+    if (state.modalSemesterFilter !== 'ALL') {
+      discs = discs.filter(d => d.semestre === state.modalSemesterFilter);
+    }
+
+    const discBody = document.getElementById('modalDisciplinasBody');
+    if (discBody) {
+      discBody.innerHTML = discs.map(d => {
+        let deltaBadge = `<span class="text-slate-500 font-mono-numbers">-</span>`;
+        if (d.delta !== null && d.delta !== undefined) {
+          const sign = d.delta >= 0 ? '+' : '';
+          const cls = d.delta >= 0 ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' : 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+          deltaBadge = `<span class="px-2 py-0.5 rounded text-[11px] font-bold font-mono-numbers border ${cls}">${sign}${d.delta.toFixed(2)}</span>`;
+        }
+
+        let sitCls = 'text-slate-400';
+        if (d.situacao === 'Aprovado') sitCls = 'text-emerald-400';
+        else if (d.situacao.includes('Parcial')) sitCls = 'text-amber-400';
+        else if (d.situacao === 'Reprovado') sitCls = 'text-rose-400';
+
+        const semBadge = d.semestre === '3.2' ? '<span class="text-amber-400 font-bold">3.2</span>' : d.semestre;
+
+        return `
+          <tr class="table-hover-row border-b border-slate-800/40">
+            <td class="py-2 px-3 text-slate-400 font-mono-numbers">${semBadge}</td>
+            <td class="py-2 px-2 text-slate-400 font-mono-numbers text-[11px]">${d.codigo}</td>
+            <td class="py-2 px-4 font-bold text-slate-200">
+              ${d.nome}
+              ${d.militar ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">Militar</span>' : (d.isPratica ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-indigo-500/10 text-indigo-400 text-[10px] font-semibold border border-indigo-500/20">Prática (MVE)</span>' : '')}
+            </td>
+            <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.ve !== null ? fmtNum(d.ve) : '-'}</td>
+            <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vc !== null ? fmtNum(d.vc) : '-'}</td>
+            <td class="py-2 px-2 text-center text-slate-400 font-mono-numbers">${d.vf !== null ? fmtNum(d.vf) : '-'}</td>
+            <td class="py-2 px-3 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">${d.notaEfetiva !== null ? fmtNum(d.notaEfetiva) : '-'}</td>
+            <td class="py-2 px-3 text-right text-slate-400 font-mono-numbers">${fmtNum(d.mediaTurma)}</td>
+            <td class="py-2 px-3 text-center">${deltaBadge}</td>
+            <td class="py-2 px-3 text-center font-bold text-[11px] ${sitCls}">${d.situacao}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    renderModalDisciplinesCards(discs);
+
+    // Toggle Modal View Visibility (Cards vs Table)
+    const cardsEl = document.getElementById('modalDisciplinesCardsContainer');
+    const tableEl = document.getElementById('modalDisciplinesTableContainer');
+    if (cardsEl && tableEl) {
+      if (state.modalDisciplineView === 'cards') {
+        cardsEl.classList.remove('hidden');
+        tableEl.classList.add('hidden');
+      } else {
+        cardsEl.classList.add('hidden');
+        tableEl.classList.remove('hidden');
+      }
+    }
+
+    // Toggle button styling
+    const toggleEl = document.getElementById('toggleModalDisciplineView');
+    if (toggleEl) {
+      toggleEl.querySelectorAll('button').forEach(btn => {
+        if (btn.getAttribute('data-mview') === state.modalDisciplineView) {
+          btn.className = 'px-2 py-0.5 text-[11px] font-bold rounded-md bg-blue-600 text-white transition flex items-center gap-1 shadow-sm';
+        } else {
+          btn.className = 'px-2 py-0.5 text-[11px] font-bold rounded-md text-slate-400 hover:text-white transition flex items-center gap-1';
+        }
+      });
+    }
+
+    refreshIcons();
   }
 
   function closeStudentModal() {
@@ -1443,38 +1793,171 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- EVENT LISTENERS ---
-  // Tabs Navigation
-  document.querySelectorAll('#navTabs button').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const targetTab = btn.getAttribute('data-tab');
-      state.currentTab = targetTab;
+  // Unified Navigation Handler (Desktop Top Nav & Mobile Bottom Nav)
+  function switchTab(targetTab) {
+    state.currentTab = targetTab;
 
-      document.querySelectorAll('#navTabs button').forEach(b => {
+    // Desktop Tabs styling
+    document.querySelectorAll('#navTabs button').forEach(b => {
+      const isTarget = b.getAttribute('data-tab') === targetTab;
+      if (isTarget) {
+        b.classList.add('active', 'text-blue-400', 'bg-blue-500/10', 'border-blue-500/30');
+        b.classList.remove('text-slate-400');
+      } else {
         b.classList.remove('active', 'text-blue-400', 'bg-blue-500/10', 'border-blue-500/30');
         b.classList.add('text-slate-400');
-      });
-      btn.classList.add('active', 'text-blue-400', 'bg-blue-500/10', 'border-blue-500/30');
-      btn.classList.remove('text-slate-400');
-
-      document.querySelectorAll('.tab-content').forEach(section => section.classList.add('hidden'));
-      const activeSection = document.getElementById(`tab-${targetTab}`);
-      if (activeSection) {
-        activeSection.classList.remove('hidden');
       }
+    });
 
-      if (targetTab === 'cursos') {
-        if (!chartCursosEvolucaoInstance) {
-          initCursosComparisonTab();
-        }
-      } else if (targetTab === 'disciplinas') {
-        renderDisciplinasTab();
-      } else if (targetTab === 'comparator') {
-        initStudentComparator();
+    // Mobile Bottom Nav styling
+    document.querySelectorAll('#mobileBottomNav button').forEach(b => {
+      const isTarget = b.getAttribute('data-tab') === targetTab;
+      if (isTarget) {
+        b.classList.add('active', 'text-blue-400');
+        b.classList.remove('text-slate-400');
+      } else {
+        b.classList.remove('active', 'text-blue-400');
+        b.classList.add('text-slate-400');
       }
+    });
 
-      refreshIcons();
+    // Content sections visibility
+    document.querySelectorAll('.tab-content').forEach(section => section.classList.add('hidden'));
+    const activeSection = document.getElementById(`tab-${targetTab}`);
+    if (activeSection) {
+      activeSection.classList.remove('hidden');
+    }
+
+    if (targetTab === 'cursos') {
+      if (!chartCursosEvolucaoInstance) {
+        initCursosComparisonTab();
+      } else {
+        renderCourseMatrixTable();
+      }
+    } else if (targetTab === 'rankings') {
+      renderRankingsTable();
+    } else if (targetTab === 'disciplinas') {
+      renderDisciplinasTab();
+    } else if (targetTab === 'comparator') {
+      initStudentComparator();
+    }
+
+    refreshIcons();
+  }
+
+  // Attach tab click events to both desktop top nav and mobile bottom nav
+  document.querySelectorAll('#navTabs button, #mobileBottomNav button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.getAttribute('data-tab');
+      if (targetTab) {
+        switchTab(targetTab);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     });
   });
+
+  // Device Mode Switcher (Celular vs PC)
+  document.getElementById('btnModeMobile')?.addEventListener('click', () => {
+    applyDeviceMode('mobile');
+  });
+
+  document.getElementById('btnModeDesktop')?.addEventListener('click', () => {
+    applyDeviceMode('desktop');
+  });
+
+  window.addEventListener('resize', () => {
+    if (state.deviceMode === 'auto') {
+      applyDeviceMode('auto');
+    }
+  });
+
+  // View Toggles: Cartões vs Tabela
+  document.querySelectorAll('#toggleRankingView button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.rankingView = btn.getAttribute('data-view') || 'cards';
+      renderRankingsTable();
+    });
+  });
+
+  document.querySelectorAll('#toggleCourseView button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.courseView = btn.getAttribute('data-cview') || 'table';
+      renderCourseMatrixTable();
+    });
+  });
+
+  document.querySelectorAll('#toggleModalDisciplineView button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      state.modalDisciplineView = btn.getAttribute('data-mview') || 'cards';
+      renderModalDisciplinesTable();
+    });
+  });
+
+  // Mobile Quick Search Drawer
+  const btnMobileSearchToggle = document.getElementById('btnMobileSearchToggle');
+  const mobileSearchDrawer = document.getElementById('mobileSearchDrawer');
+  const btnCloseMobileSearch = document.getElementById('btnCloseMobileSearch');
+  const mobileSearchInput = document.getElementById('mobileSearchInput');
+  const mobileSearchResults = document.getElementById('mobileSearchResults');
+
+  if (btnMobileSearchToggle && mobileSearchDrawer) {
+    btnMobileSearchToggle.addEventListener('click', () => {
+      const isHidden = mobileSearchDrawer.classList.contains('hidden');
+      if (isHidden) {
+        mobileSearchDrawer.classList.remove('hidden');
+        if (mobileSearchInput) {
+          mobileSearchInput.value = '';
+          mobileSearchInput.focus();
+        }
+        if (mobileSearchResults) {
+          mobileSearchResults.innerHTML = '';
+          mobileSearchResults.classList.add('hidden');
+        }
+      } else {
+        mobileSearchDrawer.classList.add('hidden');
+      }
+    });
+
+    btnCloseMobileSearch?.addEventListener('click', () => {
+      mobileSearchDrawer.classList.add('hidden');
+    });
+
+    mobileSearchInput?.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      if (!q) {
+        mobileSearchResults.classList.add('hidden');
+        return;
+      }
+
+      const matches = DATA.alunos.filter(a =>
+        a.nome.toLowerCase().includes(q) ||
+        String(a.numero).includes(q) ||
+        a.curso.toLowerCase().includes(q)
+      ).slice(0, 8);
+
+      if (matches.length === 0) {
+        mobileSearchResults.innerHTML = `<div class="px-4 py-3 text-slate-500 text-xs">Nenhum aluno encontrado</div>`;
+      } else {
+        mobileSearchResults.innerHTML = matches.map(a => `
+          <div class="px-4 py-2.5 hover:bg-slate-800/80 active:bg-slate-800 cursor-pointer flex items-center justify-between text-xs transition" onclick="window.app.openStudentModal(${a.numero}); document.getElementById('mobileSearchDrawer').classList.add('hidden');">
+            <div>
+              <span class="font-bold text-white">${a.nome}</span>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="text-slate-400 text-[11px] font-mono">#${a.numero}</span>
+                <span class="text-slate-500">•</span>
+                <span class="text-slate-400 text-[11px]">${a.curso}</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <span class="text-[10px] text-slate-400 block uppercase font-semibold">CR Grad</span>
+              <span class="font-bold text-blue-400 font-mono-numbers text-sm">${fmtNum(a.mediaGraduacao)}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+      mobileSearchResults.classList.remove('hidden');
+    });
+  }
 
   // Global Filter Events
   document.getElementById('filterCurso')?.addEventListener('change', (e) => {
@@ -1636,6 +2119,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // Initial Run
+  applyDeviceMode('auto');
   initOverviewCharts();
   applyFilters();
   renderDisciplinasTab();
