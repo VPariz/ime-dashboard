@@ -579,10 +579,13 @@
       <!-- Split Codes Clarification Banner -->
       <div class="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/30 flex items-start gap-3">
         <i data-lucide="info" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
-        <div class="text-xs text-slate-300 space-y-1">
-          <p class="font-bold text-blue-300">Esclarecimento de Matérias com Códigos de Turma Divididos:</p>
+        <div class="text-xs text-slate-300 space-y-1.5">
+          <p class="font-bold text-blue-300">Avaliações IME & Esclarecimento de Matérias:</p>
           <p>
-            Disciplinas como <strong>Álgebra Linear I e II</strong>, <strong>Cálculo III e IV</strong>, <strong>Física III e IV</strong> e <strong>Mecânica I e II</strong> foram cadastradas no portal acadêmico do IME sob códigos separados (ex: <code>01580</code> / <code>01060</code> / <code>01582</code>). <strong>Todos os 86 alunos cursaram e concluíram Álgebra Linear I e II</strong>. As matérias do <strong>3.2 (6º Semestre)</strong> estão listadas abaixo com as notas parciais das avaliações em andamento (VC / VE).
+            <strong>Fórmula Ponderada Oficial do IME:</strong> A média da disciplina é calculada por <code class="text-blue-300 bg-blue-900/40 px-1.5 py-0.5 rounded border border-blue-500/30 font-bold">Média = (Média de VE + VC + 2×VF) / 4</code>. No 6º semestre (3.2), como a VF ainda não ocorreu, as notas refletem a média ponderada das avaliações parciais em andamento (VC e VE).
+          </p>
+          <p class="text-slate-400">
+            Disciplinas como <strong>Álgebra Linear I e II</strong>, <strong>Cálculo III e IV</strong>, <strong>Física III e IV</strong> e <strong>Mecânica I e II</strong> foram cadastradas no portal acadêmico sob códigos separados (ex: <code>01580</code> / <code>01060</code> / <code>01582</code>). <strong>Todos os 86 alunos cursaram e concluíram Álgebra Linear I e II</strong>.
           </p>
         </div>
       </div>
@@ -842,10 +845,15 @@
         <!-- Student Disciplines History Table -->
         <div class="space-y-3">
           <div class="flex flex-wrap items-center justify-between gap-3">
-            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-              <i data-lucide="list" class="w-3.5 h-3.5 text-blue-400"></i>
-              Histórico Completo por Semestre (com Parciais VE / VC)
-            </h4>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <i data-lucide="list" class="w-3.5 h-3.5 text-blue-400"></i>
+                Histórico Completo por Semestre
+              </h4>
+              <span class="px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 text-[10px] font-mono border border-blue-500/20" title="Fórmula Oficial do IME">
+                Fórmula: (Média VE + VC + 2×VF) / 4
+              </span>
+            </div>
             
             <!-- Modal Semester Filter Pills -->
             <div class="flex flex-wrap gap-1 text-xs" id="modalSemestrePills">
