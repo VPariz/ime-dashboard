@@ -157,6 +157,20 @@ body.is-mobile #mobileBottomNav {
   display: grid !important;
 }
 
+body.is-mobile #mobileBottomNav button {
+  min-height: 44px !important;
+  overflow: hidden;
+}
+
+body.is-mobile #mobileBottomNav span {
+  font-size: 10px !important;
+  line-height: 1.1 !important;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 body.is-mobile main {
   padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
   padding-top: 1rem !important;
@@ -233,6 +247,20 @@ body.is-mobile #studentModal .overflow-y-auto {
 
   body:not(.is-desktop) #mobileBottomNav {
     display: grid !important;
+  }
+
+  body:not(.is-desktop) #mobileBottomNav button {
+    min-height: 44px !important;
+    overflow: hidden;
+  }
+
+  body:not(.is-desktop) #mobileBottomNav span {
+    font-size: 10px !important;
+    line-height: 1.1 !important;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   body:not(.is-desktop) main {

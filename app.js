@@ -2071,8 +2071,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
         res.querySelectorAll('button[data-pick-aluno]').forEach(btn => {
-          btn.addEventListener('mousedown', (e) => {
-            e.preventDefault();
+          btn.addEventListener('click', () => {
             const num = parseInt(btn.getAttribute('data-pick-aluno'), 10);
             state[stateKey] = num;
             res.classList.add('hidden');
@@ -2092,12 +2091,14 @@ document.addEventListener('DOMContentLoaded', () => {
       renderMatches(e.target.value);
     });
 
-    inp.addEventListener('blur', () => {
-      setTimeout(() => {
-        res.classList.add('hidden');
-        const cur = DATA.alunos.find(a => a.numero === state[stateKey]);
-        if (cur) inp.value = formatAlunoLabel(cur);
-      }, 150);
+    document.addEventListener('click', (e) => {
+      if (!inp.contains(e.target) && !res.contains(e.target)) {
+        if (!res.classList.contains('hidden')) {
+          res.classList.add('hidden');
+          const cur = DATA.alunos.find(a => a.numero === state[stateKey]);
+          if (cur) inp.value = formatAlunoLabel(cur);
+        }
+      }
     });
   }
 
@@ -3210,10 +3211,10 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-2 text-xs">
             <span class="font-bold text-slate-100 truncate">${v.nome}</span>
             <div class="flex items-center gap-1.5 shrink-0">
-              <button data-vaga-dec="${idx}" class="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">-</button>
+              <button data-vaga-dec="${idx}" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
               <span class="w-7 text-center font-mono-numbers font-bold text-cyan-300">${v.qtd}</span>
-              <button data-vaga-inc="${idx}" class="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">+</button>
-              <button data-vaga-del="${idx}" class="ml-1 p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition" title="Remover vaga">
+              <button data-vaga-inc="${idx}" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
+              <button data-vaga-del="${idx}" class="ml-1 w-8 h-8 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition flex items-center justify-center" title="Remover vaga">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
@@ -3399,11 +3400,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       return `
         <tr class="table-hover-row border-b border-slate-800/40">
-          <td class="py-2.5 px-3 font-mono-numbers font-bold text-slate-300">${idx + 1}º</td>
-          <td class="py-2.5 px-4 font-bold text-slate-100">${a.nome}</td>
-          <td class="py-2.5 px-3 text-right font-mono-numbers text-blue-400 font-bold">${fmtNum(a[field])}</td>
-          <td class="py-2.5 px-4 font-bold ${chosen ? 'text-cyan-300' : 'text-slate-500'}">${chosen || 'Não alocado'}</td>
-          <td class="py-2.5 px-3 text-center">${prefBadge}</td>
+          <td class="py-2.5 px-2.5 sm:px-3 font-mono-numbers font-bold text-slate-300">${idx + 1}º</td>
+          <td class="py-2.5 px-3 sm:px-4 font-bold text-slate-100">
+            <div>${a.nome}</div>
+            <div class="sm:hidden text-[10px] font-mono-numbers text-blue-400">CR ${fmtNum(a[field])}</div>
+          </td>
+          <td class="hidden sm:table-cell py-2.5 px-3 text-right font-mono-numbers text-blue-400 font-bold">${fmtNum(a[field])}</td>
+          <td class="py-2.5 px-3 sm:px-4 font-bold ${chosen ? 'text-cyan-300' : 'text-slate-500'}">${chosen || 'Não alocado'}</td>
+          <td class="py-2.5 px-2.5 sm:px-3 text-center">${prefBadge}</td>
         </tr>
       `;
     }).join('');
