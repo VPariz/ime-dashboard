@@ -3145,7 +3145,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- TAB: ESTÁGIO (VAGAS, PREFERÊNCIAS & ALOCAÇÃO) ---
   function getEstagioCursoStore(curso) {
     if (!state.estagioData[curso]) {
-      state.estagioData[curso] = { vagas: [], prefs: {} };
+      const nAlunos = DATA.alunos.filter(a => a.curso === curso).length;
+      const numLocais = Math.max(4, Math.min(8, Math.ceil(nAlunos / 2)));
+      const placeholders = Array.from({ length: numLocais }, (_, i) => ({
+        id: `ph_${curso}_${i + 1}`,
+        nome: `Local ${i + 1} (Placeholder)`,
+        qtd: 2
+      }));
+      state.estagioData[curso] = { vagas: placeholders, prefs: {} };
     }
     return state.estagioData[curso];
   }
@@ -3325,18 +3332,56 @@ document.addEventListener('DOMContentLoaded', () => {
         vagasEl.innerHTML = `<div class="py-8 text-center text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">Nenhuma vaga cadastrada para ${curso}. Adicione acima (ex: IMBEL, CTEx...).</div>`;
       } else {
         vagasEl.innerHTML = store.vagas.map((v, idx) => `
-          <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-2 text-xs">
-            <span class="font-bold text-slate-100 truncate">${v.nome}</span>
-            <div class="flex items-center gap-1.5 shrink-0">
-              <button data-vaga-dec="${idx}" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
-              <span class="w-7 text-center font-mono-numbers font-bold text-cyan-300">${v.qtd}</span>
-              <button data-vaga-inc="${idx}" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
-              <button data-vaga-del="${idx}" class="ml-1 w-8 h-8 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition flex items-center justify-center" title="Remover vaga">
+          <div class="p-2 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-2 text-xs">
+            <input type="text" data-vaga-name="${idx}" value="${v.nome.replace(/"/g, '&quot;')}" class="flex-1 min-w-0 bg-slate-950/80 border border-slate-700/70 rounded-lg px-2.5 py-1.5 font-bold text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" title="Editar nome do local" />
+            <div class="flex items-center gap-1 shrink-0">
+              <button data-vaga-dec="${idx}" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
+              <input type="number" min="1" max="99" data-vaga-qtd="${idx}" value="${v.qtd}" class="w-11 h-7 text-center font-mono-numbers font-bold text-cyan-300 bg-slate-950/80 border border-slate-700/70 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" title="Quantidade de vagas" />
+              <button data-vaga-inc="${idx}" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">+</button>
+              <button data-vaga-del="${idx}" class="ml-0.5 w-7 h-7 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition flex items-center justify-center" title="Remover vaga">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
           </div>
         `).join('');
+
+        vagasEl.querySelectorAll('input[data-vaga-name]').forEach(inp => {
+          inp.addEventListener('change', () => {
+            const i = parseInt(inp.getAttribute('data-vaga-name'), 10);
+            const newName = inp.value.trim();
+            if (!store.vagas[i]) return;
+            if (!newName) {
+              inp.value = store.vagas[i].nome;
+              return;
+            }
+            const oldName = store.vagas[i].nome;
+            if (oldName === newName) return;
+            const dup = store.vagas.some((x, j) => j !== i && x.nome.toLowerCase() === newName.toLowerCase());
+            if (dup) {
+              inp.value = oldName;
+              setEstagioStatus(`Já existe uma vaga chamada "${newName}".`);
+              return;
+            }
+            store.vagas[i].nome = newName;
+            Object.keys(store.prefs).forEach(num => {
+              store.prefs[num] = (store.prefs[num] || []).map(p => (p === oldName ? newName : p));
+            });
+            setEstagioStatus('Alterações não salvas — clique em Salvar');
+            renderEstagioTab();
+          });
+        });
+
+        vagasEl.querySelectorAll('input[data-vaga-qtd]').forEach(inp => {
+          inp.addEventListener('change', () => {
+            const i = parseInt(inp.getAttribute('data-vaga-qtd'), 10);
+            const val = Math.max(1, parseInt(inp.value || '1', 10) || 1);
+            if (store.vagas[i]) {
+              store.vagas[i].qtd = val;
+              setEstagioStatus('Alterações não salvas — clique em Salvar');
+              renderEstagioTab();
+            }
+          });
+        });
 
         vagasEl.querySelectorAll('button[data-vaga-dec]').forEach(btn => {
           btn.addEventListener('click', () => {
