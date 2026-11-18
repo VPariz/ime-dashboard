@@ -182,6 +182,29 @@ document.addEventListener('DOMContentLoaded', () => {
     return Number(val).toFixed(2);
   }
 
+  function computeDynamicBounds(datasets, minSpan = 1.0, pad = 0.2) {
+    const vals = [];
+    datasets.forEach(ds => {
+      const arr = Array.isArray(ds) ? ds : (ds?.data || []);
+      arr.forEach(v => {
+        if (typeof v === 'number' && !isNaN(v)) vals.push(v);
+      });
+    });
+    if (!vals.length) return { min: 6.0, max: 9.5, stepSize: 0.5 };
+    let minV = Math.min(...vals);
+    let maxV = Math.max(...vals);
+    if (maxV - minV < minSpan) {
+      const mid = (minV + maxV) / 2;
+      minV = mid - minSpan / 2;
+      maxV = mid + minSpan / 2;
+    }
+    const min = Math.max(0, Math.floor((minV - pad) * 4) / 4);
+    const max = Math.min(10, Math.ceil((maxV + pad) * 4) / 4);
+    const span = max - min;
+    const stepSize = span <= 1.75 ? 0.25 : (span <= 3.5 ? 0.5 : 1.0);
+    return { min, max, stepSize };
+  }
+
   // Helper for metric button group styling
   function updateToggleButtons(containerId, activeMetric, activeClass = 'bg-blue-600') {
     const container = document.getElementById(containerId);
@@ -386,6 +409,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const labels = sortedCursos.map(c => c.curso);
       const dataGrad = sortedCursos.map(c => c.mediaGraduacao);
       const dataGeral = sortedCursos.map(c => c.mediaGeral);
+      const xBounds = computeDynamicBounds([dataGrad, dataGeral], 0.8, 0.15);
 
       chartCursosInstance = new Chart(ctxCursos, {
         type: 'bar',
@@ -423,10 +447,15 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           scales: {
             x: {
-              min: 6.5,
-              max: 9.0,
+              min: xBounds.min,
+              max: xBounds.max,
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+              ticks: {
+                color: '#94a3b8',
+                stepSize: xBounds.stepSize,
+                callback: (v) => Number(v).toFixed(2),
+                font: { family: 'JetBrains Mono' }
+              }
             },
             y: {
               grid: { display: false },
@@ -448,6 +477,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const label = (state.overviewMetric === 'semestral')
         ? 'Média de Graduação da Turma (Semestral)'
         : 'CR de Graduação Cumulativo da Turma';
+
+      const evolBounds = computeDynamicBounds([mediaTurma], 0.8, 0.2);
 
       chartEvolucaoInstance = new Chart(ctxEvolucao, {
         type: 'line',
@@ -472,6 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
           plugins: {
             legend: { display: false },
             tooltip: {
@@ -479,17 +511,22 @@ document.addEventListener('DOMContentLoaded', () => {
               padding: 12,
               callbacks: {
                 label: function(ctx) {
-                  return `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`;
+                  return `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2) : '-'}`;
                 }
               }
             }
           },
           scales: {
             y: {
-              min: 6.5,
-              max: 9.0,
+              min: evolBounds.min,
+              max: evolBounds.max,
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+              ticks: {
+                color: '#94a3b8',
+                stepSize: evolBounds.stepSize,
+                callback: (v) => Number(v).toFixed(2),
+                font: { family: 'JetBrains Mono' }
+              }
             },
             x: {
               grid: { color: 'rgba(255, 255, 255, 0.03)' },
@@ -654,6 +691,10 @@ document.addEventListener('DOMContentLoaded', () => {
         chartEvolucaoInstance.data.datasets.pop();
       }
     }
+    const yBounds = computeDynamicBounds(chartEvolucaoInstance.data.datasets, 0.8, 0.2);
+    chartEvolucaoInstance.options.scales.y.min = yBounds.min;
+    chartEvolucaoInstance.options.scales.y.max = yBounds.max;
+    chartEvolucaoInstance.options.scales.y.ticks.stepSize = yBounds.stepSize;
     chartEvolucaoInstance.update();
   }
 
@@ -805,6 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const labels = semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`);
     const isSem = (state.courseMetric === 'semestral');
     const datasets = buildCourseChartDatasets(semestres, isSem);
+    const yBounds = computeDynamicBounds(datasets, 1.0, 0.2);
 
     chartCursosEvolucaoInstance = new Chart(ctx, {
       type: 'line',
@@ -815,6 +857,7 @@ document.addEventListener('DOMContentLoaded', () => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
         plugins: {
           legend: {
             position: 'top',
@@ -822,15 +865,23 @@ document.addEventListener('DOMContentLoaded', () => {
           },
           tooltip: {
             backgroundColor: 'rgba(15, 23, 42, 0.95)',
-            padding: 12
+            padding: 12,
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2) : '-'}`
+            }
           }
         },
         scales: {
           y: {
-            min: 5.5,
-            max: 9.5,
+            min: yBounds.min,
+            max: yBounds.max,
             grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+            ticks: {
+              color: '#94a3b8',
+              stepSize: yBounds.stepSize,
+              callback: (v) => Number(v).toFixed(2),
+              font: { family: 'JetBrains Mono' }
+            }
           },
           x: {
             grid: { color: 'rgba(255, 255, 255, 0.03)' },
@@ -846,7 +897,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const semestres = DATA.metadata.semestres;
     const isSem = (state.courseMetric === 'semestral');
-    chartCursosEvolucaoInstance.data.datasets = buildCourseChartDatasets(semestres, isSem);
+    const datasets = buildCourseChartDatasets(semestres, isSem);
+    const yBounds = computeDynamicBounds(datasets, 1.0, 0.2);
+    chartCursosEvolucaoInstance.data.datasets = datasets;
+    chartCursosEvolucaoInstance.options.scales.y.min = yBounds.min;
+    chartCursosEvolucaoInstance.options.scales.y.max = yBounds.max;
+    chartCursosEvolucaoInstance.options.scales.y.ticks.stepSize = yBounds.stepSize;
     chartCursosEvolucaoInstance.update();
   }
 
@@ -1064,6 +1120,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const isSem = (state.courseMetric === 'semestral');
       const valsA = isSem ? semestres.map(s => cA.semestres[s]) : semestres.map(s => cA.semestresCumulativo[s]);
       const valsB = isSem ? semestres.map(s => cB.semestres[s]) : semestres.map(s => cB.semestresCumulativo[s]);
+      const h2hBounds = computeDynamicBounds([valsA, valsB], 0.8, 0.2);
 
       chartCourseH2HInstance = new Chart(ctx, {
         type: 'bar',
@@ -1087,15 +1144,28 @@ document.addEventListener('DOMContentLoaded', () => {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
           plugins: {
-            legend: { position: 'top', labels: { color: '#cbd5e1', font: { weight: 'bold' } } }
+            legend: { position: 'top', labels: { color: '#cbd5e1', font: { weight: 'bold' } } },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              padding: 12,
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2) : '-'}`
+              }
+            }
           },
           scales: {
             y: {
-              min: 5.0,
-              max: 10.0,
+              min: h2hBounds.min,
+              max: h2hBounds.max,
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+              ticks: {
+                color: '#94a3b8',
+                stepSize: h2hBounds.stepSize,
+                callback: (v) => Number(v).toFixed(2),
+                font: { family: 'JetBrains Mono' }
+              }
             },
             x: {
               grid: { display: false },
@@ -1574,6 +1644,8 @@ document.addEventListener('DOMContentLoaded', () => {
           : `${a1.nome} vs ${a2.nome} vs Turma (CR Cumulativo Acumulado)`;
       }
 
+      const compBounds = computeDynamicBounds([dataA1, dataA2, dataTurma], 0.8, 0.2);
+
       chartComparatorInstance = new Chart(ctx, {
         type: 'line',
         data: {
@@ -1612,13 +1684,28 @@ document.addEventListener('DOMContentLoaded', () => {
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.95)',
+              padding: 12,
+              callbacks: {
+                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2) : '-'}`
+              }
+            }
+          },
           scales: {
             y: {
-              min: 5.0,
-              max: 10.0,
+              min: compBounds.min,
+              max: compBounds.max,
               grid: { color: 'rgba(255, 255, 255, 0.05)' },
-              ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+              ticks: {
+                color: '#94a3b8',
+                stepSize: compBounds.stepSize,
+                callback: (v) => Number(v).toFixed(2),
+                font: { family: 'JetBrains Mono' }
+              }
             },
             x: {
               grid: { color: 'rgba(255, 255, 255, 0.03)' },
@@ -1942,6 +2029,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const alunoLabel = isSem ? `${aluno.nome} (Semestral)` : `${aluno.nome} (CR Cumulativo)`;
 
+    const modalBounds = computeDynamicBounds([studentVals, cursoVals, turmaVals], 0.8, 0.2);
+
     chartModalInstance = new Chart(ctx, {
       type: 'line',
       data: {
@@ -1980,13 +2069,28 @@ document.addEventListener('DOMContentLoaded', () => {
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            padding: 12,
+            callbacks: {
+              label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2) : '-'}`
+            }
+          }
+        },
         scales: {
           y: {
-            min: 5.0,
-            max: 10.0,
+            min: modalBounds.min,
+            max: modalBounds.max,
             grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#94a3b8', font: { family: 'JetBrains Mono' } }
+            ticks: {
+              color: '#94a3b8',
+              stepSize: modalBounds.stepSize,
+              callback: (v) => Number(v).toFixed(2),
+              font: { family: 'JetBrains Mono' }
+            }
           },
           x: {
             grid: { color: 'rgba(255, 255, 255, 0.03)' },
