@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Estágio
     estagioCurso: DATA.metadata.cursos[0] || 'Computação',
     estagioCriterio: 'grad',
+    estagioIncludeCG: true,
     estagioExpandedAluno: null,
     estagioInitialized: false,
     estagioData: (() => {
@@ -414,6 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     updateKPIs();
     renderPodium();
+    renderOverviewVfBanner();
     updateOverviewCharts();
     renderRankingsTable();
     if (state.currentTab === 'vf') {
@@ -478,6 +480,41 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- TAB 1: VISÃO GERAL ---
+  function renderOverviewVfBanner() {
+    const el = document.getElementById('overviewVfBanner');
+    if (!el) return;
+
+    const safe = filteredAlunos.filter(a => a.vfRiskLevel === 'safe').length;
+    const mid = filteredAlunos.filter(a => a.vfRiskLevel === 'mid').length;
+    const warn = filteredAlunos.filter(a => a.vfRiskLevel === 'warn').length;
+    const risk = filteredAlunos.filter(a => a.vfRiskLevel === 'risk').length;
+
+    el.innerHTML = `
+      <div class="flex items-center gap-2.5">
+        <span class="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
+          <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
+        </span>
+        <div>
+          <div class="text-xs font-bold text-slate-100">Situação na VF do 3.2 (mín. 4,00 e média ≥ 5,00)</div>
+          <div class="text-[11px] text-slate-400">Clique em uma faixa para abrir os cartões direto na aba VF 3.2</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap items-center gap-2 text-xs font-bold font-mono-numbers">
+        <button data-goto-vf="safe" class="px-2.5 py-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 transition">≤ 4.00 (${safe})</button>
+        <button data-goto-vf="mid" class="px-2.5 py-1 rounded-xl border border-sky-500/30 bg-sky-500/10 hover:bg-sky-500/20 text-sky-300 transition">4.01–5.00 (${mid})</button>
+        <button data-goto-vf="warn" class="px-2.5 py-1 rounded-xl border border-amber-500/30 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 transition">5.01–6.00 (${warn})</button>
+        <button data-goto-vf="risk" class="px-2.5 py-1 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 transition">&gt; 6.00 (${risk})</button>
+      </div>
+    `;
+
+    el.querySelectorAll('button[data-goto-vf]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.vfRiskFilter = btn.getAttribute('data-goto-vf');
+        switchTab('vf');
+      });
+    });
+  }
+
   function renderPodium() {
     const container = document.getElementById('podiumContainer');
     if (!container) return;
@@ -775,6 +812,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateOverviewCharts() {
+    if (chartCursosInstance) {
+      const labels = chartCursosInstance.data.labels || [];
+      chartCursosInstance.data.datasets[0].backgroundColor = labels.map(c =>
+        state.filterCurso === 'ALL' || matchesCourseFilter(c, state.filterCurso)
+          ? 'rgba(59, 130, 246, 0.85)'
+          : 'rgba(59, 130, 246, 0.18)'
+      );
+      chartCursosInstance.data.datasets[1].backgroundColor = labels.map(c =>
+        state.filterCurso === 'ALL' || matchesCourseFilter(c, state.filterCurso)
+          ? 'rgba(99, 102, 241, 0.5)'
+          : 'rgba(99, 102, 241, 0.1)'
+      );
+      chartCursosInstance.update();
+    }
+
     if (!chartEvolucaoInstance) return;
 
     const semestres = DATA.metadata.semestres;
@@ -1703,6 +1755,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Active sort header styling
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      const col = th.getAttribute('data-sort');
+      const icon = th.querySelector('i[data-lucide]');
+      if (col === state.sortColumn) {
+        th.classList.add('text-blue-400');
+        if (icon) icon.setAttribute('data-lucide', state.sortAsc ? 'arrow-up' : 'arrow-down');
+      } else {
+        th.classList.remove('text-blue-400');
+        if (icon) icon.setAttribute('data-lucide', 'chevrons-up-down');
+      }
+    });
+
     refreshIcons();
   }
 
@@ -2262,6 +2327,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (veVal !== null && veVal !== undefined) parts.push(`VE ${fmtNum(veVal)}`);
       if (d.vc !== null && d.vc !== undefined) parts.push(`VC ${fmtNum(d.vc)}`);
       if (d.vf !== null && d.vf !== undefined) parts.push(`VF ${fmtNum(d.vf)}`);
+      const vfInfo = calcVfNecessaria(d);
+      if (vfInfo && vfInfo.tipo === 'exact') parts.push(`<span class="text-amber-300 font-bold">(${vfInfo.label})</span>`);
       return parts.join(' · ');
     };
 
@@ -2876,7 +2943,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getEstagioRankedAlunos(curso) {
     const field = state.estagioCriterio === 'geral' ? 'mediaGeral' : 'mediaGraduacao';
     return DATA.alunos
-      .filter(a => a.curso === curso)
+      .filter(a => a.curso === curso && (state.estagioIncludeCG || a.vinculo !== 'CG'))
       .sort((a, b) => (b[field] ?? 0) - (a[field] ?? 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
@@ -2919,6 +2986,41 @@ document.addEventListener('DOMContentLoaded', () => {
       selCrit?.addEventListener('change', (e) => {
         state.estagioCriterio = e.target.value;
         renderEstagioTab();
+      });
+
+      const chkCG = document.getElementById('chkEstagioIncludeCG');
+      if (chkCG) {
+        chkCG.checked = state.estagioIncludeCG;
+        chkCG.addEventListener('change', (e) => {
+          state.estagioIncludeCG = e.target.checked;
+          renderEstagioTab();
+        });
+      }
+
+      document.getElementById('btnEstagioCopy')?.addEventListener('click', async () => {
+        const curso = state.estagioCurso;
+        const store = getEstagioCursoStore(curso);
+        const ranked = getEstagioRankedAlunos(curso);
+        const remaining = new Map(store.vagas.map(v => [v.nome, v.qtd]));
+        const lines = [`*Estágio ${curso} (${state.estagioCriterio === 'geral' ? 'CR Geral' : 'CR Graduação'})*`];
+        ranked.forEach((a, idx) => {
+          const prefs = (store.prefs[a.numero] || []).filter(Boolean);
+          let chosen = 'Não alocado';
+          for (let i = 0; i < prefs.length; i++) {
+            if ((remaining.get(prefs[i]) || 0) > 0) {
+              remaining.set(prefs[i], remaining.get(prefs[i]) - 1);
+              chosen = `${prefs[i]} (${i + 1}ª op.)`;
+              break;
+            }
+          }
+          lines.push(`${idx + 1}º ${a.nome} → ${chosen}`);
+        });
+        try {
+          await navigator.clipboard.writeText(lines.join('\n'));
+          setEstagioStatus('Resultado copiado para a área de transferência!', true);
+        } catch {
+          setEstagioStatus('Não foi possível copiar automaticamente.');
+        }
       });
 
       document.getElementById('formAddEstagioVaga')?.addEventListener('submit', (e) => {
@@ -2999,7 +3101,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const totalVagas = store.vagas.reduce((s, v) => s + (v.qtd || 0), 0);
     if (resumoEl) {
-      resumoEl.textContent = `${totalVagas} vaga(s) em ${store.vagas.length} local(is) · ${ranked.length} alunos`;
+      const falta = totalVagas > 0 && totalVagas < ranked.length;
+      resumoEl.innerHTML = `${totalVagas} vaga(s) em ${store.vagas.length} local(is) · ${ranked.length} alunos${falta ? ` <span class="text-rose-400">(-${ranked.length - totalVagas})</span>` : ''}`;
     }
 
     if (vagasEl) {
@@ -3077,9 +3180,10 @@ document.addEventListener('DOMContentLoaded', () => {
                   ${idx + 1}º
                 </span>
                 <div class="min-w-0">
-                  <div class="flex items-center gap-2">
+                  <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold text-slate-100 truncate">${a.nome}</span>
                     <span class="text-[10px] font-mono-numbers text-blue-400 font-bold">${fmtNum(a[field])}</span>
+                    ${getVinculoBadge(a.vinculo)}
                   </div>
                   <div class="text-[11px] text-slate-400 truncate mt-0.5">${summaryText}</div>
                 </div>
@@ -3100,12 +3204,13 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     ${Array.from({ length: 10 }, (_, optIdx) => {
                       const curVal = prefs[optIdx] || '';
+                      const usedElsewhere = new Set(prefs.filter((v, i) => v && i !== optIdx));
                       return `
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-1.5">
                           <span class="w-8 text-[11px] font-mono-numbers font-bold text-slate-400 shrink-0">${optIdx + 1}ª op.</span>
                           <select data-pref-aluno="${a.numero}" data-pref-idx="${optIdx}" class="flex-1 min-w-0 text-xs bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500">
                             <option value="">— Nenhuma —</option>
-                            ${vagaNames.map(vn => `<option value="${vn}" ${curVal === vn ? 'selected' : ''}>${vn}</option>`).join('')}
+                            ${vagaNames.map(vn => `<option value="${vn}" ${curVal === vn ? 'selected' : ''} ${usedElsewhere.has(vn) ? 'disabled' : ''}>${vn}${usedElsewhere.has(vn) ? ' (já escolhida)' : ''}</option>`).join('')}
                           </select>
                         </div>
                       `;
@@ -3487,7 +3592,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Print Transcript Button
+  // Print Transcript & Compare Shortcut Buttons
+  document.getElementById('btnCompareFromModal')?.addEventListener('click', () => {
+    const aluno = state.activeStudentModal;
+    if (!aluno) return;
+    state.comparatorA = aluno.numero;
+    if (state.comparatorB === aluno.numero) {
+      const other = DATA.alunos.find(a => a.numero !== aluno.numero);
+      if (other) state.comparatorB = other.numero;
+    }
+    closeStudentModal();
+    switchTab('comparator');
+  });
+
   document.getElementById('btnPrintModal')?.addEventListener('click', () => {
     window.print();
   });
