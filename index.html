@@ -770,10 +770,16 @@
       
       <!-- Selection Bar -->
       <div class="glass-panel p-5 rounded-2xl border border-slate-800">
-        <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2 mb-4">
-          <i data-lucide="swords" class="w-4 h-4 text-blue-400"></i>
-          Comparador Direto de Alunos (Head-to-Head)
-        </h2>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <i data-lucide="swords" class="w-4 h-4 text-blue-400"></i>
+            Comparador Direto de Alunos (Head-to-Head)
+          </h2>
+          <button id="btnSwapComparator" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-slate-200 transition flex items-center gap-1.5" title="Trocar Aluno 1 e Aluno 2">
+            <i data-lucide="arrow-left-right" class="w-3.5 h-3.5 text-indigo-400"></i>
+            <span>Inverter A1 ⇄ A2</span>
+          </button>
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           
           <!-- Aluno 1 Selection -->
@@ -838,10 +844,25 @@
             </h3>
             <p class="text-xs text-slate-400 mt-0.5">Compare as notas em cada disciplina por semestre (equivalências do Básico agrupadas automaticamente)</p>
           </div>
-          <label class="flex items-center gap-2 text-xs text-slate-300 font-semibold cursor-pointer select-none bg-slate-900/70 border border-slate-700/80 px-3 py-1.5 rounded-xl">
-            <input type="checkbox" id="chkComparatorOnlyCommon" class="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500" />
-            <span>Apenas matérias em comum</span>
-          </label>
+          <div class="flex flex-wrap items-center gap-2">
+            <input type="text" id="comparatorSubjectSearch" placeholder="Buscar disciplina..." class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-1.5 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-44" />
+            <select id="comparatorTypeFilter" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="ALL">Todas (Grad. + Mil.)</option>
+              <option value="grad">Só Graduação</option>
+              <option value="mil">Só Militares</option>
+            </select>
+            <select id="comparatorSubjectSort" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-2.5 py-1.5 text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="semestre">Ordenar: Semestre</option>
+              <option value="diff_desc">Maior diferença |A1 - A2|</option>
+              <option value="g1_desc">Maior nota Aluno 1</option>
+              <option value="g2_desc">Maior nota Aluno 2</option>
+              <option value="turma_desc">Maior média da turma</option>
+            </select>
+            <label class="flex items-center gap-2 text-xs text-slate-300 font-semibold cursor-pointer select-none bg-slate-900/70 border border-slate-700/80 px-3 py-1.5 rounded-xl">
+              <input type="checkbox" id="chkComparatorOnlyCommon" class="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500" />
+              <span>Só em comum</span>
+            </label>
+          </div>
         </div>
 
         <!-- Semester Filter Pills -->
@@ -854,8 +875,13 @@
           <!-- Populated by JS -->
         </div>
 
+        <!-- Mobile Cards Container -->
+        <div id="comparatorSubjectsCards" class="hidden space-y-2.5">
+          <!-- Populated by JS on mobile -->
+        </div>
+
         <!-- Subjects Comparison Table -->
-        <div class="overflow-x-auto rounded-xl border border-slate-800">
+        <div id="comparatorSubjectsTableContainer" class="overflow-x-auto rounded-xl border border-slate-800">
           <table class="w-full text-left border-collapse text-xs">
             <thead class="bg-slate-900 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider">
               <tr>
@@ -1083,8 +1109,8 @@
   </nav>
 
   <!-- 1. Embedded Processed Dataset -->
-  <script src="data.js?v=20261118"></script>
+  <script src="data.js?v=20261118b"></script>
   <!-- 2. Application Logic -->
-  <script src="app.js?v=20261118"></script>
+  <script src="app.js?v=20261118b"></script>
 </body>
 </html>

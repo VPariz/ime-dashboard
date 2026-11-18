@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
     comparatorB: DATA.alunos[1]?.numero || null,
     comparatorSemester: 'ALL',
     comparatorOnlyCommon: false,
+    comparatorSubjectSearch: '',
+    comparatorTypeFilter: 'ALL',
+    comparatorSubjectSort: 'semestre',
     courseA: 'Computação',
     courseB: 'Eletrônica',
     activeCoursesInChart: new Set(DATA.metadata.cursos),
@@ -234,6 +237,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (state.activeStudentModal) {
       renderModalDisciplinesTable();
+    }
+    if (state.currentTab === 'comparator') {
+      renderStudentComparator();
     }
     refreshIcons();
   }
@@ -658,6 +664,30 @@ document.addEventListener('DOMContentLoaded', () => {
     renderCourseMatrixTable();
     initCourseHeadToHead();
 
+    document.getElementById('btnSelectSE3Courses')?.addEventListener('click', () => {
+      state.activeCoursesInChart = new Set([...SE_GROUPS.SE3.cursos, 'SE3']);
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
+    });
+
+    document.getElementById('btnSelectSE4Courses')?.addEventListener('click', () => {
+      state.activeCoursesInChart = new Set([...SE_GROUPS.SE4.cursos, 'SE4']);
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
+    });
+
+    document.getElementById('btnSelectAllCourses')?.addEventListener('click', () => {
+      state.activeCoursesInChart = new Set(DATA.metadata.cursos);
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
+    });
+
+    document.getElementById('btnClearCourses')?.addEventListener('click', () => {
+      state.activeCoursesInChart = new Set();
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
+    });
+
     // Toggle metric for courses (Semestral vs Cumulativo)
     document.querySelectorAll('#toggleCourseMetric button').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -674,58 +704,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('courseTogglePills');
     if (!container) return;
 
-    container.innerHTML = DATA.cursosComparativo.map(c => {
-      const active = state.activeCoursesInChart.has(c.curso);
-      const color = courseColors[c.curso] || '#3b82f6';
-      const border = active ? `border-color: ${color};` : 'border-color: rgba(255,255,255,0.1); opacity: 0.5;';
-      const bg = active ? `background-color: ${color}22;` : 'background-color: transparent;';
+    const pillItems = [
+      ...DATA.cursosComparativo.map(c => ({ id: c.curso, label: c.curso, color: courseColors[c.curso] || '#3b82f6' })),
+      { id: 'SE3', label: 'SE3 (Consolidado)', color: SE_GROUPS.SE3.color },
+      { id: 'SE4', label: 'SE4 (Consolidado)', color: SE_GROUPS.SE4.color }
+    ];
+
+    container.innerHTML = pillItems.map(item => {
+      const active = state.activeCoursesInChart.has(item.id);
+      const border = active ? `border-color: ${item.color};` : 'border-color: rgba(255,255,255,0.1); opacity: 0.5;';
+      const bg = active ? `background-color: ${item.color}22;` : 'background-color: transparent;';
 
       return `
         <button 
           class="course-pill px-3 py-1 rounded-xl text-xs font-bold border transition flex items-center gap-1.5"
-          style="${border} ${bg} color: ${color};"
-          data-course="${c.curso}"
-          onclick="window.app.toggleCourseInChart('${c.curso}')"
+          style="${border} ${bg} color: ${item.color};"
+          data-course="${item.id}"
+          onclick="window.app.toggleCourseInChart('${item.id}')"
         >
-          <span class="w-2 h-2 rounded-full" style="background-color: ${color};"></span>
-          <span>${c.curso}</span>
+          <span class="w-2 h-2 rounded-full" style="background-color: ${item.color};"></span>
+          <span>${item.label}</span>
         </button>
       `;
     }).join('');
-
-    document.getElementById('btnSelectSE3Courses')?.addEventListener('click', () => {
-      state.activeCoursesInChart = new Set(SE_GROUPS.SE3.cursos);
-      renderCourseTogglePills();
-      updateCourseEvolutionChart();
-    });
-
-    document.getElementById('btnSelectSE4Courses')?.addEventListener('click', () => {
-      state.activeCoursesInChart = new Set(SE_GROUPS.SE4.cursos);
-      renderCourseTogglePills();
-      updateCourseEvolutionChart();
-    });
-
-    document.getElementById('btnSelectAllCourses')?.addEventListener('click', () => {
-      state.activeCoursesInChart = new Set(DATA.metadata.cursos);
-      renderCourseTogglePills();
-      updateCourseEvolutionChart();
-    });
-
-    document.getElementById('btnClearCourses')?.addEventListener('click', () => {
-      state.activeCoursesInChart = new Set();
-      renderCourseTogglePills();
-      updateCourseEvolutionChart();
-    });
   }
 
-  function renderCourseEvolutionMultiLineChart() {
-    const ctx = document.getElementById('chartCursosEvolucao')?.getContext('2d');
-    if (!ctx) return;
-
-    const semestres = DATA.metadata.semestres;
-    const labels = semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`);
-
-    const isSem = (state.courseMetric === 'semestral');
+  function buildCourseChartDatasets(semestres, isSem) {
     const cohortData = isSem
       ? DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma)
       : DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurmaCumulativa);
@@ -765,6 +769,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       }
     });
+
+    ['SE3', 'SE4'].forEach(seKey => {
+      if (state.activeCoursesInChart.has(seKey)) {
+        const grp = getGroupCourseObj(seKey);
+        if (!grp) return;
+        const color = SE_GROUPS[seKey].color;
+        const vals = isSem
+          ? semestres.map(s => grp.semestres[s])
+          : semestres.map(s => grp.semestresCumulativo[s]);
+
+        datasets.push({
+          label: `${seKey} (Consolidado)`,
+          data: vals,
+          borderColor: color,
+          backgroundColor: color,
+          borderDash: [3, 3],
+          pointBackgroundColor: color,
+          pointBorderColor: '#fff',
+          pointRadius: 5,
+          borderWidth: 3,
+          tension: 0.25
+        });
+      }
+    });
+
+    return datasets;
+  }
+
+  function renderCourseEvolutionMultiLineChart() {
+    const ctx = document.getElementById('chartCursosEvolucao')?.getContext('2d');
+    if (!ctx) return;
+
+    const semestres = DATA.metadata.semestres;
+    const labels = semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`);
+    const isSem = (state.courseMetric === 'semestral');
+    const datasets = buildCourseChartDatasets(semestres, isSem);
 
     chartCursosEvolucaoInstance = new Chart(ctx, {
       type: 'line',
@@ -806,48 +846,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const semestres = DATA.metadata.semestres;
     const isSem = (state.courseMetric === 'semestral');
-
-    const cohortData = isSem
-      ? DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma)
-      : DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurmaCumulativa);
-
-    const cohortLabel = isSem ? 'Média da Turma (Semestral)' : 'CR Cumulativo Turma';
-
-    const datasets = [
-      {
-        label: cohortLabel,
-        data: cohortData,
-        borderColor: '#94a3b8',
-        backgroundColor: 'transparent',
-        borderDash: [6, 6],
-        pointRadius: 4,
-        borderWidth: 2,
-        order: 99
-      }
-    ];
-
-    DATA.cursosComparativo.forEach(c => {
-      if (state.activeCoursesInChart.has(c.curso)) {
-        const color = courseColors[c.curso] || '#3b82f6';
-        const vals = isSem
-          ? semestres.map(s => c.semestres[s])
-          : semestres.map(s => c.semestresCumulativo[s]);
-
-        datasets.push({
-          label: c.curso,
-          data: vals,
-          borderColor: color,
-          backgroundColor: color,
-          pointBackgroundColor: color,
-          pointBorderColor: '#fff',
-          pointRadius: 5,
-          borderWidth: 2.5,
-          tension: 0.25
-        });
-      }
-    });
-
-    chartCursosEvolucaoInstance.data.datasets = datasets;
+    chartCursosEvolucaoInstance.data.datasets = buildCourseChartDatasets(semestres, isSem);
     chartCursosEvolucaoInstance.update();
   }
 
@@ -1454,18 +1453,47 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    // Swap A1 <-> A2
+    document.getElementById('btnSwapComparator')?.addEventListener('click', () => {
+      const tmp = state.comparatorA;
+      state.comparatorA = state.comparatorB;
+      state.comparatorB = tmp;
+      select1.value = state.comparatorA;
+      select2.value = state.comparatorB;
+      renderStudentComparator();
+    });
+
+    const rerenderSubjects = () => {
+      renderComparatorSubjects(
+        DATA.alunos.find(a => a.numero === state.comparatorA) || DATA.alunos[0],
+        DATA.alunos.find(a => a.numero === state.comparatorB) || DATA.alunos[1]
+      );
+    };
+
     // Only common subjects toggle
     const chkCommon = document.getElementById('chkComparatorOnlyCommon');
     if (chkCommon) {
       chkCommon.checked = state.comparatorOnlyCommon;
       chkCommon.addEventListener('change', (e) => {
         state.comparatorOnlyCommon = e.target.checked;
-        renderComparatorSubjects(
-          DATA.alunos.find(a => a.numero === state.comparatorA) || DATA.alunos[0],
-          DATA.alunos.find(a => a.numero === state.comparatorB) || DATA.alunos[1]
-        );
+        rerenderSubjects();
       });
     }
+
+    document.getElementById('comparatorSubjectSearch')?.addEventListener('input', (e) => {
+      state.comparatorSubjectSearch = e.target.value;
+      rerenderSubjects();
+    });
+
+    document.getElementById('comparatorTypeFilter')?.addEventListener('change', (e) => {
+      state.comparatorTypeFilter = e.target.value;
+      rerenderSubjects();
+    });
+
+    document.getElementById('comparatorSubjectSort')?.addEventListener('change', (e) => {
+      state.comparatorSubjectSort = e.target.value;
+      rerenderSubjects();
+    });
 
     renderStudentComparator();
   }
@@ -1609,6 +1637,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const semFilterEl = document.getElementById('comparatorSemesterFilter');
     const summaryEl = document.getElementById('comparatorSemesterSummary');
     const tbody = document.getElementById('comparatorSubjectsTableBody');
+    const cardsEl = document.getElementById('comparatorSubjectsCards');
+    const tableWrapEl = document.getElementById('comparatorSubjectsTableContainer');
     const th1 = document.getElementById('thCompAluno1');
     const th2 = document.getElementById('thCompAluno2');
     if (!semFilterEl || !tbody) return;
@@ -1665,14 +1695,36 @@ document.addEventListener('DOMContentLoaded', () => {
     addToMap(a1.disciplinas || [], map1);
     addToMap(a2.disciplinas || [], map2);
 
-    let rows = [...rowsMap.values()].sort((x, y) => {
+    const searchQ = (state.comparatorSubjectSearch || '').trim().toLowerCase();
+    let rows = [...rowsMap.values()].filter(r => {
+      if (state.comparatorOnlyCommon && !(map1.has(r.key) && map2.has(r.key))) return false;
+      if (state.comparatorTypeFilter === 'grad' && r.militar) return false;
+      if (state.comparatorTypeFilter === 'mil' && !r.militar) return false;
+      if (searchQ && !r.nome.toLowerCase().includes(searchQ)) return false;
+      return true;
+    });
+
+    rows.sort((x, y) => {
+      const gx1 = map1.get(x.key)?.notaEfetiva ?? null;
+      const gx2 = map2.get(x.key)?.notaEfetiva ?? null;
+      const gy1 = map1.get(y.key)?.notaEfetiva ?? null;
+      const gy2 = map2.get(y.key)?.notaEfetiva ?? null;
+
+      if (state.comparatorSubjectSort === 'diff_desc') {
+        const dx = (gx1 !== null && gx2 !== null) ? Math.abs(gx1 - gx2) : -1;
+        const dy = (gy1 !== null && gy2 !== null) ? Math.abs(gy1 - gy2) : -1;
+        if (dy !== dx) return dy - dx;
+      } else if (state.comparatorSubjectSort === 'g1_desc') {
+        if ((gy1 ?? -1) !== (gx1 ?? -1)) return (gy1 ?? -1) - (gx1 ?? -1);
+      } else if (state.comparatorSubjectSort === 'g2_desc') {
+        if ((gy2 ?? -1) !== (gx2 ?? -1)) return (gy2 ?? -1) - (gx2 ?? -1);
+      } else if (state.comparatorSubjectSort === 'turma_desc') {
+        if ((y.mediaTurma ?? -1) !== (x.mediaTurma ?? -1)) return (y.mediaTurma ?? -1) - (x.mediaTurma ?? -1);
+      }
+
       if (x.semestreOrdem !== y.semestreOrdem) return x.semestreOrdem - y.semestreOrdem;
       return x.nome.localeCompare(y.nome, 'pt-BR');
     });
-
-    if (state.comparatorOnlyCommon) {
-      rows = rows.filter(r => map1.has(r.key) && map2.has(r.key));
-    }
 
     let wins1 = 0, wins2 = 0, ties = 0;
     const grades1 = [], grades2 = [];
@@ -1687,14 +1739,14 @@ document.addEventListener('DOMContentLoaded', () => {
       return parts.join(' · ');
     };
 
-    const htmlRows = rows.map(r => {
+    const enriched = rows.map(r => {
       const d1 = map1.get(r.key);
       const d2 = map2.get(r.key);
       const g1 = d1?.notaEfetiva ?? null;
       const g2 = d2?.notaEfetiva ?? null;
 
-      if (g1 !== null && !r.militar) grades1.push(g1);
-      if (g2 !== null && !r.militar) grades2.push(g2);
+      if (g1 !== null && (state.comparatorTypeFilter === 'mil' || !r.militar)) grades1.push(g1);
+      if (g2 !== null && (state.comparatorTypeFilter === 'mil' || !r.militar)) grades2.push(g2);
 
       let diffHtml = '<span class="text-slate-500">-</span>';
       if (g1 !== null && g2 !== null) {
@@ -1715,50 +1767,91 @@ document.addEventListener('DOMContentLoaded', () => {
       if (r.militar) badges.push('<span class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[10px] font-bold">Militar</span>');
       if (r.isParcial) badges.push('<span class="px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 text-[10px] font-bold">Parcial</span>');
 
-      const sub1 = fmtSub(d1);
-      const sub2 = fmtSub(d2);
+      return {
+        r, g1, g2,
+        sub1: fmtSub(d1),
+        sub2: fmtSub(d2),
+        diffHtml,
+        badgesHtml: badges.join('')
+      };
+    });
 
-      return `
-        <tr class="table-hover-row border-b border-slate-800/40">
-          <td class="py-2.5 px-3 font-mono-numbers text-slate-400">${r.semestre}</td>
-          <td class="py-2.5 px-4 text-slate-200 font-semibold">
-            <div class="flex flex-wrap items-center gap-1.5">
-              <span>${r.nome}</span>
-              ${badges.join('')}
+    tbody.innerHTML = enriched.map(({ r, g1, g2, sub1, sub2, diffHtml, badgesHtml }) => `
+      <tr class="table-hover-row border-b border-slate-800/40">
+        <td class="py-2.5 px-3 font-mono-numbers text-slate-400">${r.semestre}</td>
+        <td class="py-2.5 px-4 text-slate-200 font-semibold">
+          <div class="flex flex-wrap items-center gap-1.5">
+            <span>${r.nome}</span>
+            ${badgesHtml}
+          </div>
+        </td>
+        <td class="py-2.5 px-3 text-right font-mono-numbers">
+          <div class="font-bold ${g1 !== null && g2 !== null && g1 > g2 ? 'text-blue-400' : 'text-slate-200'}">${g1 !== null ? fmtNum(g1) : '-'}</div>
+          ${sub1 ? `<div class="text-[10px] text-slate-500">${sub1}</div>` : ''}
+        </td>
+        <td class="py-2.5 px-3 text-right font-mono-numbers">
+          <div class="font-bold ${g1 !== null && g2 !== null && g2 > g1 ? 'text-emerald-400' : 'text-slate-200'}">${g2 !== null ? fmtNum(g2) : '-'}</div>
+          ${sub2 ? `<div class="text-[10px] text-slate-500">${sub2}</div>` : ''}
+        </td>
+        <td class="py-2.5 px-3 text-right font-mono-numbers">${diffHtml}</td>
+        <td class="py-2.5 px-3 text-right font-mono-numbers text-slate-400">${fmtNum(r.mediaTurma)}</td>
+      </tr>
+    `).join('') || `<tr><td colspan="6" class="py-6 text-center text-slate-400">Nenhuma disciplina encontrada para o filtro selecionado.</td></tr>`;
+
+    if (cardsEl && tableWrapEl) {
+      const isMobile = document.body.classList.contains('is-mobile');
+      if (isMobile) {
+        cardsEl.classList.remove('hidden');
+        tableWrapEl.classList.add('hidden');
+        cardsEl.innerHTML = enriched.map(({ r, g1, g2, sub1, sub2, diffHtml, badgesHtml }) => `
+          <div class="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2">
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[10px] font-mono-numbers font-bold text-slate-400">Sem. ${r.semestre} · Turma ${fmtNum(r.mediaTurma)}</span>
+                <div class="text-xs font-bold text-slate-100 flex flex-wrap items-center gap-1.5 mt-0.5">
+                  <span>${r.nome}</span>
+                  ${badgesHtml}
+                </div>
+              </div>
+              <div class="text-xs font-mono-numbers shrink-0">${diffHtml}</div>
             </div>
-          </td>
-          <td class="py-2.5 px-3 text-right font-mono-numbers">
-            <div class="font-bold ${g1 !== null && g2 !== null && g1 > g2 ? 'text-blue-400' : 'text-slate-200'}">${g1 !== null ? fmtNum(g1) : '-'}</div>
-            ${sub1 ? `<div class="text-[10px] text-slate-500">${sub1}</div>` : ''}
-          </td>
-          <td class="py-2.5 px-3 text-right font-mono-numbers">
-            <div class="font-bold ${g1 !== null && g2 !== null && g2 > g1 ? 'text-emerald-400' : 'text-slate-200'}">${g2 !== null ? fmtNum(g2) : '-'}</div>
-            ${sub2 ? `<div class="text-[10px] text-slate-500">${sub2}</div>` : ''}
-          </td>
-          <td class="py-2.5 px-3 text-right font-mono-numbers">${diffHtml}</td>
-          <td class="py-2.5 px-3 text-right font-mono-numbers text-slate-400">${fmtNum(r.mediaTurma)}</td>
-        </tr>
-      `;
-    }).join('');
-
-    tbody.innerHTML = htmlRows || `<tr><td colspan="6" class="py-6 text-center text-slate-400">Nenhuma disciplina encontrada para o filtro selecionado.</td></tr>`;
+            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-xs">
+              <div class="p-2 rounded-lg bg-slate-950/60">
+                <span class="text-[10px] text-blue-400 font-bold block truncate">${a1.nome}</span>
+                <span class="font-extrabold font-mono-numbers ${g1 !== null && g2 !== null && g1 > g2 ? 'text-blue-400' : 'text-slate-200'}">${g1 !== null ? fmtNum(g1) : '-'}</span>
+                ${sub1 ? `<span class="text-[10px] text-slate-500 block">${sub1}</span>` : ''}
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60">
+                <span class="text-[10px] text-emerald-400 font-bold block truncate">${a2.nome}</span>
+                <span class="font-extrabold font-mono-numbers ${g1 !== null && g2 !== null && g2 > g1 ? 'text-emerald-400' : 'text-slate-200'}">${g2 !== null ? fmtNum(g2) : '-'}</span>
+                ${sub2 ? `<span class="text-[10px] text-slate-500 block">${sub2}</span>` : ''}
+              </div>
+            </div>
+          </div>
+        `).join('') || `<div class="py-6 text-center text-xs text-slate-400">Nenhuma disciplina encontrada para o filtro selecionado.</div>`;
+      } else {
+        cardsEl.classList.add('hidden');
+        tableWrapEl.classList.remove('hidden');
+      }
+    }
 
     if (summaryEl) {
       const avg1 = grades1.length ? grades1.reduce((s, v) => s + v, 0) / grades1.length : null;
       const avg2 = grades2.length ? grades2.reduce((s, v) => s + v, 0) / grades2.length : null;
       const scopeLabel = state.comparatorSemester === 'ALL' ? 'Todos os semestres' : `Semestre ${state.comparatorSemester}`;
+      const avgTypeLabel = state.comparatorTypeFilter === 'mil' ? 'Média Militar' : 'Média Graduação';
       summaryEl.innerHTML = `
         <div class="p-3 rounded-xl bg-slate-900/60 border border-blue-500/20 flex items-center justify-between">
           <div>
             <span class="text-[10px] uppercase font-bold text-blue-400 block">${a1.nome} (${scopeLabel})</span>
-            <span class="text-xs text-slate-400">Média Graduação (${grades1.length} disc.)</span>
+            <span class="text-xs text-slate-400">${avgTypeLabel} (${grades1.length} disc.)</span>
           </div>
           <span class="text-lg font-extrabold text-blue-400 font-mono-numbers">${fmtNum(avg1)}</span>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/60 border border-emerald-500/20 flex items-center justify-between">
           <div>
             <span class="text-[10px] uppercase font-bold text-emerald-400 block">${a2.nome} (${scopeLabel})</span>
-            <span class="text-xs text-slate-400">Média Graduação (${grades2.length} disc.)</span>
+            <span class="text-xs text-slate-400">${avgTypeLabel} (${grades2.length} disc.)</span>
           </div>
           <span class="text-lg font-extrabold text-emerald-400 font-mono-numbers">${fmtNum(avg2)}</span>
         </div>
