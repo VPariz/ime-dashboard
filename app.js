@@ -444,7 +444,8 @@ document.addEventListener('DOMContentLoaded', () => {
           addBtnLabel: '+ Eng.',
           defaultCriterio: 'cumulativo',
           buildDefaultVagas: () => {
-            const cursos = DATA.metadata?.cursos || DEFAULT_CURSOS_IME;
+            const specCursos = (DATA.metadata?.cursos || []).filter(c => c !== 'Ciclo Básico');
+            const cursos = specCursos.length > 1 ? specCursos : DEFAULT_CURSOS_IME;
             const totalElegiveis = Math.max(20, DATA.alunos.filter(a => a.vinculo !== 'CG').length || DATA.alunos.length);
             const baseQtd = Math.max(2, Math.round(totalElegiveis / Math.max(1, cursos.length)));
             return cursos.map((c, i) => ({
