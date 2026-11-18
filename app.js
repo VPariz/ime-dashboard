@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Estágio
     estagioCurso: DATA.metadata.cursos[0] || 'Computação',
-    estagioCriterio: 'grad',
+    estagioCriterio: 'cumulativo',
     estagioExpandedAluno: null,
     estagioInitialized: false,
     estagioData: (() => {
@@ -3150,11 +3150,25 @@ document.addEventListener('DOMContentLoaded', () => {
     return state.estagioData[curso];
   }
 
+  function getEstagioScore(aluno) {
+    if (state.estagioCriterio === 'geral') return aluno.mediaGeral;
+    if (state.estagioCriterio === 'cumulativo') {
+      const ev32 = (aluno.evolucao || []).find(e => e.semestre === '3.2');
+      return ev32?.mediaGradCumulativo ?? aluno.mediaGraduacao;
+    }
+    return aluno.mediaGraduacao;
+  }
+
+  function getEstagioCriterioLabel() {
+    if (state.estagioCriterio === 'geral') return 'CR Geral';
+    if (state.estagioCriterio === 'cumulativo') return 'Cumulativa Graduação (c/ 3.2)';
+    return 'CR Graduação (até 3.1)';
+  }
+
   function getEstagioRankedAlunos(curso) {
-    const field = state.estagioCriterio === 'geral' ? 'mediaGeral' : 'mediaGraduacao';
     return DATA.alunos
       .filter(a => a.curso === curso && state.includedVinculos.has(a.vinculo))
-      .sort((a, b) => (b[field] ?? 0) - (a[field] ?? 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
+      .sort((a, b) => (getEstagioScore(b) ?? 0) - (getEstagioScore(a) ?? 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
   function setEstagioStatus(msg, isSaved = false) {
@@ -3203,7 +3217,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const store = getEstagioCursoStore(curso);
         const ranked = getEstagioRankedAlunos(curso);
         const remaining = new Map(store.vagas.map(v => [v.nome, v.qtd]));
-        const lines = [`*Estágio ${curso} (${state.estagioCriterio === 'geral' ? 'CR Geral' : 'CR Graduação'})*`];
+        const lines = [`*Estágio ${curso} (${getEstagioCriterioLabel()})*`];
         ranked.forEach((a, idx) => {
           const prefs = (store.prefs[a.numero] || []).filter(Boolean);
           let chosen = 'Não alocado';
@@ -3361,10 +3375,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (alunosEl) {
-      const field = state.estagioCriterio === 'geral' ? 'mediaGeral' : 'mediaGraduacao';
       const vagaNames = store.vagas.map(v => v.nome);
 
       alunosEl.innerHTML = ranked.map((a, idx) => {
+        const score = getEstagioScore(a);
         const prefs = store.prefs[a.numero] || [];
         const filled = prefs.filter(Boolean);
         const isExpanded = (state.estagioExpandedAluno === a.numero);
@@ -3383,7 +3397,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold text-slate-100 truncate">${a.nome}</span>
-                    <span class="text-[10px] font-mono-numbers text-blue-400 font-bold">${fmtNum(a[field])}</span>
+                    <span class="text-[10px] font-mono-numbers text-blue-400 font-bold">${fmtNum(score)}</span>
                     ${getVinculoBadge(a.vinculo)}
                   </div>
                   <div class="text-[11px] text-slate-400 truncate mt-0.5">${summaryText}</div>
@@ -3466,7 +3480,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const curso = state.estagioCurso;
     const store = getEstagioCursoStore(curso);
     const ranked = getEstagioRankedAlunos(curso);
-    const field = state.estagioCriterio === 'geral' ? 'mediaGeral' : 'mediaGraduacao';
 
     const tbody = document.getElementById('estagioResultadoBody');
     const ocupacaoEl = document.getElementById('estagioOcupacaoVagas');
@@ -3501,14 +3514,15 @@ document.addEventListener('DOMContentLoaded', () => {
         ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${chosenRank === 1 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-blue-500/15 text-blue-300 border border-blue-500/30'}">${chosenRank}ª opção</span>`
         : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">${prefs.length ? 'Vagas esgotadas' : 'Sem escolha'}</span>`;
 
+      const score = getEstagioScore(a);
       return `
         <tr class="table-hover-row border-b border-slate-800/40">
           <td class="py-2.5 px-2.5 sm:px-3 font-mono-numbers font-bold text-slate-300">${idx + 1}º</td>
           <td class="py-2.5 px-3 sm:px-4 font-bold text-slate-100">
             <div>${a.nome}</div>
-            <div class="sm:hidden text-[10px] font-mono-numbers text-blue-400">CR ${fmtNum(a[field])}</div>
+            <div class="sm:hidden text-[10px] font-mono-numbers text-blue-400">CR ${fmtNum(score)}</div>
           </td>
-          <td class="hidden sm:table-cell py-2.5 px-3 text-right font-mono-numbers text-blue-400 font-bold">${fmtNum(a[field])}</td>
+          <td class="hidden sm:table-cell py-2.5 px-3 text-right font-mono-numbers text-blue-400 font-bold">${fmtNum(score)}</td>
           <td class="py-2.5 px-3 sm:px-4 font-bold ${chosen ? 'text-cyan-300' : 'text-slate-500'}">${chosen || 'Não alocado'}</td>
           <td class="py-2.5 px-2.5 sm:px-3 text-center">${prefBadge}</td>
         </tr>
