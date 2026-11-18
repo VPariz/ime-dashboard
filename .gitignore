@@ -2,3 +2,9 @@
 .DS_Store
 Thumbs.db
 *.log
+
+# Private student data (never commit to public GitHub)
+data.js
+data.json
+data.enc.js
+*.private.json

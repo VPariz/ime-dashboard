@@ -5,69 +5,272 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  if (!window.IME_DATA) {
-    console.error('Dataset window.IME_DATA não encontrado.');
-    return;
+  let dashboardBooted = false;
+
+  const gateEl = document.getElementById('authGate');
+  const shellEl = document.getElementById('appShell');
+  const authSelectTheme = document.getElementById('authSelectTheme');
+  const loginForm = document.getElementById('loginForm');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginError = document.getElementById('loginError');
+  const btnLoginSubmit = document.getElementById('btnLoginSubmit');
+  const checkingBanner = document.getElementById('authCheckingBanner');
+  const notConfiguredNote = document.getElementById('supabaseNotConfiguredNote');
+
+  function applyPreBootTheme(themeName) {
+    const t = themeName || 'dark';
+    document.body.setAttribute('data-theme', t);
+    try { localStorage.setItem('ime_theme', t); } catch {}
+    if (authSelectTheme && authSelectTheme.value !== t) authSelectTheme.value = t;
+    const mainSel = document.getElementById('selectTheme');
+    if (mainSel && mainSel.value !== t) mainSel.value = t;
   }
 
-  const DATA = window.IME_DATA;
-  let filteredAlunos = [...DATA.alunos];
-  
-  // App State
-  const state = {
-    currentTab: 'overview',
-    filterCurso: 'ALL',
-    includedVinculos: new Set(['Ativa', 'Reserva', 'CG']),
-    vfRiskFilter: 'ALL',
-    vfSearch: '',
-    tableSearch: '',
-    sortColumn: 'rankGraduacao',
-    sortAsc: true,
-    pageSize: 'ALL',
-    currentPage: 1,
-    disciplinasSearch: '',
-    disciplinasSemestre: 'ALL',
-    disciplinasCurso: 'ALL',
-    comparatorA: DATA.alunos[0]?.numero || null,
-    comparatorB: DATA.alunos[1]?.numero || null,
-    comparatorInitialized: false,
-    comparatorSemester: 'ALL',
-    comparatorOnlyCommon: false,
-    comparatorSubjectSearch: '',
-    comparatorTypeFilter: 'ALL',
-    comparatorSubjectSort: 'semestre',
-    courseA: 'Computação',
-    courseB: 'Eletrônica',
-    activeCoursesInChart: new Set(DATA.metadata.cursos),
-    activeStudentModal: null,
-    modalSemesterFilter: 'ALL',
-    
-    // Metric Modes: 'semestral' | 'cumulativo'
-    overviewMetric: 'semestral',
-    courseMetric: 'semestral',
-    modalMetric: 'semestral',
-    comparatorMetric: 'semestral',
+  applyPreBootTheme(localStorage.getItem('ime_theme') || 'dark');
+  authSelectTheme?.addEventListener('change', (e) => applyPreBootTheme(e.target.value));
+  if (window.lucide && typeof window.lucide.createIcons === 'function') {
+    window.lucide.createIcons();
+  }
 
-    // Device & View Modes
-    theme: localStorage.getItem('ime_theme') || 'dark',
-    deviceMode: 'auto',
-    rankingView: 'cards',
-    courseView: 'table',
-    modalDisciplineView: 'cards',
+  function showLoginError(msg) {
+    if (!loginError) return;
+    if (!msg) {
+      loginError.classList.add('hidden');
+      loginError.textContent = '';
+      return;
+    }
+    loginError.textContent = msg;
+    loginError.classList.remove('hidden');
+  }
 
-    // Estágio
-    estagioCurso: DATA.metadata.cursos[0] || 'Computação',
-    estagioCriterio: 'cumulativo',
-    estagioExpandedAluno: null,
-    estagioInitialized: false,
-    estagioData: (() => {
-      try {
-        return JSON.parse(localStorage.getItem('ime_estagio_v1') || '{}');
-      } catch {
-        return {};
+  const sbCfg = window.SUPABASE_CONFIG || {};
+  const isSupabaseConfigured = Boolean(
+    sbCfg.url && sbCfg.anonKey && window.supabase && typeof window.supabase.createClient === 'function'
+  );
+  const sbClient = isSupabaseConfigured ? window.supabase.createClient(sbCfg.url, sbCfg.anonKey) : null;
+
+  async function fetchSupabaseDataset(sb) {
+    const bucket = sbCfg.bucket || 'ime-private';
+    const objectPath = sbCfg.objectPath || 'data.json';
+    const { data, error } = await sb.storage.from(bucket).download(objectPath);
+    if (error) {
+      throw new Error(error.message || 'Erro ao baixar dataset privado no Supabase.');
+    }
+    const text = await data.text();
+    const parsed = JSON.parse(text);
+    if (!parsed || !Array.isArray(parsed.alunos)) {
+      throw new Error('Arquivo JSON inválido no bucket privado.');
+    }
+    return parsed;
+  }
+
+  function parseLocalDatasetText(text) {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end === -1 || end <= start) {
+      throw new Error('Formato não reconhecido. Use data.js ou data.json válido.');
+    }
+    const parsed = JSON.parse(text.slice(start, end + 1));
+    if (!parsed || !Array.isArray(parsed.alunos)) {
+      throw new Error('O arquivo selecionado não contém o campo "alunos".');
+    }
+    return parsed;
+  }
+
+  if (!isSupabaseConfigured && notConfiguredNote) {
+    notConfiguredNote.classList.remove('hidden');
+  }
+
+  // Tentativa automática de restaurar sessão Supabase
+  (async () => {
+    if (!sbClient) return;
+    checkingBanner?.classList.remove('hidden');
+    try {
+      const { data: sessData } = await sbClient.auth.getSession();
+      const session = sessData?.session;
+      if (session?.user) {
+        const dataset = await fetchSupabaseDataset(sbClient);
+        startDashboard(dataset, { mode: 'supabase', email: session.user.email || 'Autenticado', sb: sbClient });
+        return;
       }
-    })()
-  };
+    } catch (err) {
+      showLoginError(`Sessão encontrada, mas falhou ao abrir dados: ${err.message}`);
+    } finally {
+      checkingBanner?.classList.add('hidden');
+    }
+  })();
+
+  loginForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    showLoginError('');
+    if (!sbClient) {
+      showLoginError('Configure url e anonKey em supabase-config.js antes de usar o login.');
+      return;
+    }
+    const email = (loginEmail?.value || '').trim();
+    const password = loginPassword?.value || '';
+    if (!email || !password) return;
+
+    const origHtml = btnLoginSubmit ? btnLoginSubmit.innerHTML : '';
+    if (btnLoginSubmit) {
+      btnLoginSubmit.disabled = true;
+      btnLoginSubmit.textContent = 'Autenticando e baixando dados...';
+    }
+
+    try {
+      const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+      if (error) {
+        throw new Error(error.message === 'Invalid login credentials'
+          ? 'E-mail ou senha inválidos.'
+          : error.message);
+      }
+      const dataset = await fetchSupabaseDataset(sbClient);
+      startDashboard(dataset, { mode: 'supabase', email: data.user?.email || email, sb: sbClient });
+    } catch (err) {
+      showLoginError(err.message || 'Não foi possível entrar.');
+      if (btnLoginSubmit) {
+        btnLoginSubmit.disabled = false;
+        btnLoginSubmit.innerHTML = origHtml;
+      }
+    }
+  });
+
+  document.getElementById('btnEnterDemo')?.addEventListener('click', () => {
+    if (!window.IME_DEMO_DATA) {
+      showLoginError('Dataset Demo não encontrado.');
+      return;
+    }
+    startDashboard(window.IME_DEMO_DATA, { mode: 'demo' });
+  });
+
+  const localFileInput = document.getElementById('localDataFileInput');
+  document.getElementById('btnTriggerLocalFile')?.addEventListener('click', () => {
+    localFileInput?.click();
+  });
+  localFileInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    showLoginError('');
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const parsed = parseLocalDatasetText(String(reader.result || ''));
+        startDashboard(parsed, { mode: 'local' });
+      } catch (err) {
+        showLoginError(`Erro ao ler arquivo local: ${err.message}`);
+      }
+    };
+    reader.readAsText(file, 'utf-8');
+    e.target.value = '';
+  });
+
+  function startDashboard(DATA, sessionMeta = { mode: 'demo' }) {
+    if (dashboardBooted || !DATA) return;
+    dashboardBooted = true;
+    window.IME_DATA = DATA;
+
+    gateEl?.classList.add('hidden');
+    shellEl?.classList.remove('hidden');
+
+    const ESTAGIO_STORAGE_KEY = sessionMeta.mode === 'demo' ? 'ime_estagio_demo_v1' : 'ime_estagio_v1';
+
+    // Header auth badge & logout/switch button
+    const badgeEl = document.getElementById('authSessionBadge');
+    const actionLabelEl = document.getElementById('authActionLabel');
+    const btnAuthAction = document.getElementById('btnAuthAction');
+    if (badgeEl) {
+      badgeEl.classList.remove('hidden');
+      if (sessionMeta.mode === 'supabase') {
+        badgeEl.textContent = sessionMeta.email || 'Autenticado';
+        badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-emerald-500/35 bg-emerald-500/15 text-emerald-300 max-w-[160px] truncate';
+        if (actionLabelEl) actionLabelEl.textContent = 'Sair';
+      } else if (sessionMeta.mode === 'demo') {
+        badgeEl.textContent = 'Demo (Fictício)';
+        badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-amber-500/35 bg-amber-500/15 text-amber-300 max-w-[160px] truncate';
+        if (actionLabelEl) actionLabelEl.textContent = 'Login';
+      } else {
+        badgeEl.textContent = 'Arquivo Local';
+        badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-sky-500/35 bg-sky-500/15 text-sky-300 max-w-[160px] truncate';
+        if (actionLabelEl) actionLabelEl.textContent = 'Trocar';
+      }
+    }
+    btnAuthAction?.addEventListener('click', async () => {
+      if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+        try { await sessionMeta.sb.auth.signOut(); } catch {}
+      }
+      window.location.reload();
+    });
+
+    // Dynamic tab & vínculo counts
+    const tabRankingsLabel = document.getElementById('tabRankingsLabel');
+    if (tabRankingsLabel) tabRankingsLabel.textContent = `Fichas dos Alunos (${DATA.alunos.length})`;
+    const tabDisciplinasLabel = document.getElementById('tabDisciplinasLabel');
+    if (tabDisciplinasLabel) tabDisciplinasLabel.textContent = `Raio-X de Disciplinas (${DATA.disciplinas.length})`;
+    const lblAtiva = document.getElementById('lblVinculoAtiva');
+    if (lblAtiva) lblAtiva.textContent = `Ativa (${DATA.alunos.filter(a => a.vinculo === 'Ativa').length})`;
+    const lblReserva = document.getElementById('lblVinculoReserva');
+    if (lblReserva) lblReserva.textContent = `Reserva (${DATA.alunos.filter(a => a.vinculo === 'Reserva').length})`;
+    const lblCg = document.getElementById('lblVinculoCg');
+    if (lblCg) lblCg.textContent = `CG (${DATA.alunos.filter(a => a.vinculo === 'CG').length})`;
+
+    let filteredAlunos = [...DATA.alunos];
+  
+    // App State
+    const state = {
+      currentTab: 'overview',
+      filterCurso: 'ALL',
+      includedVinculos: new Set(['Ativa', 'Reserva', 'CG']),
+      vfRiskFilter: 'ALL',
+      vfSearch: '',
+      tableSearch: '',
+      sortColumn: 'rankGraduacao',
+      sortAsc: true,
+      pageSize: 'ALL',
+      currentPage: 1,
+      disciplinasSearch: '',
+      disciplinasSemestre: 'ALL',
+      disciplinasCurso: 'ALL',
+      comparatorA: DATA.alunos[0]?.numero || null,
+      comparatorB: DATA.alunos[1]?.numero || null,
+      comparatorInitialized: false,
+      comparatorSemester: 'ALL',
+      comparatorOnlyCommon: false,
+      comparatorSubjectSearch: '',
+      comparatorTypeFilter: 'ALL',
+      comparatorSubjectSort: 'semestre',
+      courseA: 'Computação',
+      courseB: 'Eletrônica',
+      activeCoursesInChart: new Set(DATA.metadata.cursos),
+      activeStudentModal: null,
+      modalSemesterFilter: 'ALL',
+      
+      // Metric Modes: 'semestral' | 'cumulativo'
+      overviewMetric: 'semestral',
+      courseMetric: 'semestral',
+      modalMetric: 'semestral',
+      comparatorMetric: 'semestral',
+
+      // Device & View Modes
+      theme: localStorage.getItem('ime_theme') || 'dark',
+      deviceMode: 'auto',
+      rankingView: 'cards',
+      courseView: 'table',
+      modalDisciplineView: 'cards',
+
+      // Estágio
+      estagioCurso: DATA.metadata.cursos[0] || 'Computação',
+      estagioCriterio: 'cumulativo',
+      estagioExpandedAluno: null,
+      estagioInitialized: false,
+      estagioData: (() => {
+        try {
+          return JSON.parse(localStorage.getItem(ESTAGIO_STORAGE_KEY) || '{}');
+        } catch {
+          return {};
+        }
+      })()
+    };
 
   // Chart instances
   let chartCursosInstance = null;
@@ -2698,10 +2901,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modalStudentRanks').textContent = `#${aluno.rankGraduacao} Graduação • #${aluno.rankGeral} Geral • #${aluno.rankCurso} no Curso`;
 
     document.getElementById('modalCrGrad').textContent = fmtNum(aluno.mediaGraduacao);
-    document.getElementById('modalRankGradLabel').textContent = `${aluno.rankGraduacao}º de 86 alunos`;
+    document.getElementById('modalRankGradLabel').textContent = `${aluno.rankGraduacao}º de ${DATA.alunos.length} alunos`;
 
     document.getElementById('modalCrGeral').textContent = fmtNum(aluno.mediaGeral);
-    document.getElementById('modalRankGeralLabel').textContent = `${aluno.rankGeral}º de 86 alunos`;
+    document.getElementById('modalRankGeralLabel').textContent = `${aluno.rankGeral}º de ${DATA.alunos.length} alunos`;
 
     document.getElementById('modalCr32').textContent = fmtNum(aluno.media32);
     document.getElementById('modalDisciplinasCount').textContent = aluno.totalDisciplinas;
@@ -3189,7 +3392,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveEstagioData() {
     try {
-      localStorage.setItem('ime_estagio_v1', JSON.stringify(state.estagioData));
+      localStorage.setItem(ESTAGIO_STORAGE_KEY, JSON.stringify(state.estagioData));
       const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       setEstagioStatus(`Salvo no navegador às ${now}`, true);
     } catch {
@@ -3969,4 +4172,6 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTheme(state.theme);
   applyFilters();
   renderDisciplinasTab();
+  refreshIcons();
+  } // end startDashboard
 });
