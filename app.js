@@ -3145,7 +3145,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- TAB: ESTÁGIO (VAGAS, PREFERÊNCIAS & ALOCAÇÃO) ---
   function getEstagioCursoStore(curso) {
     if (!state.estagioData[curso]) {
-      const nAlunos = DATA.alunos.filter(a => a.curso === curso).length;
+      const nAlunos = DATA.alunos.filter(a => a.curso === curso && a.vinculo === 'Ativa').length;
       const numLocais = Math.max(4, Math.min(8, Math.ceil(nAlunos / 2)));
       const placeholders = Array.from({ length: numLocais }, (_, i) => ({
         id: `ph_${curso}_${i + 1}`,
@@ -3174,7 +3174,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getEstagioRankedAlunos(curso) {
     return DATA.alunos
-      .filter(a => a.curso === curso && state.includedVinculos.has(a.vinculo))
+      .filter(a => a.curso === curso && a.vinculo === 'Ativa')
       .sort((a, b) => (getEstagioScore(b) ?? 0) - (getEstagioScore(a) ?? 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
