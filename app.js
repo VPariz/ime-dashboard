@@ -242,6 +242,43 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  function getVfColorStyle(vfInfo) {
+    if (!vfInfo || vfInfo.tipo !== 'exact') {
+      return {
+        text: 'text-slate-300',
+        pill: 'bg-slate-800 text-slate-300 border-slate-700',
+        cardBorder: 'border-slate-800/80'
+      };
+    }
+    const v = vfInfo.valor;
+    if (v <= 4.0) {
+      return {
+        text: 'text-emerald-400',
+        pill: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
+        cardBorder: 'border-emerald-500/25'
+      };
+    }
+    if (v <= 5.0) {
+      return {
+        text: 'text-sky-400',
+        pill: 'bg-sky-500/15 text-sky-300 border-sky-500/30',
+        cardBorder: 'border-sky-500/25'
+      };
+    }
+    if (v <= 6.0) {
+      return {
+        text: 'text-amber-300',
+        pill: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
+        cardBorder: 'border-amber-500/30'
+      };
+    }
+    return {
+      text: 'text-rose-400',
+      pill: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+      cardBorder: 'border-rose-500/35'
+    };
+  }
+
   // Precompute VF risk metrics for each student (3.2 open subjects), 3.2 disciplines, and course classification
   const discVfAgg = new Map();
   const discCoursesMap = new Map();
@@ -2328,7 +2365,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (d.vc !== null && d.vc !== undefined) parts.push(`VC ${fmtNum(d.vc)}`);
       if (d.vf !== null && d.vf !== undefined) parts.push(`VF ${fmtNum(d.vf)}`);
       const vfInfo = calcVfNecessaria(d);
-      if (vfInfo && vfInfo.tipo === 'exact') parts.push(`<span class="text-amber-300 font-bold">(${vfInfo.label})</span>`);
+      if (vfInfo && vfInfo.tipo === 'exact') {
+        const st = getVfColorStyle(vfInfo);
+        parts.push(`<span class="${st.text} font-bold">(${vfInfo.label})</span>`);
+      }
       return parts.join(' · ');
     };
 
@@ -2668,10 +2708,8 @@ document.addEventListener('DOMContentLoaded', () => {
             ${(() => {
               const vfInfo = calcVfNecessaria(d);
               if (!vfInfo) return '';
-              const badgeCls = vfInfo.tipo === 'exact' && vfInfo.valor > 6.5
-                ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
-                : 'bg-amber-500/15 text-amber-300 border-amber-500/30';
-              return `<span class="px-2 py-0.5 rounded-md border font-mono-numbers font-bold text-[10px] ${badgeCls}" title="${vfInfo.detalhe}">🎯 ${vfInfo.label}</span>`;
+              const st = getVfColorStyle(vfInfo);
+              return `<span class="px-2 py-0.5 rounded-md border font-mono-numbers font-bold text-[10px] ${st.pill}" title="${vfInfo.detalhe}">🎯 ${vfInfo.label}</span>`;
             })()}
           </div>
         </div>
@@ -2707,7 +2745,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const vfInfo = calcVfNecessaria(d);
         const vfPill = vfInfo
-          ? `<div class="mt-0.5"><span class="inline-block px-1.5 py-0.5 rounded border font-mono-numbers text-[10px] font-bold ${vfInfo.tipo === 'exact' && vfInfo.valor > 6.5 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'}" title="${vfInfo.detalhe}">🎯 ${vfInfo.label}</span></div>`
+          ? `<div class="mt-0.5"><span class="inline-block px-1.5 py-0.5 rounded border font-mono-numbers text-[10px] font-bold ${getVfColorStyle(vfInfo).pill}" title="${vfInfo.detalhe}">🎯 ${vfInfo.label}</span></div>`
           : '';
 
         return `
@@ -2746,17 +2784,16 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             ${abertas.map(({ d, vfInfo }, i) => {
-              const highNeed = vfInfo.tipo === 'exact' && vfInfo.valor > 6.0;
-              const valCls = highNeed ? 'text-rose-400' : 'text-amber-300';
+              const st = getVfColorStyle(vfInfo);
               const canSim = (vfInfo.tipo === 'exact');
               return `
-                <div class="p-2 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                <div class="p-2 rounded-xl bg-slate-950/70 border ${st.cardBorder} flex items-center justify-between gap-2 text-xs">
                   <div class="min-w-0 flex-1">
                     <div class="font-bold text-slate-200 truncate" title="${d.nome}">${d.nome}</div>
                     <div class="text-[10px] text-slate-400">${vfInfo.detalhe}</div>
                   </div>
                   <div class="flex items-center gap-2 shrink-0">
-                    <span class="font-extrabold font-mono-numbers ${valCls}">${vfInfo.label}</span>
+                    <span class="font-extrabold font-mono-numbers ${st.text}">${vfInfo.label}</span>
                     ${canSim ? `<input type="number" min="0" max="10" step="0.1" placeholder="Sim." data-sim-code="${d.codigo}" data-sim-ve="${d.mve ?? d.ve}" data-sim-vc="${d.vc}" data-sim-mil="${d.militar ? 1 : 0}" class="modal-vf-sim-input w-14 px-1.5 py-1 text-[11px] text-center font-mono-numbers bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500" title="Simular nota na VF" />` : ''}
                   </div>
                 </div>
