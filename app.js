@@ -251,7 +251,9 @@ document.addEventListener('DOMContentLoaded', () => {
       aluno.maxVf32 = exactList[0].valor;
       aluno.avgVf32 = Math.round((exactList.reduce((s, x) => s + x.valor, 0) / exactList.length) * 100) / 100;
       aluno.vfRiskCount = exactList.filter(x => x.valor > 5.0).length;
-      aluno.vfRiskLevel = aluno.maxVf32 >= 6.5 ? 'risk' : (aluno.maxVf32 > 5.0 ? 'warn' : 'safe');
+      aluno.vfRiskLevel = aluno.maxVf32 > 6.0
+        ? 'risk'
+        : (aluno.maxVf32 > 5.0 ? 'warn' : (aluno.maxVf32 > 4.0 ? 'mid' : 'safe'));
     } else {
       aluno.maxVf32 = null;
       aluno.avgVf32 = null;
@@ -1300,7 +1302,9 @@ document.addEventListener('DOMContentLoaded', () => {
           ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
           : (aluno.vfRiskLevel === 'warn'
             ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-            : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30');
+            : (aluno.vfRiskLevel === 'mid'
+              ? 'bg-sky-500/15 text-sky-300 border-sky-500/30'
+              : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'));
         vfBadge = `<span class="px-2 py-0.5 rounded border text-[10px] font-bold font-mono-numbers ${vfCls}">Máx VF: ${fmtNum(aluno.maxVf32)}</span>`;
       }
 
@@ -1366,6 +1370,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const riskList = filteredAlunos.filter(a => a.vfRiskLevel === 'risk').sort((a, b) => b.maxVf32 - a.maxVf32);
     const warnList = filteredAlunos.filter(a => a.vfRiskLevel === 'warn').sort((a, b) => b.maxVf32 - a.maxVf32);
+    const midList = filteredAlunos.filter(a => a.vfRiskLevel === 'mid').sort((a, b) => b.maxVf32 - a.maxVf32);
     const safeList = filteredAlunos.filter(a => a.vfRiskLevel === 'safe');
 
     const pillCls = (key, activeBorder, activeBg, baseText) => {
@@ -1384,20 +1389,23 @@ document.addEventListener('DOMContentLoaded', () => {
             <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
             Radar de Risco de Recuperação (VF 3.2)
           </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Clique em um grupo para filtrar a lista abaixo (mín. 4,00 na VF e média ≥ 5,00)</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Clique em uma faixa para filtrar a lista abaixo (mín. 4,00 na VF e média ≥ 5,00)</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
           <button data-vfrisk="ALL" class="px-2.5 py-1 rounded-xl border transition ${state.vfRiskFilter === 'ALL' ? 'border-blue-500 bg-blue-500/20 text-blue-300' : 'border-slate-700 bg-slate-900 text-slate-400 hover:text-white'}">
             Todos (${filteredAlunos.length})
           </button>
-          <button data-vfrisk="risk" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('risk', 'border-rose-500', 'bg-rose-500/20', 'text-rose-300')}">
-            Risco VF ≥ 6.50 (${riskList.length})
+          <button data-vfrisk="safe" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('safe', 'border-emerald-500', 'bg-emerald-500/20', 'text-emerald-300')}">
+            Tranquilos ≤ 4.00 (${safeList.length})
+          </button>
+          <button data-vfrisk="mid" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('mid', 'border-sky-500', 'bg-sky-500/20', 'text-sky-300')}">
+            4.01–5.00 (${midList.length})
           </button>
           <button data-vfrisk="warn" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('warn', 'border-amber-500', 'bg-amber-500/20', 'text-amber-300')}">
-            Atenção 5.01–6.49 (${warnList.length})
+            Atenção 5.01–6.00 (${warnList.length})
           </button>
-          <button data-vfrisk="safe" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('safe', 'border-emerald-500', 'bg-emerald-500/20', 'text-emerald-300')}">
-            Tranquilos ≤ 5.00 (${safeList.length})
+          <button data-vfrisk="risk" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('risk', 'border-rose-500', 'bg-rose-500/20', 'text-rose-300')}">
+            Risco &gt; 6.00 (${riskList.length})
           </button>
         </div>
       </div>
@@ -1486,7 +1494,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (aluno.maxVf32 !== null) {
           const vfColor = aluno.vfRiskLevel === 'risk'
             ? 'text-rose-400 font-extrabold'
-            : (aluno.vfRiskLevel === 'warn' ? 'text-amber-300 font-bold' : 'text-emerald-400 font-semibold');
+            : (aluno.vfRiskLevel === 'warn'
+              ? 'text-amber-300 font-bold'
+              : (aluno.vfRiskLevel === 'mid' ? 'text-sky-300 font-semibold' : 'text-emerald-400 font-semibold'));
           maxVfCell = `<span class="${vfColor}" title="${aluno.vfRiskSubjects[0]?.nome || ''}">${fmtNum(aluno.maxVf32)}</span>`;
         }
 
