@@ -262,9 +262,9 @@
           <i data-lucide="git-compare" class="w-4 h-4 text-indigo-400"></i>
           <span>Comparador 1x1</span>
         </button>
-        <button data-tab="estagio" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+        <button id="navTabCareerBtn" data-tab="estagio" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="briefcase" class="w-4 h-4 text-cyan-400"></i>
-          <span>Estágio</span>
+          <span id="navTabCareerLabel">Estágio</span>
         </button>
         <button id="navTabGestaoBtn" data-tab="gestao" class="hidden tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-emerald-400 hover:text-emerald-200 hover:bg-emerald-500/10">
           <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
@@ -1182,10 +1182,10 @@
           <div>
             <h2 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2 flex-wrap">
               <i data-lucide="briefcase" class="w-4 h-4 text-cyan-400"></i>
-              <span>Escolha de Vagas de Estágio por Engenharia</span>
-              <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">Somente Ativa</span>
+              <span id="careerHeadingTitle">Escolha de Vagas de Estágio por Engenharia</span>
+              <span id="careerHeadingBadge" class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">Somente Ativa</span>
             </h2>
-            <p class="text-xs text-slate-400 mt-0.5">
+            <p id="careerHeadingSubtitle" class="text-xs text-slate-400 mt-0.5">
               Cadastre as vagas disponíveis, defina até 10 opções de preferência por aluno e calcule a alocação automática respeitando a classificação do curso.
             </p>
           </div>
@@ -1208,15 +1208,15 @@
 
         <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
           <div class="flex flex-wrap items-center gap-3">
-            <div class="flex items-center gap-2">
+            <div id="careerCursoWrapper" class="flex items-center gap-2">
               <label for="selectEstagioCurso" class="text-xs font-semibold text-slate-400">Engenharia:</label>
               <select id="selectEstagioCurso" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-cyan-500"></select>
             </div>
             <div class="flex items-center gap-2">
               <label for="selectEstagioCriterio" class="text-xs font-semibold text-slate-400">Ordem:</label>
               <select id="selectEstagioCriterio" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-500">
-                <option value="cumulativo">Cumulativa Graduação (c/ 3.2)</option>
-                <option value="grad">CR Graduação (até 3.1)</option>
+                <option value="cumulativo" id="optEstagioCumulativo">Cumulativa Graduação (c/ 3.2)</option>
+                <option value="grad">CR Graduação (Consolidado)</option>
                 <option value="geral">CR Geral (80/20)</option>
               </select>
             </div>
@@ -1241,7 +1241,7 @@
           <form id="formAddEstagioVaga" class="flex items-center gap-2">
             <input type="text" id="inputNovaVagaNome" placeholder="Ex: IMBEL, CTEx, IPqM..." class="flex-1 min-w-0 text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
             <input type="number" id="inputNovaVagaQtd" min="1" max="50" value="1" class="w-16 text-xs text-center font-mono-numbers bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500" title="Quantidade de vagas" />
-            <button type="submit" class="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition shrink-0">
+            <button id="careerAddBtnLabel" type="submit" class="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition shrink-0">
               + Vaga
             </button>
           </form>
@@ -1826,9 +1826,9 @@
       <i data-lucide="git-compare" class="w-4 h-4"></i>
       <span class="text-[9.5px] leading-tight">1 x 1</span>
     </button>
-    <button data-tab="estagio" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
+    <button id="mobileNavCareerBtn" data-tab="estagio" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="briefcase" class="w-4 h-4"></i>
-      <span class="text-[9.5px] leading-tight">Estágio</span>
+      <span id="mobileNavCareerLabel" class="text-[9.5px] leading-tight">Estágio</span>
     </button>
     <button id="mobileNavGestaoBtn" data-tab="gestao" class="hidden mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-emerald-400 font-semibold transition">
       <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
@@ -1840,10 +1840,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261118v"></script>
+  <script src="supabase-config.js?v=20261118w"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261118v"></script>
+  <script src="demo-data.js?v=20261118w"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261118v"></script>
+  <script src="app.js?v=20261118w"></script>
 </body>
 </html>

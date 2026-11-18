@@ -423,21 +423,124 @@ document.addEventListener('DOMContentLoaded', () => {
     gateEl?.classList.add('hidden');
     shellEl?.classList.remove('hidden');
 
-    const ESTAGIO_STORAGE_KEY = sessionMeta.mode === 'demo'
-      ? 'ime_estagio_demo_v1'
-      : `ime_estagio_${ACTIVE_TURMA.id || 'v1'}`;
+    function getTurmaCareerStage(sem) {
+      const ord = buildSemesterOrder(sem);
+      if (ord <= 2) {
+        return { key: 'none', enabled: false };
+      }
+      if (ord <= 5) {
+        return {
+          key: 'engenharia',
+          enabled: true,
+          tabLabel: 'Escolha de Engenharia',
+          mobileLabel: 'Engenharia',
+          heading: 'Escolha de Especialidade de Engenharia',
+          badge: `Ativa + Reserva · Desbloqueado ${sem} (até 3.1)`,
+          subtitle: 'Simule a classificação geral da turma e as vagas disponíveis por Engenharia (1ª a 10ª opção) antes da escolha no início do 3.1.',
+          scopeMode: 'turma',
+          scopeKey: 'TURMA_COMPLETA',
+          vinculosAllowed: ['Ativa', 'Reserva'],
+          itemPlaceholder: 'Ex: Computação, Eletrônica, Fortificação...',
+          addBtnLabel: '+ Eng.',
+          defaultCriterio: 'cumulativo',
+          buildDefaultVagas: () => {
+            const cursos = DATA.metadata?.cursos || DEFAULT_CURSOS_IME;
+            const totalElegiveis = Math.max(20, DATA.alunos.filter(a => a.vinculo !== 'CG').length || DATA.alunos.length);
+            const baseQtd = Math.max(2, Math.round(totalElegiveis / Math.max(1, cursos.length)));
+            return cursos.map((c, i) => ({
+              id: `eng_${i + 1}`,
+              nome: c,
+              qtd: baseQtd
+            }));
+          }
+        };
+      }
+      if (ord <= 8) {
+        return {
+          key: 'estagio',
+          enabled: true,
+          tabLabel: 'Estágio',
+          mobileLabel: 'Estágio',
+          heading: 'Escolha de Vagas de Estágio por Engenharia',
+          badge: `Somente Ativa · ${sem} – 4.2`,
+          subtitle: 'Cadastre as vagas disponíveis, defina até 10 opções de preferência por aluno e calcule a alocação automática respeitando a classificação do curso.',
+          scopeMode: 'curso',
+          vinculosAllowed: ['Ativa'],
+          itemPlaceholder: 'Ex: IMBEL, CTEx, IPqM...',
+          addBtnLabel: '+ Vaga',
+          defaultCriterio: 'cumulativo',
+          buildDefaultVagas: (curso) => {
+            const nAlunos = DATA.alunos.filter(a => a.curso === curso && a.vinculo === 'Ativa').length;
+            const numLocais = Math.max(4, Math.min(8, Math.ceil(nAlunos / 2)));
+            return Array.from({ length: numLocais }, (_, i) => ({
+              id: `ph_${curso}_${i + 1}`,
+              nome: `Local ${i + 1} (Placeholder)`,
+              qtd: 2
+            }));
+          }
+        };
+      }
+      return {
+        key: 'om',
+        enabled: true,
+        tabLabel: 'Escolha de OM',
+        mobileLabel: 'OM',
+        heading: 'Escolha de Organização Militar (OM) por Engenharia',
+        badge: `Somente Ativa · Escolha pós-5.2`,
+        subtitle: 'Cadastre as vagas de Organização Militar (OM) por Engenharia, defina as preferências dos alunos da Ativa e simule a alocação pela classificação final.',
+        scopeMode: 'curso',
+        vinculosAllowed: ['Ativa'],
+        itemPlaceholder: 'Ex: CTEx, CDS, DCT, 1º CTA, IMBEL...',
+        addBtnLabel: '+ OM',
+        defaultCriterio: 'geral',
+        buildDefaultVagas: (curso) => {
+          const nAlunos = DATA.alunos.filter(a => a.curso === curso && a.vinculo === 'Ativa').length;
+          const numOMs = Math.max(4, Math.min(10, Math.max(4, nAlunos)));
+          return Array.from({ length: numOMs }, (_, i) => ({
+            id: `om_${curso}_${i + 1}`,
+            nome: `OM ${i + 1} (Placeholder)`,
+            qtd: 1
+          }));
+        }
+      };
+    }
+
+    function getCareerStoreKey(stageKey) {
+      if (sessionMeta.mode === 'demo') return `ime_career_demo_${ACTIVE_TURMA.id}_${stageKey}_v1`;
+      return `ime_career_${ACTIVE_TURMA.id || 't28'}_${stageKey}_v1`;
+    }
+
+    function loadCareerStoreForStage(stage) {
+      if (!stage?.enabled) return {};
+      const key = getCareerStoreKey(stage.key);
+      try {
+        const raw = localStorage.getItem(key);
+        if (raw) return JSON.parse(raw);
+        if (stage.key === 'estagio') {
+          const legacyKey = sessionMeta.mode === 'demo' ? 'ime_estagio_demo_v1' : `ime_estagio_${ACTIVE_TURMA.id || 'v1'}`;
+          const legacyRaw = localStorage.getItem(legacyKey) || localStorage.getItem('ime_estagio_v1');
+          if (legacyRaw) return JSON.parse(legacyRaw);
+        }
+      } catch {}
+      return {};
+    }
+
+    let ACTIVE_CAREER_STAGE = getTurmaCareerStage(CURRENT_SEM);
+
+    function updateMobileNavColumns() {
+      const mobileNav = document.getElementById('mobileBottomNav');
+      if (!mobileNav) return;
+      const visibleBtns = mobileNav.querySelectorAll('.mobile-nav-btn:not(.hidden)').length;
+      mobileNav.classList.remove('grid-cols-5', 'grid-cols-6', 'grid-cols-7', 'grid-cols-8');
+      mobileNav.classList.add(`grid-cols-${Math.max(5, Math.min(8, visibleBtns))}`);
+    }
 
     // Visibilidade da aba Gestão & Notas (apenas Gestor / Super Admin / Demo)
     if (CAN_MANAGE_GRADES) {
       document.getElementById('navTabGestaoBtn')?.classList.remove('hidden');
-      const mobileGestaoBtn = document.getElementById('mobileNavGestaoBtn');
-      mobileGestaoBtn?.classList.remove('hidden');
-      const mobileNav = document.getElementById('mobileBottomNav');
-      if (mobileNav) {
-        mobileNav.classList.remove('grid-cols-7');
-        mobileNav.classList.add('grid-cols-8');
-      }
+      document.getElementById('mobileNavGestaoBtn')?.classList.remove('hidden');
     }
+    updateMobileNavColumns();
 
     // Header Turma Switcher (Super Admin ou prévia Multi-Turma em Modo Demo)
     const selectTurmaHeader = document.getElementById('selectTurmaHeader');
@@ -586,18 +689,12 @@ document.addEventListener('DOMContentLoaded', () => {
       courseView: 'table',
       modalDisciplineView: 'cards',
 
-      // Estágio
+      // Escolha de Engenharia (2.1-3.1) / Estágio (3.2-4.2) / Escolha de OM (5.1+)
       estagioCurso: DATA.metadata.cursos[0] || 'Computação',
-      estagioCriterio: 'cumulativo',
+      estagioCriterio: ACTIVE_CAREER_STAGE?.defaultCriterio || 'cumulativo',
       estagioExpandedAluno: null,
       estagioInitialized: false,
-      estagioData: (() => {
-        try {
-          return JSON.parse(localStorage.getItem(ESTAGIO_STORAGE_KEY) || '{}');
-        } catch {
-          return {};
-        }
-      })()
+      estagioData: loadCareerStoreForStage(ACTIVE_CAREER_STAGE)
     };
 
   // Chart instances
@@ -3687,6 +3784,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (targetTab === 'comparator') {
       initStudentComparator();
     } else if (targetTab === 'estagio') {
+      if (!ACTIVE_CAREER_STAGE.enabled) return;
       initEstagioTab();
     } else if (targetTab === 'gestao') {
       if (!CAN_MANAGE_GRADES) return;
@@ -3697,19 +3795,70 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIcons();
   }
 
-  // --- TAB: ESTÁGIO (VAGAS, PREFERÊNCIAS & ALOCAÇÃO) ---
-  function getEstagioCursoStore(curso) {
-    if (!state.estagioData[curso]) {
-      const nAlunos = DATA.alunos.filter(a => a.curso === curso && a.vinculo === 'Ativa').length;
-      const numLocais = Math.max(4, Math.min(8, Math.ceil(nAlunos / 2)));
-      const placeholders = Array.from({ length: numLocais }, (_, i) => ({
-        id: `ph_${curso}_${i + 1}`,
-        nome: `Local ${i + 1} (Placeholder)`,
-        qtd: 2
-      }));
-      state.estagioData[curso] = { vagas: placeholders, prefs: {} };
+  // --- TAB CICLO DE CARREIRA: ESCOLHA DE ENGENHARIA (2.1-3.1) / ESTÁGIO (3.2-4.2) / OM (5.1+) ---
+  function syncCareerStageTab({ reloadStore = false } = {}) {
+    const prevKey = ACTIVE_CAREER_STAGE?.key;
+    ACTIVE_CAREER_STAGE = getTurmaCareerStage(CURRENT_SEM);
+
+    const navBtn = document.getElementById('navTabCareerBtn');
+    const navLbl = document.getElementById('navTabCareerLabel');
+    const mobBtn = document.getElementById('mobileNavCareerBtn');
+    const mobLbl = document.getElementById('mobileNavCareerLabel');
+
+    navBtn?.classList.toggle('hidden', !ACTIVE_CAREER_STAGE.enabled);
+    mobBtn?.classList.toggle('hidden', !ACTIVE_CAREER_STAGE.enabled);
+    updateMobileNavColumns();
+
+    if (!ACTIVE_CAREER_STAGE.enabled) {
+      if (state.currentTab === 'estagio') switchTab('overview');
+      return;
     }
-    return state.estagioData[curso];
+
+    if (navLbl) navLbl.textContent = ACTIVE_CAREER_STAGE.tabLabel;
+    if (mobLbl) mobLbl.textContent = ACTIVE_CAREER_STAGE.mobileLabel;
+
+    if (reloadStore || prevKey !== ACTIVE_CAREER_STAGE.key) {
+      state.estagioData = loadCareerStoreForStage(ACTIVE_CAREER_STAGE);
+      state.estagioCriterio = ACTIVE_CAREER_STAGE.defaultCriterio || 'cumulativo';
+      state.estagioExpandedAluno = null;
+    }
+
+    const titleEl = document.getElementById('careerHeadingTitle');
+    const badgeEl = document.getElementById('careerHeadingBadge');
+    const subEl = document.getElementById('careerHeadingSubtitle');
+    const cursoWrap = document.getElementById('careerCursoWrapper');
+    const addBtn = document.getElementById('careerAddBtnLabel');
+    const inpNome = document.getElementById('inputNovaVagaNome');
+    const optCum = document.getElementById('optEstagioCumulativo');
+    const selCrit = document.getElementById('selectEstagioCriterio');
+
+    if (titleEl) titleEl.textContent = ACTIVE_CAREER_STAGE.heading;
+    if (badgeEl) badgeEl.textContent = ACTIVE_CAREER_STAGE.badge;
+    if (subEl) subEl.textContent = ACTIVE_CAREER_STAGE.subtitle;
+    if (cursoWrap) cursoWrap.classList.toggle('hidden', ACTIVE_CAREER_STAGE.scopeMode === 'turma');
+    if (addBtn) addBtn.textContent = ACTIVE_CAREER_STAGE.addBtnLabel;
+    if (inpNome) inpNome.placeholder = ACTIVE_CAREER_STAGE.itemPlaceholder;
+    if (optCum) optCum.textContent = `Cumulativa Graduação (c/ ${CURRENT_SEM})`;
+    if (selCrit) selCrit.value = state.estagioCriterio;
+
+    if (state.currentTab === 'estagio') {
+      renderEstagioTab();
+    }
+  }
+
+  function getActiveCareerScope() {
+    if (!ACTIVE_CAREER_STAGE.enabled) return 'TURMA_COMPLETA';
+    return ACTIVE_CAREER_STAGE.scopeMode === 'turma' ? 'TURMA_COMPLETA' : state.estagioCurso;
+  }
+
+  function getEstagioCursoStore(scopeKey) {
+    if (!state.estagioData[scopeKey]) {
+      const placeholders = ACTIVE_CAREER_STAGE.enabled
+        ? ACTIVE_CAREER_STAGE.buildDefaultVagas(scopeKey)
+        : [];
+      state.estagioData[scopeKey] = { vagas: placeholders, prefs: {} };
+    }
+    return state.estagioData[scopeKey];
   }
 
   function getEstagioScore(aluno) {
@@ -3723,14 +3872,20 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function getEstagioCriterioLabel() {
-    if (state.estagioCriterio === 'geral') return 'CR Geral';
+    if (state.estagioCriterio === 'geral') return 'CR Geral (80/20)';
     if (state.estagioCriterio === 'cumulativo') return `Cumulativa Graduação (c/ ${CURRENT_SEM})`;
     return 'CR Graduação (Consolidado)';
   }
 
-  function getEstagioRankedAlunos(curso) {
+  function getEstagioRankedAlunos(scopeKey) {
+    if (!ACTIVE_CAREER_STAGE.enabled) return [];
+    const allowedVinculos = ACTIVE_CAREER_STAGE.vinculosAllowed || ['Ativa'];
     return DATA.alunos
-      .filter(a => a.curso === curso && a.vinculo === 'Ativa')
+      .filter(a => {
+        if (!allowedVinculos.includes(a.vinculo)) return false;
+        if (ACTIVE_CAREER_STAGE.scopeMode === 'turma') return true;
+        return a.curso === scopeKey;
+      })
       .sort((a, b) => (getEstagioScore(b) ?? 0) - (getEstagioScore(a) ?? 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
@@ -3745,7 +3900,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveEstagioData() {
     try {
-      localStorage.setItem(ESTAGIO_STORAGE_KEY, JSON.stringify(state.estagioData));
+      const key = getCareerStoreKey(ACTIVE_CAREER_STAGE.key);
+      localStorage.setItem(key, JSON.stringify(state.estagioData));
       const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       setEstagioStatus(`Salvo no navegador às ${now}`, true);
     } catch {
@@ -3754,9 +3910,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function initEstagioTab() {
+    if (!ACTIVE_CAREER_STAGE.enabled) {
+      switchTab('overview');
+      return;
+    }
     const selCurso = document.getElementById('selectEstagioCurso');
     const selCrit = document.getElementById('selectEstagioCriterio');
     if (!selCurso) return;
+
+    syncCareerStageTab();
 
     if (!state.estagioInitialized) {
       state.estagioInitialized = true;
@@ -3776,11 +3938,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       document.getElementById('btnEstagioCopy')?.addEventListener('click', async () => {
-        const curso = state.estagioCurso;
-        const store = getEstagioCursoStore(curso);
-        const ranked = getEstagioRankedAlunos(curso);
+        const scopeKey = getActiveCareerScope();
+        const store = getEstagioCursoStore(scopeKey);
+        const ranked = getEstagioRankedAlunos(scopeKey);
         const remaining = new Map(store.vagas.map(v => [v.nome, v.qtd]));
-        const lines = [`*Estágio ${curso} (${getEstagioCriterioLabel()})*`];
+        const headerScope = ACTIVE_CAREER_STAGE.scopeMode === 'turma' ? (ACTIVE_TURMA.nome || 'Turma') : scopeKey;
+        const lines = [`*${ACTIVE_CAREER_STAGE.tabLabel} · ${headerScope} (${getEstagioCriterioLabel()})*`];
         ranked.forEach((a, idx) => {
           const prefs = (store.prefs[a.numero] || []).filter(Boolean);
           let chosen = 'Não alocado';
@@ -3809,7 +3972,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const qtd = Math.max(1, parseInt(inpQtd?.value || '1', 10) || 1);
         if (!nome) return;
 
-        const store = getEstagioCursoStore(state.estagioCurso);
+        const store = getEstagioCursoStore(getActiveCareerScope());
         const existing = store.vagas.find(v => v.nome.toLowerCase() === nome.toLowerCase());
         if (existing) {
           existing.qtd += qtd;
@@ -3838,7 +4001,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `estagio_ime_${new Date().toISOString().slice(0, 10)}.json`;
+        a.download = `${ACTIVE_CAREER_STAGE.key}_${ACTIVE_TURMA.id || 'ime'}_${new Date().toISOString().slice(0, 10)}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -3870,9 +4033,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderEstagioTab() {
-    const curso = state.estagioCurso;
-    const store = getEstagioCursoStore(curso);
-    const ranked = getEstagioRankedAlunos(curso);
+    if (!ACTIVE_CAREER_STAGE.enabled) return;
+    const scopeKey = getActiveCareerScope();
+    const store = getEstagioCursoStore(scopeKey);
+    const ranked = getEstagioRankedAlunos(scopeKey);
     const vagasEl = document.getElementById('estagioVagasList');
     const resumoEl = document.getElementById('estagioVagasResumo');
     const alunosEl = document.getElementById('estagioAlunosList');
@@ -4078,9 +4242,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderEstagioResult() {
-    const curso = state.estagioCurso;
-    const store = getEstagioCursoStore(curso);
-    const ranked = getEstagioRankedAlunos(curso);
+    const scopeKey = getActiveCareerScope();
+    const store = getEstagioCursoStore(scopeKey);
+    const ranked = getEstagioRankedAlunos(scopeKey);
 
     const tbody = document.getElementById('estagioResultadoBody');
     const ocupacaoEl = document.getElementById('estagioOcupacaoVagas');
@@ -5187,6 +5351,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('gestaoSemestreLockPill').textContent = `Semestre Editável: ${nextSem}`;
       document.getElementById('impSemAtualLabel').textContent = nextSem;
       markGestaoDirty(true);
+      syncCareerStageTab({ reloadStore: true });
       recalculateFullDataset();
       setGestaoStatus(`Semestre editável da turma atualizado para ${nextSem}!`, 'ok');
     });
@@ -5721,6 +5886,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Initial Run
   applyDeviceMode('auto');
+  syncCareerStageTab();
   initOverviewCharts();
   applyTheme(state.theme);
   applyFilters();
