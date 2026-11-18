@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     disciplinasCurso: 'ALL',
     comparatorA: DATA.alunos[0]?.numero || null,
     comparatorB: DATA.alunos[1]?.numero || null,
+    comparatorInitialized: false,
     comparatorSemester: 'ALL',
     comparatorOnlyCommon: false,
     comparatorSubjectSearch: '',
@@ -2033,78 +2034,132 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- TAB 5: COMPARADOR 1x1 ALUNOS ---
-  function initStudentComparator() {
-    const select1 = document.getElementById('selectAluno1');
-    const select2 = document.getElementById('selectAluno2');
-    if (!select1 || !select2) return;
+  function formatAlunoLabel(a) {
+    return a ? `#${a.rankGraduacao} ${a.nome} (${a.curso})` : '';
+  }
 
-    const options = DATA.alunos.map(a => `<option value="${a.numero}">#${a.rankGraduacao} ${a.nome} (${a.curso})</option>`).join('');
-    select1.innerHTML = options;
-    select2.innerHTML = options;
+  function setupComparatorSearch(inputId, resultsId, stateKey) {
+    const inp = document.getElementById(inputId);
+    const res = document.getElementById(resultsId);
+    if (!inp || !res) return;
 
-    if (state.comparatorA) select1.value = state.comparatorA;
-    if (state.comparatorB) select2.value = state.comparatorB;
-
-    select1.addEventListener('change', (e) => {
-      state.comparatorA = parseInt(e.target.value);
-      renderStudentComparator();
-    });
-
-    select2.addEventListener('change', (e) => {
-      state.comparatorB = parseInt(e.target.value);
-      renderStudentComparator();
-    });
-
-    // Metric Toggle for Comparator
-    document.querySelectorAll('#toggleComparatorMetric button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.comparatorMetric = btn.getAttribute('data-metric');
-        updateToggleButtons('toggleComparatorMetric', state.comparatorMetric, 'bg-blue-600');
-        renderStudentComparator();
+    const renderMatches = (query) => {
+      const q = (query || '').trim().toLowerCase();
+      const matches = DATA.alunos.filter(a => {
+        if (!q) return true;
+        const se = courseToSE[a.curso] || '';
+        return a.nome.toLowerCase().includes(q) ||
+          String(a.numero).includes(q) ||
+          a.curso.toLowerCase().includes(q) ||
+          se.toLowerCase().includes(q);
       });
-    });
 
-    // Swap A1 <-> A2
-    document.getElementById('btnSwapComparator')?.addEventListener('click', () => {
-      const tmp = state.comparatorA;
-      state.comparatorA = state.comparatorB;
-      state.comparatorB = tmp;
-      select1.value = state.comparatorA;
-      select2.value = state.comparatorB;
-      renderStudentComparator();
-    });
+      if (matches.length === 0) {
+        res.innerHTML = `<div class="px-3 py-2.5 text-xs text-slate-500">Nenhum aluno encontrado.</div>`;
+      } else {
+        res.innerHTML = matches.map(a => {
+          const isSelected = (state[stateKey] === a.numero);
+          return `
+            <button type="button" data-pick-aluno="${a.numero}" class="w-full text-left px-3 py-2 hover:bg-slate-800/90 flex items-center justify-between gap-2 text-xs transition ${isSelected ? 'bg-blue-500/10' : ''}">
+              <div class="min-w-0">
+                <span class="font-bold text-slate-100">${a.nome}</span>
+                <span class="text-[11px] text-slate-400 ml-1.5">#${a.rankGraduacao} · ${a.curso}</span>
+              </div>
+              <span class="font-mono-numbers font-bold text-blue-400 shrink-0">${fmtNum(a.mediaGraduacao)}</span>
+            </button>
+          `;
+        }).join('');
 
-    const rerenderSubjects = () => {
-      renderComparatorSubjects(
-        DATA.alunos.find(a => a.numero === state.comparatorA) || DATA.alunos[0],
-        DATA.alunos.find(a => a.numero === state.comparatorB) || DATA.alunos[1]
-      );
+        res.querySelectorAll('button[data-pick-aluno]').forEach(btn => {
+          btn.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            const num = parseInt(btn.getAttribute('data-pick-aluno'), 10);
+            state[stateKey] = num;
+            res.classList.add('hidden');
+            renderStudentComparator();
+          });
+        });
+      }
+      res.classList.remove('hidden');
     };
 
-    // Only common subjects toggle
-    const chkCommon = document.getElementById('chkComparatorOnlyCommon');
-    if (chkCommon) {
-      chkCommon.checked = state.comparatorOnlyCommon;
-      chkCommon.addEventListener('change', (e) => {
-        state.comparatorOnlyCommon = e.target.checked;
+    inp.addEventListener('focus', () => {
+      inp.select();
+      renderMatches('');
+    });
+
+    inp.addEventListener('input', (e) => {
+      renderMatches(e.target.value);
+    });
+
+    inp.addEventListener('blur', () => {
+      setTimeout(() => {
+        res.classList.add('hidden');
+        const cur = DATA.alunos.find(a => a.numero === state[stateKey]);
+        if (cur) inp.value = formatAlunoLabel(cur);
+      }, 150);
+    });
+  }
+
+  function initStudentComparator() {
+    const inp1 = document.getElementById('searchAluno1');
+    const inp2 = document.getElementById('searchAluno2');
+    if (!inp1 || !inp2) return;
+
+    if (!state.comparatorInitialized) {
+      state.comparatorInitialized = true;
+      setupComparatorSearch('searchAluno1', 'resultsAluno1', 'comparatorA');
+      setupComparatorSearch('searchAluno2', 'resultsAluno2', 'comparatorB');
+
+      // Metric Toggle for Comparator
+      document.querySelectorAll('#toggleComparatorMetric button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.comparatorMetric = btn.getAttribute('data-metric');
+          updateToggleButtons('toggleComparatorMetric', state.comparatorMetric, 'bg-blue-600');
+          renderStudentComparator();
+        });
+      });
+
+      // Swap A1 <-> A2
+      document.getElementById('btnSwapComparator')?.addEventListener('click', () => {
+        const tmp = state.comparatorA;
+        state.comparatorA = state.comparatorB;
+        state.comparatorB = tmp;
+        renderStudentComparator();
+      });
+
+      const rerenderSubjects = () => {
+        renderComparatorSubjects(
+          DATA.alunos.find(a => a.numero === state.comparatorA) || DATA.alunos[0],
+          DATA.alunos.find(a => a.numero === state.comparatorB) || DATA.alunos[1]
+        );
+      };
+
+      // Only common subjects toggle
+      const chkCommon = document.getElementById('chkComparatorOnlyCommon');
+      if (chkCommon) {
+        chkCommon.checked = state.comparatorOnlyCommon;
+        chkCommon.addEventListener('change', (e) => {
+          state.comparatorOnlyCommon = e.target.checked;
+          rerenderSubjects();
+        });
+      }
+
+      document.getElementById('comparatorSubjectSearch')?.addEventListener('input', (e) => {
+        state.comparatorSubjectSearch = e.target.value;
+        rerenderSubjects();
+      });
+
+      document.getElementById('comparatorTypeFilter')?.addEventListener('change', (e) => {
+        state.comparatorTypeFilter = e.target.value;
+        rerenderSubjects();
+      });
+
+      document.getElementById('comparatorSubjectSort')?.addEventListener('change', (e) => {
+        state.comparatorSubjectSort = e.target.value;
         rerenderSubjects();
       });
     }
-
-    document.getElementById('comparatorSubjectSearch')?.addEventListener('input', (e) => {
-      state.comparatorSubjectSearch = e.target.value;
-      rerenderSubjects();
-    });
-
-    document.getElementById('comparatorTypeFilter')?.addEventListener('change', (e) => {
-      state.comparatorTypeFilter = e.target.value;
-      rerenderSubjects();
-    });
-
-    document.getElementById('comparatorSubjectSort')?.addEventListener('change', (e) => {
-      state.comparatorSubjectSort = e.target.value;
-      rerenderSubjects();
-    });
 
     renderStudentComparator();
   }
@@ -2112,6 +2167,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderStudentComparator() {
     const a1 = DATA.alunos.find(a => a.numero === state.comparatorA) || DATA.alunos[0];
     const a2 = DATA.alunos.find(a => a.numero === state.comparatorB) || DATA.alunos[1];
+
+    const inp1 = document.getElementById('searchAluno1');
+    const inp2 = document.getElementById('searchAluno2');
+    if (inp1 && document.activeElement !== inp1) inp1.value = formatAlunoLabel(a1);
+    if (inp2 && document.activeElement !== inp2) inp2.value = formatAlunoLabel(a2);
 
     const cardsContainer = document.getElementById('comparatorComparisonCards');
     if (cardsContainer) {
