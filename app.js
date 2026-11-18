@@ -3605,6 +3605,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  document.getElementById('btnToggleGlossary')?.addEventListener('click', () => {
+    document.getElementById('glossaryPanel')?.classList.toggle('hidden');
+  });
+  document.getElementById('btnCloseGlossary')?.addEventListener('click', () => {
+    document.getElementById('glossaryPanel')?.classList.add('hidden');
+  });
+
   // Device Mode Switcher (Celular vs PC)
   document.getElementById('selectTheme')?.addEventListener('change', (e) => {
     applyTheme(e.target.value);
