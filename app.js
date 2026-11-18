@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentTab: 'overview',
     filterCurso: 'ALL',
     filterVinculo: 'ALL',
+    vfRiskFilter: 'ALL',
     tableSearch: '',
     sortColumn: 'rankGraduacao',
     sortAsc: true,
@@ -186,9 +187,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!d || d.nf !== null || d.vf !== null || d.isPratica) return null;
     const ve = d.mve ?? d.ve;
     const vc = d.vc;
-    if (ve === null || ve === undefined) return null;
+    const hasVe = (ve !== null && ve !== undefined);
+    const hasVc = (vc !== null && vc !== undefined);
+    if (!hasVe && !hasVc) return null;
 
-    if (vc !== null && vc !== undefined) {
+    if (hasVe && hasVc) {
       const paraMedia5 = (20 - ve - vc) / 2;
       const precisa = Math.max(4.0, paraMedia5);
       const precisaArred = Math.round(precisa * 100) / 100;
@@ -204,14 +207,72 @@ document.addEventListener('DOMContentLoaded', () => {
       };
     }
 
-    const faltaConjunto = Math.max(0, 20 - ve);
+    if (hasVe) {
+      const faltaConjunto = Math.max(0, 20 - ve);
+      return {
+        tipo: 'partial',
+        valor: null,
+        label: `VC+2×VF ≥ ${faltaConjunto.toFixed(2)}`,
+        detalhe: `Aguardando VC (e VF ≥ 4,00)`
+      };
+    }
+
+    const faltaConjunto = Math.max(0, 20 - vc);
     return {
       tipo: 'partial',
       valor: null,
-      label: `VC+2×VF ≥ ${faltaConjunto.toFixed(2)}`,
-      detalhe: `Aguardando VC (e VF ≥ 4,00)`
+      label: `VE+2×VF ≥ ${faltaConjunto.toFixed(2)}`,
+      detalhe: `Aguardando VE (e VF ≥ 4,00)`
     };
   }
+
+  // Precompute VF risk metrics for each student (3.2 open subjects) and 3.2 disciplines
+  const discVfAgg = new Map();
+  DATA.alunos.forEach(aluno => {
+    const exactList = [];
+    (aluno.disciplinas || []).forEach(d => {
+      if (d.semestre !== '3.2') return;
+      const vfInfo = calcVfNecessaria(d);
+      if (vfInfo && vfInfo.tipo === 'exact') {
+        exactList.push({
+          nome: d.nome,
+          codigo: d.codigo,
+          valor: vfInfo.valor,
+          militar: d.militar
+        });
+        const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
+        if (!discVfAgg.has(dKey)) discVfAgg.set(dKey, []);
+        discVfAgg.get(dKey).push(vfInfo.valor);
+      }
+    });
+    exactList.sort((a, b) => b.valor - a.valor);
+    aluno.vfRiskSubjects = exactList;
+    if (exactList.length > 0) {
+      aluno.maxVf32 = exactList[0].valor;
+      aluno.avgVf32 = Math.round((exactList.reduce((s, x) => s + x.valor, 0) / exactList.length) * 100) / 100;
+      aluno.vfRiskCount = exactList.filter(x => x.valor > 5.0).length;
+      aluno.vfRiskLevel = aluno.maxVf32 >= 6.5 ? 'risk' : (aluno.maxVf32 > 5.0 ? 'warn' : 'safe');
+    } else {
+      aluno.maxVf32 = null;
+      aluno.avgVf32 = null;
+      aluno.vfRiskCount = 0;
+      aluno.vfRiskLevel = 'none';
+    }
+  });
+
+  DATA.disciplinas.forEach(d => {
+    const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
+    const vals = discVfAgg.get(dKey);
+    if (vals && vals.length) {
+      d.vfMediaNec = Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100;
+      d.vfEmRisco = vals.filter(v => v > 5.0).length;
+      d.vfRiscoAlto = vals.filter(v => v >= 6.5).length;
+    } else {
+      d.vfMediaNec = null;
+      d.vfEmRisco = 0;
+      d.vfRiscoAlto = 0;
+    }
+  });
 
   function computeDynamicBounds(datasets, minSpan = 1.0, pad = 0.2) {
     const vals = [];
@@ -1233,6 +1294,15 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       const m32 = aluno.media32 !== null ? fmtNum(aluno.media32) : '-';
+      let vfBadge = '';
+      if (aluno.maxVf32 !== null) {
+        const vfCls = aluno.vfRiskLevel === 'risk'
+          ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+          : (aluno.vfRiskLevel === 'warn'
+            ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+            : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30');
+        vfBadge = `<span class="px-2 py-0.5 rounded border text-[10px] font-bold font-mono-numbers ${vfCls}">Máx VF: ${fmtNum(aluno.maxVf32)}</span>`;
+      }
 
       return `
         <div class="ranking-card glass-panel p-4 rounded-2xl border border-slate-800 space-y-3 cursor-pointer hover:border-blue-500/50 shadow-lg relative overflow-hidden" onclick="window.app.openStudentModal(${aluno.numero})">
@@ -1274,11 +1344,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-xs pt-1 text-slate-400 border-t border-slate-800/60">
-            <div class="font-mono-numbers text-[11px]">
+          <div class="flex items-center justify-between text-xs pt-1 text-slate-400 border-t border-slate-800/60 gap-2 flex-wrap">
+            <div class="font-mono-numbers text-[11px] flex items-center gap-1.5 flex-wrap">
               <span>Maior: <strong class="text-emerald-400">${fmtNum(aluno.maiorNota)}</strong></span>
-              <span class="mx-1 text-slate-600">•</span>
+              <span class="text-slate-600">•</span>
               <span>Menor: <strong class="text-rose-400">${fmtNum(aluno.menorNota)}</strong></span>
+              ${vfBadge}
             </div>
             <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-400">
               Ver Ficha <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
@@ -1289,11 +1360,93 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
+  function renderVfRiskRadar() {
+    const panel = document.getElementById('vfRiskRadarPanel');
+    if (!panel) return;
+
+    const riskList = filteredAlunos.filter(a => a.vfRiskLevel === 'risk').sort((a, b) => b.maxVf32 - a.maxVf32);
+    const warnList = filteredAlunos.filter(a => a.vfRiskLevel === 'warn').sort((a, b) => b.maxVf32 - a.maxVf32);
+    const safeList = filteredAlunos.filter(a => a.vfRiskLevel === 'safe');
+
+    const pillCls = (key, activeBorder, activeBg, baseText) => {
+      const active = state.vfRiskFilter === key;
+      return active
+        ? `${activeBorder} ${activeBg} ${baseText} ring-2 ring-offset-1 ring-offset-slate-900`
+        : `border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 ${baseText}`;
+    };
+
+    const highlightList = [...riskList, ...warnList].slice(0, 8);
+
+    panel.innerHTML = `
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 class="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-2">
+            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
+            Radar de Risco de Recuperação (VF 3.2)
+          </h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Clique em um grupo para filtrar a lista abaixo (mín. 4,00 na VF e média ≥ 5,00)</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+          <button data-vfrisk="ALL" class="px-2.5 py-1 rounded-xl border transition ${state.vfRiskFilter === 'ALL' ? 'border-blue-500 bg-blue-500/20 text-blue-300' : 'border-slate-700 bg-slate-900 text-slate-400 hover:text-white'}">
+            Todos (${filteredAlunos.length})
+          </button>
+          <button data-vfrisk="risk" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('risk', 'border-rose-500', 'bg-rose-500/20', 'text-rose-300')}">
+            Risco VF ≥ 6.50 (${riskList.length})
+          </button>
+          <button data-vfrisk="warn" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('warn', 'border-amber-500', 'bg-amber-500/20', 'text-amber-300')}">
+            Atenção 5.01–6.49 (${warnList.length})
+          </button>
+          <button data-vfrisk="safe" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('safe', 'border-emerald-500', 'bg-emerald-500/20', 'text-emerald-300')}">
+            Tranquilos ≤ 5.00 (${safeList.length})
+          </button>
+        </div>
+      </div>
+      ${highlightList.length > 0 ? `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-slate-800/80">
+          ${highlightList.map(a => {
+            const crit = a.vfRiskSubjects.filter(s => s.valor > 5.0);
+            const isHigh = a.vfRiskLevel === 'risk';
+            const cardBorder = isHigh ? 'border-rose-500/30 bg-rose-500/5' : 'border-amber-500/25 bg-amber-500/5';
+            const badgeColor = isHigh ? 'text-rose-400' : 'text-amber-300';
+            return `
+              <button onclick="window.app.openStudentModal(${a.numero})" class="text-left p-2.5 rounded-xl border ${cardBorder} hover:border-blue-500/50 transition space-y-1">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-bold text-slate-100 truncate">${a.nome}</span>
+                  <span class="text-xs font-extrabold font-mono-numbers shrink-0 ${badgeColor}">VF ${fmtNum(a.maxVf32)}</span>
+                </div>
+                <div class="text-[10px] text-slate-400 truncate">${a.curso} · ${crit.length} mat. &gt; 5.00</div>
+                <div class="text-[10px] text-slate-300 truncate">${crit.slice(0, 2).map(s => `${s.nome.split(' ')[0]} (${fmtNum(s.valor)})`).join(', ')}</div>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      ` : `
+        <div class="text-xs text-emerald-400 font-semibold pt-2 border-t border-slate-800/80">
+          Todos os alunos filtrados precisam de no máximo 5,00 na VF para fechar o 3.2 sem exame.
+        </div>
+      `}
+    `;
+
+    panel.querySelectorAll('button[data-vfrisk]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.vfRiskFilter = btn.getAttribute('data-vfrisk');
+        state.currentPage = 1;
+        renderRankingsTable();
+      });
+    });
+  }
+
   function renderRankingsTable() {
     const tbody = document.getElementById('rankingTableBody');
     if (!tbody) return;
 
-    const sorted = [...filteredAlunos].sort((a, b) => {
+    renderVfRiskRadar();
+
+    const baseList = state.vfRiskFilter === 'ALL'
+      ? filteredAlunos
+      : filteredAlunos.filter(a => a.vfRiskLevel === state.vfRiskFilter);
+
+    const sorted = [...baseList].sort((a, b) => {
       let valA = a[state.sortColumn];
       let valB = b[state.sortColumn];
 
@@ -1320,7 +1473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (displayed.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-slate-500">Nenhum aluno encontrado para os filtros selecionados.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="13" class="py-8 text-center text-slate-500">Nenhum aluno encontrado para os filtros selecionados.</td></tr>`;
     } else {
       tbody.innerHTML = displayed.map(aluno => {
         let rankIcon = '';
@@ -1329,6 +1482,13 @@ document.addEventListener('DOMContentLoaded', () => {
         else if (aluno.rankGraduacao === 3) rankIcon = '🥉 ';
 
         const m32 = aluno.media32 !== null ? fmtNum(aluno.media32) : '-';
+        let maxVfCell = '<span class="text-slate-500">-</span>';
+        if (aluno.maxVf32 !== null) {
+          const vfColor = aluno.vfRiskLevel === 'risk'
+            ? 'text-rose-400 font-extrabold'
+            : (aluno.vfRiskLevel === 'warn' ? 'text-amber-300 font-bold' : 'text-emerald-400 font-semibold');
+          maxVfCell = `<span class="${vfColor}" title="${aluno.vfRiskSubjects[0]?.nome || ''}">${fmtNum(aluno.maxVf32)}</span>`;
+        }
 
         return `
           <tr class="table-hover-row border-b border-slate-800/40">
@@ -1358,6 +1518,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </td>
             <td class="py-3 px-4 text-right font-mono-numbers text-amber-400 font-bold">
               ${m32}
+            </td>
+            <td class="py-3 px-3 text-right font-mono-numbers">
+              ${maxVfCell}
             </td>
             <td class="py-3 px-3 text-center text-slate-400 font-mono-numbers">
               ${aluno.concluidas}
@@ -1491,6 +1654,9 @@ document.addEventListener('DOMContentLoaded', () => {
     tbody.innerHTML = filtered.map(d => {
       const is32 = (d.semestre === '3.2');
       const badge32 = is32 ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-bold border border-amber-500/20">3.2 Parcial</span>' : '';
+      const vfRiskInfo = (is32 && d.vfMediaNec !== null)
+        ? `<div class="text-[10px] mt-0.5 font-mono-numbers ${d.vfEmRisco > 0 ? 'text-amber-300' : 'text-emerald-400'}">VF nec. méd: ${fmtNum(d.vfMediaNec)}${d.vfEmRisco > 0 ? ` · <span class="text-rose-400 font-bold">${d.vfEmRisco} em risco (&gt;5.0)</span>` : ' · todos ≤ 5.0'}</div>`
+        : '';
 
       const pct = d.media !== null ? Math.min(100, Math.max(0, (d.media / 10) * 100)) : 0;
       let barColor = 'bg-rose-500';
@@ -1502,7 +1668,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr class="table-hover-row border-b border-slate-800/40">
           <td class="py-2.5 px-3 font-mono-numbers text-slate-400 text-[11px]">${d.codigo}</td>
           <td class="py-2.5 px-4 font-bold text-slate-200">
-            ${d.nome} ${badge32}
+            ${d.nome} ${badge32}${vfRiskInfo}
           </td>
           <td class="py-2.5 px-3 text-slate-400 font-mono-numbers">${d.semestre}</td>
           <td class="py-2.5 px-3 text-slate-400 text-[11px]">${d.ciclo}</td>

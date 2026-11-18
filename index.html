@@ -570,6 +570,11 @@
 
       </div>
 
+      <!-- Radar de Risco de Recuperação (VF 3.2) -->
+      <div id="vfRiskRadarPanel" class="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-3">
+        <!-- Populated by JS -->
+      </div>
+
       <!-- Mobile-Optimized Ranking Cards View -->
       <div id="rankingCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
         <!-- Populated by JS -->
@@ -632,6 +637,12 @@
                 <th class="py-3.5 px-4 cursor-pointer hover:text-slate-200 transition text-right text-amber-400" data-sort="media32">
                   <div class="flex items-center justify-end gap-1.5">
                     <span>3.2 (Parcial)</span>
+                    <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
+                  </div>
+                </th>
+                <th class="py-3.5 px-3 cursor-pointer hover:text-rose-300 transition text-right text-rose-400" data-sort="maxVf32" title="Maior nota necessária na VF entre as matérias abertas do 3.2">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <span>Máx. VF 3.2</span>
                     <i data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-slate-500"></i>
                   </div>
                 </th>
@@ -1114,8 +1125,8 @@
   </nav>
 
   <!-- 1. Embedded Processed Dataset -->
-  <script src="data.js?v=20261118d"></script>
+  <script src="data.js?v=20261118e"></script>
   <!-- 2. Application Logic -->
-  <script src="app.js?v=20261118d"></script>
+  <script src="app.js?v=20261118e"></script>
 </body>
 </html>
