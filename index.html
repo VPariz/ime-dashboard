@@ -286,7 +286,11 @@
     <!-- Navigation Tabs -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 border-t border-slate-800/60">
       <nav class="flex space-x-2 sm:space-x-6 overflow-x-auto py-2.5" id="navTabs">
-        <button data-tab="overview" class="tab-btn active flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-blue-400 bg-blue-500/10 border-blue-500/30">
+        <button id="navTabMeuPainelBtn" data-tab="meu-painel" class="hidden tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-cyan-400 hover:text-cyan-200 hover:bg-cyan-500/10 whitespace-nowrap">
+          <i data-lucide="user-circle-2" class="w-4 h-4 text-cyan-400"></i>
+          <span>Meu Painel</span>
+        </button>
+        <button data-tab="overview" class="tab-btn active flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-blue-400 bg-blue-500/10 border-blue-500/30 whitespace-nowrap">
           <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
           <span>Visão Geral</span>
         </button>
@@ -526,6 +530,169 @@
           <span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-300 font-mono-numbers" id="kpiCountReserva">9 Reserva</span>
           <span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-mono-numbers" id="kpiCountCG">9 CG</span>
         </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 0: MEU PAINEL (ABA PESSOAL DO ALUNO) -->
+    <section id="tab-meu-painel" class="tab-content hidden space-y-6 animate-fade-in">
+
+      <!-- Banner de Subturma (Ciclo Básico: 1º Ano A/B | 2º Ano A/B/C) -->
+      <div id="mpSubturmaBanner" class="hidden glass-panel p-4 rounded-2xl border border-amber-500/40 bg-amber-500/5 flex flex-wrap items-center justify-between gap-3">
+        <div class="space-y-0.5">
+          <div class="text-xs sm:text-sm font-bold text-amber-300 flex items-center gap-1.5">
+            <i data-lucide="users-round" class="w-4 h-4"></i>
+            <span id="mpSubturmaTitle">Escolha sua subturma do Ciclo Básico</span>
+          </div>
+          <p class="text-[11px] text-slate-300">As datas de provas, trabalhos e anotações do calendário são compartilhadas entre todos da mesma subturma.</p>
+        </div>
+        <div id="mpSubturmaButtons" class="flex flex-wrap items-center gap-2"></div>
+      </div>
+
+      <!-- Perfil Pessoal, Avatar & KPIs -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="flex items-center gap-4 min-w-0">
+            <div class="relative shrink-0">
+              <div id="mpAvatarContainer" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600/40 to-cyan-500/30 border border-cyan-500/40 flex items-center justify-center font-extrabold text-2xl text-cyan-200 overflow-hidden shadow-lg">
+                A
+              </div>
+              <label id="lblMpUploadAvatar" class="absolute -bottom-1.5 -right-1.5 w-7 h-7 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center shadow-lg cursor-pointer border-2 border-slate-950 transition" title="Enviar / alterar minha foto (comprimida automaticamente)">
+                <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+                <input type="file" id="mpAvatarFileInput" accept="image/webp,image/jpeg,image/png" class="hidden">
+              </label>
+            </div>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <h2 id="mpStudentName" class="text-lg sm:text-xl font-extrabold text-white truncate">MEU PAINEL</h2>
+                <span id="mpStudentCourseBadge" class="text-[11px] px-2.5 py-0.5 rounded-full font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">Computação</span>
+                <span id="mpStudentSubturmaPill" class="hidden text-[11px] px-2 py-0.5 rounded-full font-bold bg-amber-500/15 text-amber-300 border border-amber-500/30"></span>
+                <button id="btnMpChangeSubturma" type="button" class="hidden text-[10.5px] text-amber-300 hover:text-amber-200 underline font-semibold">trocar subturma</button>
+              </div>
+              <p id="mpStudentSubtitle" class="text-xs text-slate-400 mt-0.5">Matrícula • Classificação na turma</p>
+              <div id="mpAvatarStatus" class="text-[11px] text-emerald-400 font-semibold mt-0.5 hidden"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full lg:w-auto">
+            <div class="px-3.5 py-2 rounded-xl bg-slate-900/80 border border-blue-500/30 text-center">
+              <div class="text-[10px] font-bold text-blue-400 uppercase">CR Graduação</div>
+              <div id="mpKpiGrad" class="text-lg font-extrabold text-white font-mono-numbers">-</div>
+            </div>
+            <div class="px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+              <div class="text-[10px] font-bold text-indigo-400 uppercase">CR Geral</div>
+              <div id="mpKpiGeral" class="text-lg font-extrabold text-slate-100 font-mono-numbers">-</div>
+            </div>
+            <div class="px-3.5 py-2 rounded-xl bg-slate-900/80 border border-amber-500/30 text-center">
+              <div id="mpKpiCurSemLbl" class="text-[10px] font-bold text-amber-400 uppercase">Média 3.2</div>
+              <div id="mpKpiCurSem" class="text-lg font-extrabold text-amber-300 font-mono-numbers">-</div>
+            </div>
+            <div class="px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
+              <div class="text-[10px] font-bold text-emerald-400 uppercase">Ranking</div>
+              <div id="mpKpiRank" class="text-lg font-extrabold text-emerald-300 font-mono-numbers">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco 1: Minhas Notas do Semestre Atual (2 -> 7 VEs com Peso, VC e VF) -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2 flex-wrap">
+              <i data-lucide="calculator" class="w-4 h-4 text-blue-400"></i>
+              <span>Minhas Notas do Semestre Atual (<span id="mpGradesSemSpan">3.2</span>)</span>
+              <span class="text-[10.5px] px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30 font-semibold">Simulador &amp; Controle Pessoal</span>
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Lance suas notas de <strong>VE com peso individual</strong> (2 espaços iniciais, até <strong>7 VEs</strong> com o botão <strong>+</strong>), <strong>VC</strong> e <strong>VF</strong>. O cálculo pessoal não altera o ranking oficial publicado pelo Gestor.
+            </p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span id="mpGradesStatus" class="text-xs text-slate-400 font-medium"></span>
+            <button id="btnMpSaveGrades" type="button" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+              <span>Salvar Minhas Notas</span>
+            </button>
+          </div>
+        </div>
+
+        <div id="mpGradesContainer" class="space-y-3">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Grid Inferior: Calendário Compartilhado + Atalho de Carreira -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Calendário Compartilhado & Anotações de Estudo -->
+        <div class="lg:col-span-7 glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2 flex-wrap">
+                <i data-lucide="calendar-days" class="w-4 h-4 text-amber-400"></i>
+                <span>Calendário de Provas, Trabalhos &amp; Anotações</span>
+                <span id="mpCalendarGroupBadge" class="text-[10.5px] px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold">Grupo</span>
+              </h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">Compartilhado com todos da mesma Engenharia (ou Turma A/B/C no Básico). Você também pode marcar lembretes como privados.</p>
+            </div>
+            <select id="mpCalendarFilter" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-slate-200 font-semibold focus:outline-none">
+              <option value="ALL">Todos</option>
+              <option value="SHARED">Compartilhados do Grupo</option>
+              <option value="PRIVATE">Apenas Privados</option>
+            </select>
+          </div>
+
+          <form id="mpCalendarForm" class="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2.5 text-xs">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+              <input type="date" id="mpCalDate" required class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500">
+              <select id="mpCalTipo" class="bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500">
+                <option value="VE">Prova VE</option>
+                <option value="VC">Prova VC</option>
+                <option value="VF">Prova VF</option>
+                <option value="Trabalho">Entrega de Trabalho</option>
+                <option value="Lista">Lista de Exercícios</option>
+                <option value="Outro">Outro Lembrete</option>
+              </select>
+              <input type="text" id="mpCalDisciplina" maxlength="80" placeholder="Disciplina (ex: Cálculo III)" class="sm:col-span-2 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            </div>
+            <input type="text" id="mpCalTitulo" required maxlength="120" placeholder="Título (ex: VE1 de Cálculo III ou Lista de Física II)" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500">
+            <textarea id="mpCalAnotacao" rows="2" maxlength="1000" placeholder="Anotações de estudo (ex: Estudar capítulos 3 e 4 do Apostol; fazer questões 4, 7 e 12)..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"></textarea>
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label class="inline-flex items-center gap-1.5 text-slate-300 cursor-pointer select-none">
+                <input type="checkbox" id="mpCalPrivate" class="rounded border-slate-600 bg-slate-950 text-amber-500">
+                <span>Anotação privada (só eu vejo)</span>
+              </label>
+              <button type="submit" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold transition flex items-center gap-1.5">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Adicionar ao Calendário</span>
+              </button>
+            </div>
+          </form>
+
+          <div id="mpCalendarList" class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Atalho Direto: Escolhas de Carreira (Engenharia / Estágio / OM) -->
+        <div id="mpCareerShortcutCard" class="lg:col-span-5 glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <i data-lucide="briefcase" class="w-4 h-4 text-cyan-400"></i>
+                <span id="mpCareerTitle">Minhas Preferências</span>
+              </h3>
+              <p id="mpCareerSubtitle" class="text-[11px] text-slate-400 mt-0.5">Defina rapidamente sua ordem de escolha.</p>
+            </div>
+            <button id="btnMpGotoCareer" type="button" class="text-[11px] text-cyan-300 hover:text-cyan-200 font-bold whitespace-nowrap">Ver disputa completa →</button>
+          </div>
+
+          <div id="mpCareerBody" class="space-y-2.5">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
       </div>
 
     </section>
@@ -1692,8 +1859,14 @@
       <!-- Modal Header -->
       <div class="p-6 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border-b border-slate-800 flex items-start justify-between">
         <div class="flex items-center gap-4">
-          <div id="modalAvatar" class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-500/50 flex items-center justify-center font-extrabold text-xl text-blue-300 shrink-0">
-            AL
+          <div class="relative shrink-0">
+            <div id="modalAvatar" class="w-14 h-14 rounded-2xl bg-blue-600/30 border border-blue-500/50 flex items-center justify-center font-extrabold text-xl text-blue-300 overflow-hidden">
+              A
+            </div>
+            <label id="lblModalUploadAvatar" class="hidden absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full bg-cyan-600 hover:bg-cyan-500 text-white flex items-center justify-center shadow cursor-pointer border-2 border-slate-900 transition" title="Enviar / alterar foto deste aluno">
+              <i data-lucide="camera" class="w-3 h-3"></i>
+              <input type="file" id="modalAvatarFileInput" accept="image/webp,image/jpeg,image/png" class="hidden">
+            </label>
           </div>
           <div>
             <div class="flex flex-wrap items-center gap-2">
@@ -1880,10 +2053,14 @@
   </footer>
 
   <!-- Mobile Bottom Navigation Bar (App Experience) -->
-  <nav id="mobileBottomNav" class="hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 px-1 py-1.5 grid-cols-7 gap-0.5 shadow-2xl safe-area-pb bg-slate-950/95 backdrop-blur">
-    <button data-tab="overview" class="mobile-nav-btn active flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-blue-400 font-bold transition">
+  <nav id="mobileBottomNav" class="hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 px-1 py-1.5 gap-0.5 shadow-2xl safe-area-pb bg-slate-950/95 backdrop-blur overflow-x-auto">
+    <button id="mobileNavMeuPainelBtn" data-tab="meu-painel" class="hidden mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-cyan-400 font-semibold transition min-w-[44px]">
+      <i data-lucide="user-circle-2" class="w-4 h-4"></i>
+      <span class="text-[9px] leading-tight">Painel</span>
+    </button>
+    <button data-tab="overview" class="mobile-nav-btn active flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-blue-400 font-bold transition min-w-[44px]">
       <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-      <span class="text-[9.5px] leading-tight">Início</span>
+      <span class="text-[9px] leading-tight">Início</span>
     </button>
     <button data-tab="cursos" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="line-chart" class="w-4 h-4"></i>
@@ -1919,10 +2096,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261118z"></script>
+  <script src="supabase-config.js?v=20261119a"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261118z"></script>
+  <script src="demo-data.js?v=20261119a"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261118z"></script>
+  <script src="app.js?v=20261119a"></script>
 </body>
 </html>

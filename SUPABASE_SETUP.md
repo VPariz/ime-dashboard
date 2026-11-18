@@ -86,3 +86,13 @@ on conflict (user_id) do update set role = 'super_admin', turma_id = null, must_
    - `SUPABASE_ANON_KEY`
    
    O workflow [.github/workflows/supabase-keep-alive.yml](.github/workflows/supabase-keep-alive.yml) fará um ping automático a cada 3 dias para impedir que o plano gratuito pause por inatividade.
+
+---
+
+## Passo 6 — Meu Painel, Avatares Comprimidos, Calendário e Cache Free Tier
+Ao executar o [supabase_schema.sql](supabase_schema.sql) atualizado (idempotente — pode rodar novamente sobre um banco existente), são criadas automaticamente:
+- **`student_current_grades`**: notas pessoais do semestre atual (2 a 7 VEs com peso individual, VC e VF), isoladas por RLS para o próprio aluno (não alteram o ranking oficial).
+- **`student_subturmas`**: escolha de `Turma A` / `Turma B` (1º ano `1.1–1.2`) ou `Turma A` / `Turma B` / `Turma C` (2º ano `2.1–2.2`).
+- **`calendar_events`**: provas, trabalhos, listas e anotações de estudo compartilhadas por `(turma_id, semestre, grupo_academico)`, com suporte a anotações privadas (`is_private = true`) e atualização em tempo real via Supabase Realtime.
+- **`student_avatars` + Storage `ime-private/avatars/<turma_id>/<aluno_numero>.webp`**: fotos de perfil comprimidas no navegador para `256×256` WebP (`<= 60 KB`, teto `150 KB`, bloqueio de SVG/HTML). Alunos sobem a própria foto; múltiplos **Gestores** por turma podem subir fotos dos colegas da própria turma; **Super Admin** em qualquer turma. Sem foto, exibe a inicial do 1º nome com 0 requisições ao Storage.
+- **Cache inteligente (IndexedDB + `bump_my_turma_version`)**: o cliente guarda o `data.json` da turma no IndexedDB indexado por `turmas.updated_at`. Quando um Gestor publica novas notas, o RPC `bump_my_turma_version` atualiza o timestamp e invalida o cache automaticamente, economizando Egress no plano gratuito.

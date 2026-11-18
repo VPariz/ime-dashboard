@@ -305,6 +305,161 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- INDEXEDDB SMART CACHE (ECONOMIZA EGRESS NO PLANO GRATUITO) ---
+  function openTurmaCacheDb() {
+    return new Promise((resolve) => {
+      if (!window.indexedDB) return resolve(null);
+      const req = window.indexedDB.open('ime_dashboard_cache_v1', 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains('datasets')) {
+          db.createObjectStore('datasets', { keyPath: 'turmaId' });
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    });
+  }
+
+  async function getCachedTurmaDataset(turmaId, expectedUpdatedAt) {
+    try {
+      const db = await openTurmaCacheDb();
+      if (!db) return null;
+      return await new Promise((resolve) => {
+        const tx = db.transaction('datasets', 'readonly');
+        const req = tx.objectStore('datasets').get(turmaId);
+        req.onsuccess = () => {
+          const rec = req.result;
+          if (rec && rec.dataset && expectedUpdatedAt && rec.updatedAt === expectedUpdatedAt) {
+            resolve(rec.dataset);
+          } else {
+            resolve(null);
+          }
+        };
+        req.onerror = () => resolve(null);
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  async function setCachedTurmaDataset(turmaId, updatedAt, dataset) {
+    try {
+      const db = await openTurmaCacheDb();
+      if (!db) return;
+      await new Promise((resolve) => {
+        const tx = db.transaction('datasets', 'readwrite');
+        tx.objectStore('datasets').put({ turmaId, updatedAt: updatedAt || '', dataset, savedAt: Date.now() });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    } catch {}
+  }
+
+  // --- HELPERS PUROS: AVATAR INICIAL, COMPRESSÃO WEBP, 2..7 VEs PONDERADAS, SUBTURMAS ---
+  function getFirstNameInitial(nome) {
+    const clean = String(nome || '').trim();
+    if (!clean) return '?';
+    const firstWord = clean.split(/\s+/)[0] || clean;
+    return firstWord.charAt(0).toUpperCase();
+  }
+
+  function normalizeVeItems(rawItems, fallbackVe = null) {
+    let arr = Array.isArray(rawItems) ? rawItems.slice(0, 7).map(it => ({
+      nota: (it && it.nota !== null && it.nota !== undefined && it.nota !== '') ? Number(it.nota) : null,
+      peso: (it && it.peso !== null && it.peso !== undefined && Number(it.peso) > 0) ? Number(it.peso) : 1
+    })) : [];
+    if (arr.length === 0) {
+      arr = [
+        { nota: (fallbackVe !== null && fallbackVe !== undefined) ? Number(fallbackVe) : null, peso: 1 },
+        { nota: null, peso: 1 }
+      ];
+    }
+    while (arr.length < 2) arr.push({ nota: null, peso: 1 });
+    return arr;
+  }
+
+  function calcWeightedMve(veItems) {
+    const valid = (veItems || []).filter(it =>
+      it && it.nota !== null && it.nota !== undefined && !isNaN(Number(it.nota)) && Number(it.peso) > 0
+    );
+    if (!valid.length) return null;
+    let sumProd = 0;
+    let sumWeight = 0;
+    valid.forEach(it => {
+      const n = Math.max(0, Math.min(10, Number(it.nota)));
+      const w = Number(it.peso) || 1;
+      sumProd += n * w;
+      sumWeight += w;
+    });
+    return sumWeight > 0 ? Math.round((sumProd / sumWeight) * 100) / 100 : null;
+  }
+
+  function getAllowedSubturmasForSemester(sem) {
+    const ord = buildSemesterOrder(sem);
+    if (ord <= 2) return ['Turma A', 'Turma B'];
+    if (ord <= 4) return ['Turma A', 'Turma B', 'Turma C'];
+    return null;
+  }
+
+  async function compressAvatarImage(file, { maxSize = 256, targetBytes = 60 * 1024, hardMaxBytes = 150 * 1024 } = {}) {
+    const allowed = ['image/webp', 'image/jpeg', 'image/png'];
+    if (!file || !allowed.includes(file.type)) {
+      throw new Error('Formato inválido. Envie apenas imagem JPG, PNG ou WebP.');
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error('Imagem original muito grande (máx. 10 MB antes da compressão).');
+    }
+
+    const imgUrl = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((resolve, reject) => {
+        const el = new Image();
+        el.onload = () => resolve(el);
+        el.onerror = () => reject(new Error('Não foi possível decodificar a imagem.'));
+        el.src = imgUrl;
+      });
+
+      const canvas = document.createElement('canvas');
+      canvas.width = maxSize;
+      canvas.height = maxSize;
+      const ctx = canvas.getContext('2d');
+      const side = Math.min(img.width, img.height);
+      const sx = (img.width - side) / 2;
+      const sy = (img.height - side) / 2;
+      ctx.drawImage(img, sx, sy, side, side, 0, 0, maxSize, maxSize);
+
+      const toBlob = (mime, q) => new Promise(res => canvas.toBlob(res, mime, q));
+      let mime = 'image/webp';
+      let blob = await toBlob(mime, 0.8);
+      if (!blob || blob.type !== 'image/webp') {
+        mime = 'image/jpeg';
+        blob = await toBlob(mime, 0.8);
+      }
+
+      let q = 0.72;
+      while (blob && blob.size > targetBytes && q >= 0.35) {
+        blob = await toBlob(mime, q);
+        q -= 0.1;
+      }
+      if (!blob || blob.size > hardMaxBytes) {
+        throw new Error('Não foi possível comprimir a foto abaixo de 150 KB.');
+      }
+      const ext = mime === 'image/webp' ? 'webp' : 'jpg';
+      return { blob, mime, ext };
+    } finally {
+      URL.revokeObjectURL(imgUrl);
+    }
+  }
+
+  window.__IME_PERSONAL_HELPERS = {
+    getFirstNameInitial,
+    normalizeVeItems,
+    calcWeightedMve,
+    getAllowedSubturmasForSemester,
+    compressAvatarImage
+  };
+
   async function resolveSupabaseSessionAndLoad(sb, user, rawEnteredPassword = '') {
     const bucket = sbCfg.bucket || 'ime-private';
     let role = 'viewer';
@@ -374,31 +529,46 @@ document.addEventListener('DOMContentLoaded', () => {
       turmas = [activeTurma];
     }
 
-    // 3. Baixar JSON do bucket privado (fallback 'data.json' legado apenas para turma_28)
+    // 3. Baixar JSON do bucket privado (com cache IndexedDB por turmas.updated_at)
     const objectPath = activeTurma.storage_path || `${activeTurma.id}/data.json`;
-    let { data, error } = await sb.storage.from(bucket).download(objectPath);
-    if (error && activeTurma.id === 'turma_28' && objectPath !== 'data.json') {
-      const fb = await sb.storage.from(bucket).download('data.json');
-      if (!fb.error && fb.data) {
-        data = fb.data;
-        error = null;
+    let parsed = null;
+    let isStarterEmpty = false;
+    let fromCache = false;
+
+    if (activeTurma.updated_at) {
+      const cached = await getCachedTurmaDataset(activeTurma.id, activeTurma.updated_at);
+      if (cached && Array.isArray(cached.alunos)) {
+        parsed = cached;
+        fromCache = true;
       }
     }
 
-    let parsed = null;
-    let isStarterEmpty = false;
-    if (error) {
-      if (role === 'gestor' || role === 'super_admin') {
-        parsed = createEmptyTurmaDataset(activeTurma);
-        isStarterEmpty = true;
-      } else {
-        throw new Error(`A turma "${activeTurma.nome}" ainda não possui notas publicadas.`);
+    if (!parsed) {
+      let { data, error } = await sb.storage.from(bucket).download(objectPath);
+      if (error && activeTurma.id === 'turma_28' && objectPath !== 'data.json') {
+        const fb = await sb.storage.from(bucket).download('data.json');
+        if (!fb.error && fb.data) {
+          data = fb.data;
+          error = null;
+        }
       }
-    } else {
-      const text = await data.text();
-      parsed = JSON.parse(text);
-      if (!parsed || !Array.isArray(parsed.alunos)) {
-        throw new Error('Arquivo JSON inválido no bucket privado.');
+
+      if (error) {
+        if (role === 'gestor' || role === 'super_admin') {
+          parsed = createEmptyTurmaDataset(activeTurma);
+          isStarterEmpty = true;
+        } else {
+          throw new Error(`A turma "${activeTurma.nome}" ainda não possui notas publicadas.`);
+        }
+      } else {
+        const text = await data.text();
+        parsed = JSON.parse(text);
+        if (!parsed || !Array.isArray(parsed.alunos)) {
+          throw new Error('Arquivo JSON inválido no bucket privado.');
+        }
+        if (activeTurma.updated_at) {
+          setCachedTurmaDataset(activeTurma.id, activeTurma.updated_at, parsed);
+        }
       }
     }
 
@@ -714,7 +884,129 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!mobileNav) return;
       const visibleBtns = mobileNav.querySelectorAll('.mobile-nav-btn:not(.hidden)').length;
       mobileNav.classList.remove('grid-cols-5', 'grid-cols-6', 'grid-cols-7', 'grid-cols-8');
-      mobileNav.classList.add(`grid-cols-${Math.max(5, Math.min(8, visibleBtns))}`);
+      mobileNav.style.gridTemplateColumns = `repeat(${Math.max(4, visibleBtns)}, minmax(0, 1fr))`;
+    }
+
+    // --- AVATAR STORE (INICIAL DO 1º NOME + UPLOAD COMPRIMIDO WEBP) ---
+    const avatarUrlMap = new Map(); // numero -> objectURL ou dataURL
+    const demoAvatarStorageKey = `ime_avatars_demo_${ACTIVE_TURMA.id}_v1`;
+    if (sessionMeta.mode !== 'supabase') {
+      try {
+        const savedAv = JSON.parse(localStorage.getItem(demoAvatarStorageKey) || '{}');
+        Object.entries(savedAv).forEach(([num, url]) => avatarUrlMap.set(Number(num), url));
+      } catch {}
+    }
+
+    function getPersonalAlunoTarget() {
+      const num = getEffectiveAlunoNumero();
+      if (num !== null) {
+        const found = DATA.alunos.find(a => String(a.numero) === String(num));
+        if (found) return found;
+      }
+      if (sessionMeta.mode === 'demo' || sessionMeta.mode === 'local') {
+        return DATA.alunos[0] || null;
+      }
+      return null;
+    }
+
+    function canUploadAvatarFor(alunoNumero) {
+      if (IS_SUPER_ADMIN || USER_ROLE === 'gestor') return true;
+      if (sessionMeta.mode === 'demo') {
+        if (demoCareerViewAs !== 'viewer') return true;
+        const target = getPersonalAlunoTarget();
+        return target && String(target.numero) === String(alunoNumero);
+      }
+      return MY_ALUNO_NUM !== null && String(MY_ALUNO_NUM) === String(alunoNumero);
+    }
+
+    function renderAvatarInnerHtml(aluno) {
+      if (!aluno) return '?';
+      const url = avatarUrlMap.get(Number(aluno.numero));
+      if (url) {
+        return `<img src="${url}" alt="${escapeHtml(aluno.nome)}" class="w-full h-full object-cover" />`;
+      }
+      return escapeHtml(getFirstNameInitial(aluno.nome));
+    }
+
+    async function loadTurmaAvatarsFromSupabase() {
+      if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb) return;
+      try {
+        const { data: rows, error } = await sessionMeta.sb
+          .from('student_avatars')
+          .select('aluno_numero, storage_path')
+          .eq('turma_id', ACTIVE_TURMA.id);
+        if (error || !rows?.length) return;
+        const paths = rows.map(r => r.storage_path);
+        const { data: signed } = await sessionMeta.sb.storage
+          .from(sessionMeta.bucket)
+          .createSignedUrls(paths, 3600);
+        if (Array.isArray(signed)) {
+          signed.forEach((item, idx) => {
+            if (item?.signedUrl && rows[idx]) {
+              avatarUrlMap.set(Number(rows[idx].aluno_numero), item.signedUrl);
+            }
+          });
+          renderPodium();
+          if (state.currentTab === 'meu-painel') renderMeuPainelTab();
+          if (state.currentTab === 'comparator') renderStudentComparator();
+        }
+      } catch {}
+    }
+
+    async function uploadStudentAvatar(alunoNumero, file) {
+      if (!canUploadAvatarFor(alunoNumero)) {
+        throw new Error('Sem permissão para alterar a foto deste aluno.');
+      }
+      const { blob, mime, ext } = await compressAvatarImage(file);
+      if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+        const storagePath = `avatars/${ACTIVE_TURMA.id}/${alunoNumero}.${ext}`;
+        const { error: upErr } = await sessionMeta.sb.storage
+          .from(sessionMeta.bucket)
+          .upload(storagePath, blob, { upsert: true, contentType: mime });
+        if (upErr) throw new Error(upErr.message);
+
+        const { error: dbErr } = await sessionMeta.sb
+          .from('student_avatars')
+          .upsert({
+            turma_id: ACTIVE_TURMA.id,
+            aluno_numero: Number(alunoNumero),
+            storage_path: storagePath,
+            updated_by: sessionMeta.userId || null,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'turma_id,aluno_numero' });
+        if (dbErr) throw new Error(dbErr.message);
+
+        const objUrl = URL.createObjectURL(blob);
+        avatarUrlMap.set(Number(alunoNumero), objUrl);
+      } else {
+        const dataUrl = await new Promise((resolve) => {
+          const fr = new FileReader();
+          fr.onload = () => resolve(String(fr.result || ''));
+          fr.readAsDataURL(blob);
+        });
+        avatarUrlMap.set(Number(alunoNumero), dataUrl);
+        try {
+          const saved = JSON.parse(localStorage.getItem(demoAvatarStorageKey) || '{}');
+          saved[alunoNumero] = dataUrl;
+          localStorage.setItem(demoAvatarStorageKey, JSON.stringify(saved));
+        } catch {}
+      }
+
+      renderPodium();
+      if (state.currentTab === 'meu-painel') renderMeuPainelTab();
+      if (state.currentTab === 'comparator') renderStudentComparator();
+      if (state.activeStudentModal && Number(state.activeStudentModal.numero) === Number(alunoNumero)) {
+        const ma = document.getElementById('modalAvatar');
+        if (ma) ma.innerHTML = renderAvatarInnerHtml(state.activeStudentModal);
+      }
+      return { sizeKb: Math.round((blob.size / 1024) * 10) / 10, mime };
+    }
+
+    // Visibilidade da aba Meu Painel (1ª aba para alunos vinculados ou Demo)
+    const HAS_MEU_PAINEL = Boolean(MY_ALUNO_NUM !== null || sessionMeta.mode === 'demo' || sessionMeta.mode === 'local');
+    if (HAS_MEU_PAINEL) {
+      document.getElementById('navTabMeuPainelBtn')?.classList.remove('hidden');
+      document.getElementById('mobileNavMeuPainelBtn')?.classList.remove('hidden');
     }
 
     // Visibilidade da aba Gestão & Notas (apenas Gestor / Super Admin / Demo)
@@ -1466,8 +1758,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="text-[11px] text-slate-400 font-mono-numbers">#${aluno.rankGraduacao} Grad</span>
           </div>
           <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-extrabold text-white text-base">
-              ${aluno.nome.substring(0, 2).toUpperCase()}
+            <div class="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-extrabold text-white text-base overflow-hidden shrink-0">
+              ${renderAvatarInnerHtml(aluno)}
             </div>
             <div class="flex-1 min-w-0">
               <h4 class="font-extrabold text-sm text-white truncate">${aluno.nome}</h4>
@@ -3137,8 +3429,8 @@ document.addEventListener('DOMContentLoaded', () => {
               <span class="text-xs font-mono-numbers text-slate-400">#${aluno.rankGraduacao} Graduação</span>
             </div>
             <div class="flex items-center gap-3 mb-4">
-              <div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center font-extrabold text-white text-lg">
-                ${aluno.nome.substring(0, 2).toUpperCase()}
+              <div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center font-extrabold text-white text-lg overflow-hidden shrink-0">
+                ${renderAvatarInnerHtml(aluno)}
               </div>
               <div>
                 <h3 class="font-extrabold text-base text-white">${aluno.nome}</h3>
@@ -3527,7 +3819,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('studentModal');
     
     document.getElementById('modalStudentName').textContent = aluno.nome;
-    document.getElementById('modalAvatar').textContent = aluno.nome.substring(0, 2).toUpperCase();
+    document.getElementById('modalAvatar').innerHTML = renderAvatarInnerHtml(aluno);
+    document.getElementById('lblModalUploadAvatar')?.classList.toggle('hidden', !canUploadAvatarFor(aluno.numero));
     document.getElementById('modalStudentNum').textContent = aluno.numero;
     document.getElementById('modalStudentCursoBadge').className = `text-xs px-2.5 py-0.5 rounded-full font-bold ${courseClassMap[aluno.curso] || 'badge-computacao'}`;
     document.getElementById('modalStudentCursoBadge').textContent = aluno.curso;
@@ -3963,7 +4256,9 @@ document.addEventListener('DOMContentLoaded', () => {
       activeSection.classList.remove('hidden');
     }
 
-    if (targetTab === 'cursos') {
+    if (targetTab === 'meu-painel') {
+      initMeuPainelTab();
+    } else if (targetTab === 'cursos') {
       if (!chartCursosEvolucaoInstance) {
         initCursosComparisonTab();
       } else {
@@ -6233,6 +6528,13 @@ document.addEventListener('DOMContentLoaded', () => {
           .from(sessionMeta.bucket)
           .upload(sessionMeta.storagePath, blob, { upsert: true, contentType: 'application/json' });
         if (error) throw new Error(error.message);
+        try {
+          const { data: newTs } = await sessionMeta.sb.rpc('bump_my_turma_version', { p_turma_id: ACTIVE_TURMA.id });
+          if (newTs) {
+            ACTIVE_TURMA.updated_at = newTs;
+            setCachedTurmaDataset(ACTIVE_TURMA.id, newTs, payload);
+          }
+        } catch {}
         markGestaoDirty(false);
         setGestaoStatus(`Dataset publicado com sucesso em "${sessionMeta.storagePath}"!`, 'ok');
       } catch (err) {
@@ -6474,6 +6776,889 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // --- UPLOAD DE AVATAR NO MODAL DO ALUNO (ALUNO / GESTOR DA TURMA / SUPER ADMIN) ---
+  document.getElementById('modalAvatarFileInput')?.addEventListener('change', async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    const aluno = state.activeStudentModal;
+    if (!file || !aluno) return;
+    try {
+      const res = await uploadStudentAvatar(aluno.numero, file);
+      const modalAv = document.getElementById('modalAvatar');
+      if (modalAv) modalAv.innerHTML = renderAvatarInnerHtml(aluno);
+      const personalTarget = getPersonalAlunoTarget();
+      if (personalTarget && Number(personalTarget.numero) === Number(aluno.numero)) {
+        const mpAv = document.getElementById('mpAvatarContainer');
+        if (mpAv) mpAv.innerHTML = renderAvatarInnerHtml(aluno);
+      }
+      if (state.currentTab === 'overview') renderPodium();
+      if (state.currentTab === 'comparator') renderStudentComparator();
+      alert(`Foto de ${aluno.nome} atualizada com sucesso (${res.sizeKb} KB)!`);
+    } catch (err) {
+      alert(`Erro ao enviar foto: ${err.message}`);
+    }
+  });
+
+  // =========================================================================
+  // --- ABA 0: MEU PAINEL (NOTAS 2..7 VEs, SUBTURMA, CALENDÁRIO, CARREIRA) ---
+  // =========================================================================
+  const mpState = {
+    initialized: false,
+    loadedKey: null,
+    grades: {},
+    subturma: null,
+    changingSubturma: false,
+    calendarEvents: [],
+    calendarFilter: 'ALL',
+    calendarChannel: null,
+    dirtyGrades: false
+  };
+
+  function getMpGradesStorageKey(alunoNum) {
+    return `ime_personal_grades_${ACTIVE_TURMA.id}_${CURRENT_SEM}_${alunoNum}_v1`;
+  }
+  function getMpSubturmaStorageKey(alunoNum) {
+    return `ime_personal_subturma_${ACTIVE_TURMA.id}_${CURRENT_SEM}_${alunoNum}_v1`;
+  }
+  function getMpCalendarStorageKey(grupo) {
+    return `ime_calendar_${ACTIVE_TURMA.id}_${CURRENT_SEM}_${grupo}_v1`;
+  }
+
+  function getAcademicGroupForAluno(aluno) {
+    const allowed = getAllowedSubturmasForSemester(CURRENT_SEM);
+    if (allowed) {
+      return mpState.subturma || allowed[0];
+    }
+    return aluno?.curso || 'Geral';
+  }
+
+  function setMpGradesStatus(msg, tone = 'info') {
+    const el = document.getElementById('mpGradesStatus');
+    if (!el) return;
+    el.textContent = msg;
+    const cls = tone === 'ok'
+      ? 'text-xs text-emerald-400 font-bold'
+      : tone === 'err'
+        ? 'text-xs text-rose-400 font-bold'
+        : tone === 'warn'
+          ? 'text-xs text-amber-300 font-semibold'
+          : 'text-xs text-slate-400 font-medium';
+    el.className = cls;
+  }
+
+  function computePersonalDisciplineSummary(d, rec) {
+    const veItems = normalizeVeItems(rec?.ve_items, d.ve);
+    const mve = calcWeightedMve(veItems);
+    const vc = (rec && rec.vc !== null && rec.vc !== undefined && rec.vc !== '') ? Number(rec.vc) : null;
+    const vf = (rec && rec.vf !== null && rec.vf !== undefined && rec.vf !== '') ? Number(rec.vf) : null;
+
+    let parcialOrNf = null;
+    if (d.isPratica) {
+      if (mve !== null && vc !== null) parcialOrNf = (mve + vc) / 2;
+      else if (mve !== null) parcialOrNf = mve;
+      else if (vc !== null) parcialOrNf = vc;
+    } else if (vf !== null && mve !== null && vc !== null) {
+      parcialOrNf = (mve + vc + 2 * vf) / 4;
+    } else if (mve !== null && vc !== null) {
+      parcialOrNf = (mve + vc) / 2;
+    } else if (mve !== null) {
+      parcialOrNf = mve;
+    } else if (vc !== null) {
+      parcialOrNf = vc;
+    }
+    if (parcialOrNf !== null) parcialOrNf = Math.round(parcialOrNf * 100) / 100;
+
+    const vfInfo = calcVfNecessaria({
+      ve: mve,
+      vc,
+      vf,
+      isPratica: Boolean(d.isPratica)
+    });
+
+    return { veItems, mve, vc, vf, parcialOrNf, vfInfo };
+  }
+
+  function updateMpPersonalCurSemKpi(aluno) {
+    const curDiscs = (aluno?.disciplinas || []).filter(d => d.semestre === CURRENT_SEM && !d.militar);
+    const vals = [];
+    curDiscs.forEach(d => {
+      const rec = mpState.grades[d.codigo];
+      const summary = computePersonalDisciplineSummary(d, rec);
+      if (summary.parcialOrNf !== null) vals.push(summary.parcialOrNf);
+      else if (d.notaEfetiva !== null && d.notaEfetiva !== undefined) vals.push(Number(d.notaEfetiva));
+    });
+    const avg = vals.length ? (vals.reduce((s, v) => s + v, 0) / vals.length) : aluno?.media32;
+    const el = document.getElementById('mpKpiCurSem');
+    if (el) el.textContent = avg !== null && avg !== undefined ? fmtNum(avg) : '-';
+  }
+
+  async function loadMeuPainelData(aluno) {
+    if (!aluno) return;
+    const curDiscs = (aluno.disciplinas || []).filter(d => d.semestre === CURRENT_SEM && !d.militar);
+
+    // 1. Subturma (1.1-2.2)
+    const allowedSubturmas = getAllowedSubturmasForSemester(CURRENT_SEM);
+    mpState.subturma = null;
+    if (allowedSubturmas) {
+      if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+        try {
+          const { data } = await sessionMeta.sb
+            .from('student_subturmas')
+            .select('subturma')
+            .eq('turma_id', ACTIVE_TURMA.id)
+            .eq('semestre', CURRENT_SEM)
+            .eq('aluno_numero', aluno.numero)
+            .maybeSingle();
+          if (data?.subturma && allowedSubturmas.includes(data.subturma)) {
+            mpState.subturma = data.subturma;
+          }
+        } catch {}
+      } else {
+        try {
+          const saved = localStorage.getItem(getMpSubturmaStorageKey(aluno.numero));
+          if (saved && allowedSubturmas.includes(saved)) mpState.subturma = saved;
+        } catch {}
+      }
+    }
+
+    // 2. Notas pessoais do semestre atual
+    const nextGrades = {};
+    curDiscs.forEach(d => {
+      nextGrades[d.codigo] = {
+        ve_items: normalizeVeItems(null, d.ve),
+        vc: d.vc !== null && d.vc !== undefined ? Number(d.vc) : null,
+        vf: d.vf !== null && d.vf !== undefined ? Number(d.vf) : null
+      };
+    });
+
+    if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+      try {
+        const { data: rows } = await sessionMeta.sb
+          .from('student_current_grades')
+          .select('disciplina_codigo, ve_items, vc, vf')
+          .eq('turma_id', ACTIVE_TURMA.id)
+          .eq('semestre', CURRENT_SEM)
+          .eq('aluno_numero', aluno.numero);
+        (rows || []).forEach(r => {
+          nextGrades[r.disciplina_codigo] = {
+            ve_items: normalizeVeItems(r.ve_items, null),
+            vc: r.vc !== null && r.vc !== undefined ? Number(r.vc) : null,
+            vf: r.vf !== null && r.vf !== undefined ? Number(r.vf) : null
+          };
+        });
+      } catch {}
+    } else {
+      try {
+        const raw = localStorage.getItem(getMpGradesStorageKey(aluno.numero));
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          Object.entries(parsed || {}).forEach(([cod, rec]) => {
+            nextGrades[cod] = {
+              ve_items: normalizeVeItems(rec?.ve_items, null),
+              vc: rec?.vc !== null && rec?.vc !== undefined && rec?.vc !== '' ? Number(rec.vc) : null,
+              vf: rec?.vf !== null && rec?.vf !== undefined && rec?.vf !== '' ? Number(rec.vf) : null
+            };
+          });
+        }
+      } catch {}
+    }
+    mpState.grades = nextGrades;
+    mpState.dirtyGrades = false;
+
+    // 3. Calendário do grupo
+    await loadMeuPainelCalendar(aluno);
+    subscribeCalendarRealtime(aluno);
+  }
+
+  async function loadMeuPainelCalendar(aluno) {
+    const grupo = getAcademicGroupForAluno(aluno);
+    if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+      try {
+        const { data: rows, error } = await sessionMeta.sb
+          .from('calendar_events')
+          .select('*')
+          .eq('turma_id', ACTIVE_TURMA.id)
+          .eq('semestre', CURRENT_SEM)
+          .eq('grupo_academico', grupo)
+          .order('data_evento', { ascending: true });
+        if (!error && Array.isArray(rows)) {
+          mpState.calendarEvents = rows;
+        }
+      } catch {}
+      return;
+    }
+
+    // Demo / Local
+    try {
+      const key = getMpCalendarStorageKey(grupo);
+      const raw = localStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed)) {
+          mpState.calendarEvents = parsed;
+          return;
+        }
+      }
+      // Seed ilustrativo no Modo Demo
+      const today = new Date();
+      const plusDays = (n) => {
+        const dt = new Date(today.getTime() + n * 86400000);
+        return dt.toISOString().slice(0, 10);
+      };
+      const curDiscs = (aluno?.disciplinas || []).filter(d => d.semestre === CURRENT_SEM && !d.militar);
+      const disc1 = curDiscs[0]?.disciplina || 'Cálculo III';
+      const disc2 = curDiscs[1]?.disciplina || 'Física II';
+      const seed = [
+        {
+          id: `demo_ev_1_${grupo}`,
+          turma_id: ACTIVE_TURMA.id,
+          semestre: CURRENT_SEM,
+          grupo_academico: grupo,
+          titulo: `Prova VE1 de ${disc1}`,
+          tipo: 'VE',
+          disciplina: disc1,
+          data_evento: plusDays(5),
+          anotacao: 'Estudar capítulos 3 e 4 do livro-texto e refazer provas antigas.',
+          is_private: false,
+          created_by: 'demo-user',
+          created_by_name: aluno?.nome || 'Aluno Demo'
+        },
+        {
+          id: `demo_ev_2_${grupo}`,
+          turma_id: ACTIVE_TURMA.id,
+          semestre: CURRENT_SEM,
+          grupo_academico: grupo,
+          titulo: `Lista de exercícios — ${disc2}`,
+          tipo: 'Lista',
+          disciplina: disc2,
+          data_evento: plusDays(9),
+          anotacao: 'Fazer questões 2, 5, 8 e 11 antes da monitoria.',
+          is_private: true,
+          created_by: 'demo-user',
+          created_by_name: aluno?.nome || 'Aluno Demo'
+        }
+      ];
+      mpState.calendarEvents = seed;
+      localStorage.setItem(key, JSON.stringify(seed));
+    } catch {
+      mpState.calendarEvents = [];
+    }
+  }
+
+  function subscribeCalendarRealtime(aluno) {
+    if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb) return;
+    if (mpState.calendarChannel) {
+      try { sessionMeta.sb.removeChannel(mpState.calendarChannel); } catch {}
+      mpState.calendarChannel = null;
+    }
+    mpState.calendarChannel = sessionMeta.sb
+      .channel(`calendar_live_${ACTIVE_TURMA.id}_${CURRENT_SEM}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'calendar_events',
+        filter: `turma_id=eq.${ACTIVE_TURMA.id}`
+      }, async () => {
+        await loadMeuPainelCalendar(aluno);
+        renderMeuPainelCalendar(aluno);
+      })
+      .subscribe();
+  }
+
+  async function saveStudentSubturma(aluno, chosen) {
+    mpState.subturma = chosen;
+    mpState.changingSubturma = false;
+    if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+      try {
+        const { error } = await sessionMeta.sb
+          .from('student_subturmas')
+          .upsert({
+            turma_id: ACTIVE_TURMA.id,
+            semestre: CURRENT_SEM,
+            aluno_numero: aluno.numero,
+            subturma: chosen,
+            updated_by: sessionMeta.userId || null,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'turma_id,semestre,aluno_numero' });
+        if (error) throw new Error(error.message);
+      } catch (err) {
+        alert(`Erro ao salvar subturma: ${err.message}`);
+      }
+    } else {
+      try { localStorage.setItem(getMpSubturmaStorageKey(aluno.numero), chosen); } catch {}
+    }
+    await loadMeuPainelCalendar(aluno);
+    renderMeuPainelTab();
+  }
+
+  async function saveMeuPainelGrades(aluno) {
+    if (!aluno) return;
+    const curDiscs = (aluno.disciplinas || []).filter(d => d.semestre === CURRENT_SEM && !d.militar);
+    const btn = document.getElementById('btnMpSaveGrades');
+    if (btn) btn.disabled = true;
+    setMpGradesStatus('Salvando...', 'info');
+    try {
+      if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+        const rows = curDiscs.map(d => {
+          const rec = mpState.grades[d.codigo] || {};
+          return {
+            turma_id: ACTIVE_TURMA.id,
+            semestre: CURRENT_SEM,
+            aluno_numero: aluno.numero,
+            disciplina_codigo: d.codigo,
+            ve_items: normalizeVeItems(rec.ve_items, null),
+            vc: rec.vc !== null && rec.vc !== undefined && rec.vc !== '' ? Number(rec.vc) : null,
+            vf: rec.vf !== null && rec.vf !== undefined && rec.vf !== '' ? Number(rec.vf) : null,
+            updated_by: sessionMeta.userId || null,
+            updated_at: new Date().toISOString()
+          };
+        });
+        if (rows.length > 0) {
+          const { error } = await sessionMeta.sb
+            .from('student_current_grades')
+            .upsert(rows, { onConflict: 'turma_id,semestre,aluno_numero,disciplina_codigo' });
+          if (error) throw new Error(error.message);
+        }
+      } else {
+        localStorage.setItem(getMpGradesStorageKey(aluno.numero), JSON.stringify(mpState.grades));
+      }
+      mpState.dirtyGrades = false;
+      const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      setMpGradesStatus(`Salvo às ${now}`, 'ok');
+    } catch (err) {
+      setMpGradesStatus(`Erro ao salvar: ${err.message}`, 'err');
+    } finally {
+      if (btn) btn.disabled = false;
+    }
+  }
+
+  function renderMeuPainelGrades(aluno) {
+    const container = document.getElementById('mpGradesContainer');
+    const semSpan = document.getElementById('mpGradesSemSpan');
+    if (semSpan) semSpan.textContent = CURRENT_SEM;
+    if (!container) return;
+
+    const curDiscs = (aluno?.disciplinas || []).filter(d => d.semestre === CURRENT_SEM && !d.militar);
+    if (!curDiscs.length) {
+      container.innerHTML = `
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400">
+          Nenhuma disciplina de graduação cadastrada para o semestre <strong>${escapeHtml(CURRENT_SEM)}</strong> ainda. Assim que o Gestor publicar a grade do semestre, seus campos de VE, VC e VF aparecerão aqui automaticamente.
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = curDiscs.map(d => {
+      const rec = mpState.grades[d.codigo] || { ve_items: normalizeVeItems(null, d.ve), vc: d.vc ?? null, vf: d.vf ?? null };
+      mpState.grades[d.codigo] = rec;
+      const summary = computePersonalDisciplineSummary(d, rec);
+      const codSafe = escapeHtml(d.codigo);
+
+      const veRowsHtml = summary.veItems.map((it, idx) => `
+        <div class="flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-xl px-2 py-1.5">
+          <span class="text-[10px] font-bold text-slate-400 shrink-0">VE${idx + 1}</span>
+          <input type="number" min="0" max="10" step="0.1" data-mp-cod="${codSafe}" data-mp-ve-idx="${idx}" data-mp-field="nota"
+            value="${it.nota !== null && it.nota !== undefined ? it.nota : ''}" placeholder="Nota"
+            class="mp-grade-inp w-14 bg-slate-900 border border-slate-700 rounded-lg px-1.5 py-1 text-xs font-mono-numbers text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500">
+          <span class="text-[10px] text-slate-500">×</span>
+          <input type="number" min="0.1" max="10" step="0.5" data-mp-cod="${codSafe}" data-mp-ve-idx="${idx}" data-mp-field="peso"
+            value="${it.peso ?? 1}" title="Peso da VE${idx + 1}"
+            class="mp-grade-inp w-12 bg-slate-900 border border-slate-700 rounded-lg px-1.5 py-1 text-xs font-mono-numbers text-cyan-300 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+          ${summary.veItems.length > 2 ? `<button type="button" data-mp-rm-ve="${codSafe}" data-mp-ve-idx="${idx}" class="text-slate-500 hover:text-rose-400 text-xs font-bold px-1" title="Remover VE${idx + 1}">×</button>` : ''}
+        </div>
+      `).join('');
+
+      const vfBadgeText = summary.vfInfo?.status === 'aprovado'
+        ? `Aprovado (${fmtNum(summary.parcialOrNf)})`
+        : summary.vfInfo?.status === 'pratica'
+          ? 'Disciplina Prática (s/ VF)'
+          : summary.vfInfo?.vfMin !== null && summary.vfInfo?.vfMin !== undefined
+            ? `Precisa ${fmtNum(summary.vfInfo.vfMin)} na VF`
+            : 'Informe VE e VC';
+
+      const vfBadgeCls = summary.vfInfo?.status === 'aprovado'
+        ? 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30'
+        : (summary.vfInfo?.vfMin > 6)
+          ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+          : (summary.vfInfo?.vfMin > 5)
+            ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+            : 'bg-blue-500/15 text-blue-300 border-blue-500/30';
+
+      return `
+        <div class="p-4 rounded-xl bg-slate-900/65 border border-slate-800 space-y-3" data-mp-disc-card="${codSafe}">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-xs sm:text-sm font-bold text-slate-100 truncate">${escapeHtml(d.disciplina)}</div>
+              <div class="text-[10.5px] text-slate-400 font-mono-numbers">${codSafe}${d.isPratica ? ' · Prática' : ''}</div>
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
+              <span class="px-2 py-0.5 rounded-lg bg-slate-800 text-cyan-300 font-mono-numbers" data-mp-mve="${codSafe}">MVE: ${summary.mve !== null ? fmtNum(summary.mve) : '-'}</span>
+              <span class="px-2 py-0.5 rounded-lg bg-slate-800 text-white font-mono-numbers" data-mp-parcial="${codSafe}">Média: ${summary.parcialOrNf !== null ? fmtNum(summary.parcialOrNf) : '-'}</span>
+              <span class="px-2 py-0.5 rounded-lg border ${vfBadgeCls}" data-mp-vf-badge="${codSafe}">${escapeHtml(vfBadgeText)}</span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            ${veRowsHtml}
+            ${summary.veItems.length < 7 ? `
+              <button type="button" data-mp-add-ve="${codSafe}" class="px-2.5 py-1.5 rounded-xl bg-blue-500/15 hover:bg-blue-500/25 border border-blue-500/30 text-blue-300 text-xs font-bold transition flex items-center gap-1" title="Adicionar mais uma nota de VE (máx. 7)">
+                <span>+ VE</span>
+              </button>` : '<span class="text-[10px] text-slate-500 font-semibold px-1">Máx. 7 VEs</span>'}
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-1 border-t border-slate-800/70 text-xs">
+            <label class="inline-flex items-center gap-1.5 text-slate-300 font-semibold">
+              <span>VC:</span>
+              <input type="number" min="0" max="10" step="0.1" data-mp-cod="${codSafe}" data-mp-field="vc"
+                value="${summary.vc !== null ? summary.vc : ''}" placeholder="0.0"
+                class="mp-grade-inp w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono-numbers text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500">
+            </label>
+            ${!d.isPratica ? `
+            <label class="inline-flex items-center gap-1.5 text-slate-300 font-semibold">
+              <span>VF:</span>
+              <input type="number" min="0" max="10" step="0.1" data-mp-cod="${codSafe}" data-mp-field="vf"
+                value="${summary.vf !== null ? summary.vf : ''}" placeholder="0.0"
+                class="mp-grade-inp w-16 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono-numbers text-slate-100 focus:outline-none focus:ring-1 focus:ring-amber-500">
+            </label>` : ''}
+            <span class="text-[10.5px] text-slate-500 ml-auto">Peso padrão = 1 (ex.: VE1 peso 1, VE2 peso 2)</span>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    // Wire dynamic buttons & inputs
+    container.querySelectorAll('[data-mp-add-ve]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cod = btn.getAttribute('data-mp-add-ve');
+        const rec = mpState.grades[cod];
+        if (!rec) return;
+        if (rec.ve_items.length >= 7) return;
+        rec.ve_items.push({ nota: null, peso: 1 });
+        mpState.dirtyGrades = true;
+        setMpGradesStatus('Alterações não salvas', 'warn');
+        renderMeuPainelGrades(aluno);
+      });
+    });
+
+    container.querySelectorAll('[data-mp-rm-ve]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cod = btn.getAttribute('data-mp-rm-ve');
+        const idx = Number(btn.getAttribute('data-mp-ve-idx'));
+        const rec = mpState.grades[cod];
+        if (!rec || rec.ve_items.length <= 2) return;
+        rec.ve_items.splice(idx, 1);
+        mpState.dirtyGrades = true;
+        setMpGradesStatus('Alterações não salvas', 'warn');
+        renderMeuPainelGrades(aluno);
+        updateMpPersonalCurSemKpi(aluno);
+      });
+    });
+
+    container.querySelectorAll('.mp-grade-inp').forEach(inp => {
+      inp.addEventListener('input', () => {
+        const cod = inp.getAttribute('data-mp-cod');
+        const field = inp.getAttribute('data-mp-field');
+        const rec = mpState.grades[cod];
+        const disc = curDiscs.find(x => x.codigo === cod);
+        if (!rec || !disc) return;
+
+        const raw = inp.value.trim();
+        const val = raw === '' ? null : Number(raw);
+        if (field === 'vc') {
+          rec.vc = val !== null && !isNaN(val) ? Math.max(0, Math.min(10, val)) : null;
+        } else if (field === 'vf') {
+          rec.vf = val !== null && !isNaN(val) ? Math.max(0, Math.min(10, val)) : null;
+        } else {
+          const idx = Number(inp.getAttribute('data-mp-ve-idx'));
+          if (!rec.ve_items[idx]) return;
+          if (field === 'nota') {
+            rec.ve_items[idx].nota = val !== null && !isNaN(val) ? Math.max(0, Math.min(10, val)) : null;
+          } else if (field === 'peso') {
+            rec.ve_items[idx].peso = val !== null && !isNaN(val) && val > 0 ? Math.min(10, val) : 1;
+          }
+        }
+
+        const summary = computePersonalDisciplineSummary(disc, rec);
+        const mveEl = container.querySelector(`[data-mp-mve="${CSS.escape(cod)}"]`);
+        const parEl = container.querySelector(`[data-mp-parcial="${CSS.escape(cod)}"]`);
+        const vfEl = container.querySelector(`[data-mp-vf-badge="${CSS.escape(cod)}"]`);
+        if (mveEl) mveEl.textContent = `MVE: ${summary.mve !== null ? fmtNum(summary.mve) : '-'}`;
+        if (parEl) parEl.textContent = `Média: ${summary.parcialOrNf !== null ? fmtNum(summary.parcialOrNf) : '-'}`;
+        if (vfEl) {
+          vfEl.textContent = summary.vfInfo?.status === 'aprovado'
+            ? `Aprovado (${fmtNum(summary.parcialOrNf)})`
+            : summary.vfInfo?.status === 'pratica'
+              ? 'Disciplina Prática (s/ VF)'
+              : summary.vfInfo?.vfMin !== null && summary.vfInfo?.vfMin !== undefined
+                ? `Precisa ${fmtNum(summary.vfInfo.vfMin)} na VF`
+                : 'Informe VE e VC';
+        }
+        mpState.dirtyGrades = true;
+        setMpGradesStatus('Alterações não salvas', 'warn');
+        updateMpPersonalCurSemKpi(aluno);
+      });
+    });
+
+    updateMpPersonalCurSemKpi(aluno);
+  }
+
+  function renderMeuPainelCalendar(aluno) {
+    const listEl = document.getElementById('mpCalendarList');
+    const badgeEl = document.getElementById('mpCalendarGroupBadge');
+    const grupo = getAcademicGroupForAluno(aluno);
+    if (badgeEl) badgeEl.textContent = grupo;
+    if (!listEl) return;
+
+    const filtered = (mpState.calendarEvents || []).filter(ev => {
+      if (mpState.calendarFilter === 'SHARED') return !ev.is_private;
+      if (mpState.calendarFilter === 'PRIVATE') return Boolean(ev.is_private);
+      return true;
+    }).sort((a, b) => String(a.data_evento || '').localeCompare(String(b.data_evento || '')));
+
+    if (!filtered.length) {
+      listEl.innerHTML = `
+        <div class="p-4 rounded-xl bg-slate-900/50 border border-slate-800 text-xs text-slate-400 text-center">
+          Nenhum evento ou anotação neste filtro. Adicione provas, trabalhos ou listas acima!
+        </div>`;
+      return;
+    }
+
+    const typeColors = {
+      VE: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+      VC: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+      VF: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
+      Trabalho: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
+      Lista: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+      Outro: 'bg-slate-700/60 text-slate-300 border-slate-600'
+    };
+
+    listEl.innerHTML = filtered.map(ev => {
+      const canDelete = (sessionMeta.mode !== 'supabase')
+        || (ev.created_by && ev.created_by === sessionMeta.userId)
+        || IS_GESTOR
+        || IS_SUPER_ADMIN;
+      const dtFmt = ev.data_evento ? String(ev.data_evento).split('-').reverse().join('/') : '--/--';
+      const tCls = typeColors[ev.tipo] || typeColors.Outro;
+      return `
+        <div class="p-3 rounded-xl bg-slate-900/75 border border-slate-800 space-y-1.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-1.5 flex-wrap min-w-0">
+              <span class="text-[11px] font-extrabold font-mono-numbers px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-200">${escapeHtml(dtFmt)}</span>
+              <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${tCls}">${escapeHtml(ev.tipo || 'Outro')}</span>
+              ${ev.disciplina ? `<span class="text-[11px] font-semibold text-cyan-300">${escapeHtml(ev.disciplina)}</span>` : ''}
+              ${ev.is_private ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">Privado</span>' : ''}
+            </div>
+            ${canDelete ? `<button type="button" data-mp-del-ev="${escapeHtml(ev.id)}" class="text-slate-500 hover:text-rose-400 text-xs font-bold px-1.5 py-0.5 rounded hover:bg-rose-500/10 transition shrink-0" title="Excluir evento">Excluir</button>` : ''}
+          </div>
+          <div class="text-xs font-bold text-slate-100">${escapeHtml(ev.titulo)}</div>
+          ${ev.anotacao ? `<p class="text-[11.5px] text-slate-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(ev.anotacao)}</p>` : ''}
+          ${ev.created_by_name ? `<div class="text-[10px] text-slate-500">Por ${escapeHtml(ev.created_by_name)}</div>` : ''}
+        </div>
+      `;
+    }).join('');
+
+    listEl.querySelectorAll('[data-mp-del-ev]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-mp-del-ev');
+        if (!id) return;
+        if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+          const { error } = await sessionMeta.sb.from('calendar_events').delete().eq('id', id);
+          if (error) {
+            alert(`Erro ao excluir evento: ${error.message}`);
+            return;
+          }
+          mpState.calendarEvents = mpState.calendarEvents.filter(x => String(x.id) !== String(id));
+        } else {
+          mpState.calendarEvents = mpState.calendarEvents.filter(x => String(x.id) !== String(id));
+          try {
+            localStorage.setItem(getMpCalendarStorageKey(grupo), JSON.stringify(mpState.calendarEvents));
+          } catch {}
+        }
+        renderMeuPainelCalendar(aluno);
+      });
+    });
+  }
+
+  function renderMeuPainelCareer(aluno) {
+    const card = document.getElementById('mpCareerShortcutCard');
+    const calCol = card?.previousElementSibling;
+    const titleEl = document.getElementById('mpCareerTitle');
+    const subEl = document.getElementById('mpCareerSubtitle');
+    const bodyEl = document.getElementById('mpCareerBody');
+    if (!card || !bodyEl) return;
+
+    if (!ACTIVE_CAREER_STAGE.enabled) {
+      card.classList.add('hidden');
+      if (calCol) {
+        calCol.classList.remove('lg:col-span-7');
+        calCol.classList.add('lg:col-span-12');
+      }
+      return;
+    }
+
+    card.classList.remove('hidden');
+    if (calCol) {
+      calCol.classList.remove('lg:col-span-12');
+      calCol.classList.add('lg:col-span-7');
+    }
+
+    if (titleEl) titleEl.textContent = `Minhas Escolhas · ${ACTIVE_CAREER_STAGE.tabLabel}`;
+    if (subEl) subEl.textContent = ACTIVE_CAREER_STAGE.subtitle;
+
+    const scopeKey = ACTIVE_CAREER_STAGE.scopeMode === 'turma' ? 'TURMA' : (aluno.curso || state.estagioCurso);
+    const store = getEstagioCursoStore(scopeKey);
+    const myPrefs = store.prefs[aluno.numero] || [];
+    const vagas = store.vagas || [];
+
+    // Alocação estimada ao vivo
+    const ranked = getEstagioRankedAlunos(scopeKey);
+    const remaining = new Map(vagas.map(v => [v.nome, Number(v.qtd) || 0]));
+    let myAlloc = 'Ainda não alocado';
+    ranked.forEach(a => {
+      const prefs = (store.prefs[a.numero] || []).filter(Boolean);
+      let got = null;
+      for (let i = 0; i < prefs.length; i++) {
+        if ((remaining.get(prefs[i]) || 0) > 0) {
+          remaining.set(prefs[i], remaining.get(prefs[i]) - 1);
+          got = `${prefs[i]} (${i + 1}ª opção)`;
+          break;
+        }
+      }
+      if (Number(a.numero) === Number(aluno.numero) && got) {
+        myAlloc = got;
+      }
+    });
+
+    const maxOpts = Math.min(5, Math.max(3, vagas.length));
+    const selectsHtml = Array.from({ length: maxOpts }, (_, idx) => {
+      const curVal = myPrefs[idx] || '';
+      const opts = ['<option value="">— Selecionar —</option>']
+        .concat(vagas.map(v => `<option value="${escapeHtml(v.nome)}" ${curVal === v.nome ? 'selected' : ''}>${escapeHtml(v.nome)} (${v.qtd} vaga${v.qtd > 1 ? 's' : ''})</option>`))
+        .join('');
+      return `
+        <div class="flex items-center gap-2">
+          <span class="text-[11px] font-extrabold text-cyan-300 w-10 shrink-0">${idx + 1}ª op.</span>
+          <select data-mp-career-idx="${idx}" class="mp-career-sel flex-1 bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+            ${opts}
+          </select>
+        </div>
+      `;
+    }).join('');
+
+    bodyEl.innerHTML = `
+      <div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between gap-2 text-xs">
+        <span class="text-slate-300 font-semibold">Previsão atual:</span>
+        <span class="font-extrabold text-cyan-300 text-right">${escapeHtml(myAlloc)}</span>
+      </div>
+      <div class="space-y-2">${selectsHtml}</div>
+      <div id="mpCareerSaveMsg" class="text-[11px] text-slate-400"></div>
+    `;
+
+    bodyEl.querySelectorAll('.mp-career-sel').forEach(sel => {
+      sel.addEventListener('change', async () => {
+        const idx = Number(sel.getAttribute('data-mp-career-idx'));
+        if (!store.prefs[aluno.numero]) store.prefs[aluno.numero] = [];
+        store.prefs[aluno.numero][idx] = sel.value;
+        // Sincronizar scope ativo se for por curso
+        if (ACTIVE_CAREER_STAGE.scopeMode !== 'turma') {
+          state.estagioCurso = scopeKey;
+        }
+        await saveEstagioData();
+        renderMeuPainelCareer(aluno);
+        const msg = document.getElementById('mpCareerSaveMsg');
+        if (msg) {
+          msg.textContent = 'Preferências salvas!';
+          msg.className = 'text-[11px] text-emerald-400 font-bold';
+        }
+      });
+    });
+  }
+
+  function renderMeuPainelTab() {
+    const aluno = getPersonalAlunoTarget();
+    if (!aluno) return;
+
+    const avEl = document.getElementById('mpAvatarContainer');
+    if (avEl) avEl.innerHTML = renderAvatarInnerHtml(aluno);
+
+    const nameEl = document.getElementById('mpStudentName');
+    const courseEl = document.getElementById('mpStudentCourseBadge');
+    const subEl = document.getElementById('mpStudentSubtitle');
+    const subPill = document.getElementById('mpStudentSubturmaPill');
+    const btnChangeSub = document.getElementById('btnMpChangeSubturma');
+    const banner = document.getElementById('mpSubturmaBanner');
+    const bannerBtns = document.getElementById('mpSubturmaButtons');
+    const bannerTitle = document.getElementById('mpSubturmaTitle');
+
+    if (nameEl) nameEl.textContent = aluno.nome;
+    if (courseEl) {
+      courseEl.className = `text-[11px] px-2.5 py-0.5 rounded-full font-bold ${courseClassMap[aluno.curso] || 'badge-computacao'}`;
+      courseEl.textContent = aluno.curso;
+    }
+    if (subEl) {
+      subEl.textContent = `Matrícula ${aluno.numero} · ${aluno.vinculo} · #${aluno.rankGraduacao} Graduação · #${aluno.rankGeral} Geral`;
+    }
+
+    // Banner / pill de subturma no Ciclo Básico (1.1-1.2 -> A/B; 2.1-2.2 -> A/B/C)
+    const allowedSubturmas = getAllowedSubturmasForSemester(CURRENT_SEM);
+    if (allowedSubturmas) {
+      const showBanner = !mpState.subturma || mpState.changingSubturma;
+      banner?.classList.toggle('hidden', !showBanner);
+      subPill?.classList.toggle('hidden', !mpState.subturma);
+      btnChangeSub?.classList.toggle('hidden', !mpState.subturma);
+      if (subPill && mpState.subturma) subPill.textContent = mpState.subturma;
+      if (bannerTitle) {
+        bannerTitle.textContent = `Escolha sua subturma do ${buildSemesterOrder(CURRENT_SEM) <= 2 ? '1º Ano' : '2º Ano'} (${CURRENT_SEM})`;
+      }
+      if (bannerBtns) {
+        bannerBtns.innerHTML = allowedSubturmas.map(st => {
+          const active = mpState.subturma === st;
+          return `<button type="button" data-mp-pick-sub="${escapeHtml(st)}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold border transition ${active ? 'bg-amber-500 text-slate-950 border-amber-400' : 'bg-slate-900 hover:bg-amber-500/20 text-amber-200 border-amber-500/40'}">${escapeHtml(st)}</button>`;
+        }).join('');
+        bannerBtns.querySelectorAll('[data-mp-pick-sub]').forEach(btn => {
+          btn.addEventListener('click', () => saveStudentSubturma(aluno, btn.getAttribute('data-mp-pick-sub')));
+        });
+      }
+    } else {
+      banner?.classList.add('hidden');
+      subPill?.classList.add('hidden');
+      btnChangeSub?.classList.add('hidden');
+    }
+
+    // KPIs
+    const kGrad = document.getElementById('mpKpiGrad');
+    const kGeral = document.getElementById('mpKpiGeral');
+    const kCurLbl = document.getElementById('mpKpiCurSemLbl');
+    const kRank = document.getElementById('mpKpiRank');
+    if (kGrad) kGrad.textContent = fmtNum(aluno.mediaGraduacao);
+    if (kGeral) kGeral.textContent = fmtNum(aluno.mediaGeral);
+    if (kCurLbl) kCurLbl.textContent = `Média ${CURRENT_SEM}`;
+    if (kRank) kRank.textContent = `#${aluno.rankGraduacao}º`;
+
+    renderMeuPainelGrades(aluno);
+    renderMeuPainelCalendar(aluno);
+    renderMeuPainelCareer(aluno);
+    refreshIcons();
+  }
+
+  async function initMeuPainelTab() {
+    const aluno = getPersonalAlunoTarget();
+    if (!aluno) {
+      switchTab('overview');
+      return;
+    }
+
+    if (!mpState.initialized) {
+      mpState.initialized = true;
+
+      document.getElementById('btnMpChangeSubturma')?.addEventListener('click', () => {
+        mpState.changingSubturma = !mpState.changingSubturma;
+        renderMeuPainelTab();
+      });
+
+      document.getElementById('btnMpSaveGrades')?.addEventListener('click', () => {
+        const curAluno = getPersonalAlunoTarget();
+        if (curAluno) saveMeuPainelGrades(curAluno);
+      });
+
+      document.getElementById('btnMpGotoCareer')?.addEventListener('click', () => {
+        switchTab('estagio');
+      });
+
+      document.getElementById('mpCalendarFilter')?.addEventListener('change', (e) => {
+        mpState.calendarFilter = e.target.value || 'ALL';
+        const curAluno = getPersonalAlunoTarget();
+        if (curAluno) renderMeuPainelCalendar(curAluno);
+      });
+
+      document.getElementById('mpAvatarFileInput')?.addEventListener('change', async (e) => {
+        const file = e.target.files?.[0];
+        e.target.value = '';
+        const curAluno = getPersonalAlunoTarget();
+        const statusEl = document.getElementById('mpAvatarStatus');
+        if (!file || !curAluno) return;
+        if (statusEl) {
+          statusEl.textContent = 'Comprimindo e enviando foto...';
+          statusEl.className = 'text-[11px] text-cyan-300 font-semibold mt-0.5';
+          statusEl.classList.remove('hidden');
+        }
+        try {
+          const res = await uploadStudentAvatar(curAluno.numero, file);
+          const avEl = document.getElementById('mpAvatarContainer');
+          if (avEl) avEl.innerHTML = renderAvatarInnerHtml(curAluno);
+          if (statusEl) {
+            statusEl.textContent = `Foto salva (${res.sizeKb} KB)!`;
+            statusEl.className = 'text-[11px] text-emerald-400 font-bold mt-0.5';
+          }
+        } catch (err) {
+          if (statusEl) {
+            statusEl.textContent = err.message || 'Erro ao enviar foto.';
+            statusEl.className = 'text-[11px] text-rose-400 font-bold mt-0.5';
+          }
+        }
+      });
+
+      document.getElementById('mpCalendarForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const curAluno = getPersonalAlunoTarget();
+        if (!curAluno) return;
+        const grupo = getAcademicGroupForAluno(curAluno);
+        const dataEvento = document.getElementById('mpCalDate')?.value || '';
+        const tipo = document.getElementById('mpCalTipo')?.value || 'VE';
+        const disciplina = (document.getElementById('mpCalDisciplina')?.value || '').trim().slice(0, 80);
+        const titulo = (document.getElementById('mpCalTitulo')?.value || '').trim().slice(0, 120);
+        const anotacao = (document.getElementById('mpCalAnotacao')?.value || '').trim().slice(0, 1000);
+        const isPrivate = Boolean(document.getElementById('mpCalPrivate')?.checked);
+        if (!dataEvento || !titulo) return;
+
+        const payload = {
+          turma_id: ACTIVE_TURMA.id,
+          semestre: CURRENT_SEM,
+          grupo_academico: grupo,
+          titulo,
+          tipo,
+          disciplina: disciplina || null,
+          data_evento: dataEvento,
+          anotacao: anotacao || null,
+          is_private: isPrivate,
+          created_by: sessionMeta.userId || 'demo-user',
+          created_by_name: curAluno.nome
+        };
+
+        if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+          const { data: inserted, error } = await sessionMeta.sb
+            .from('calendar_events')
+            .insert(payload)
+            .select('*')
+            .single();
+          if (error) {
+            alert(`Erro ao salvar evento: ${error.message}`);
+            return;
+          }
+          if (inserted) mpState.calendarEvents.push(inserted);
+        } else {
+          const localEv = { ...payload, id: `local_${Date.now()}_${Math.random().toString(36).slice(2, 6)}` };
+          mpState.calendarEvents.push(localEv);
+          try {
+            localStorage.setItem(getMpCalendarStorageKey(grupo), JSON.stringify(mpState.calendarEvents));
+          } catch {}
+        }
+
+        document.getElementById('mpCalendarForm')?.reset();
+        renderMeuPainelCalendar(curAluno);
+      });
+    }
+
+    const loadKey = `${ACTIVE_TURMA.id}_${CURRENT_SEM}_${aluno.numero}`;
+    if (mpState.loadedKey !== loadKey) {
+      mpState.loadedKey = loadKey;
+      await loadMeuPainelData(aluno);
+      if (sessionMeta.mode === 'supabase' && ACTIVE_CAREER_STAGE.enabled && careerLoadedStageKey !== ACTIVE_CAREER_STAGE.key) {
+        await loadCareerFromSupabase({ silent: true });
+      }
+    }
+    renderMeuPainelTab();
+  }
+
   // Initial Run
   applyDeviceMode('auto');
   syncCareerStageTab();
@@ -6481,6 +7666,18 @@ document.addEventListener('DOMContentLoaded', () => {
   applyTheme(state.theme);
   applyFilters();
   renderDisciplinasTab();
+  loadTurmaAvatarsFromSupabase().then(() => {
+    if (state.currentTab === 'meu-painel') {
+      const a = getPersonalAlunoTarget();
+      const avEl = document.getElementById('mpAvatarContainer');
+      if (a && avEl) avEl.innerHTML = renderAvatarInnerHtml(a);
+    } else if (state.currentTab === 'overview') {
+      renderPodium();
+    }
+  });
+  if (HAS_MEU_PAINEL && getPersonalAlunoTarget()) {
+    switchTab('meu-painel');
+  }
   refreshIcons();
   } // end startDashboard
 });
