@@ -182,6 +182,37 @@ document.addEventListener('DOMContentLoaded', () => {
     return Number(val).toFixed(2);
   }
 
+  function calcVfNecessaria(d) {
+    if (!d || d.nf !== null || d.vf !== null || d.isPratica) return null;
+    const ve = d.mve ?? d.ve;
+    const vc = d.vc;
+    if (ve === null || ve === undefined) return null;
+
+    if (vc !== null && vc !== undefined) {
+      const paraMedia5 = (20 - ve - vc) / 2;
+      const precisa = Math.max(4.0, paraMedia5);
+      const precisaArred = Math.round(precisa * 100) / 100;
+      const limitadaPorMinimo = paraMedia5 <= 4.0;
+      return {
+        tipo: 'exact',
+        valor: precisaArred,
+        limitadaPorMinimo,
+        label: `VF ≥ ${precisaArred.toFixed(2)}`,
+        detalhe: limitadaPorMinimo
+          ? `Mínimo 4,00 na VF (média fica ${((ve + vc + 8) / 4).toFixed(2)})`
+          : `Para fechar média 5,00 (VE×1 + VC×1 + VF×2)`
+      };
+    }
+
+    const faltaConjunto = Math.max(0, 20 - ve);
+    return {
+      tipo: 'partial',
+      valor: null,
+      label: `VC+2×VF ≥ ${faltaConjunto.toFixed(2)}`,
+      detalhe: `Aguardando VC (e VF ≥ 4,00)`
+    };
+  }
+
   function computeDynamicBounds(datasets, minSpan = 1.0, pad = 0.2) {
     const vals = [];
     datasets.forEach(ds => {
@@ -2157,8 +2188,16 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
 
-          <div class="flex items-center justify-between text-[11px] pt-0.5">
+          <div class="flex items-center justify-between text-[11px] pt-0.5 flex-wrap gap-1.5">
             <span class="font-semibold ${sitCls}">● ${d.situacao}</span>
+            ${(() => {
+              const vfInfo = calcVfNecessaria(d);
+              if (!vfInfo) return '';
+              const badgeCls = vfInfo.tipo === 'exact' && vfInfo.valor > 6.5
+                ? 'bg-rose-500/15 text-rose-300 border-rose-500/30'
+                : 'bg-amber-500/15 text-amber-300 border-amber-500/30';
+              return `<span class="px-2 py-0.5 rounded-md border font-mono-numbers font-bold text-[10px] ${badgeCls}" title="${vfInfo.detalhe}">🎯 ${vfInfo.label}</span>`;
+            })()}
           </div>
         </div>
       `;
@@ -2191,6 +2230,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const semBadge = d.semestre === '3.2' ? '<span class="text-amber-400 font-bold">3.2</span>' : d.semestre;
 
+        const vfInfo = calcVfNecessaria(d);
+        const vfPill = vfInfo
+          ? `<div class="mt-0.5"><span class="inline-block px-1.5 py-0.5 rounded border font-mono-numbers text-[10px] font-bold ${vfInfo.tipo === 'exact' && vfInfo.valor > 6.5 ? 'bg-rose-500/15 text-rose-300 border-rose-500/30' : 'bg-amber-500/15 text-amber-300 border-amber-500/30'}" title="${vfInfo.detalhe}">🎯 ${vfInfo.label}</span></div>`
+          : '';
+
         return `
           <tr class="table-hover-row border-b border-slate-800/40">
             <td class="py-2 px-3 text-slate-400 font-mono-numbers">${semBadge}</td>
@@ -2205,10 +2249,46 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="py-2 px-3 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">${d.notaEfetiva !== null ? fmtNum(d.notaEfetiva) : '-'}</td>
             <td class="py-2 px-3 text-right text-slate-400 font-mono-numbers">${fmtNum(d.mediaTurma)}</td>
             <td class="py-2 px-3 text-center">${deltaBadge}</td>
-            <td class="py-2 px-3 text-center font-bold text-[11px] ${sitCls}">${d.situacao}</td>
+            <td class="py-2 px-3 text-center font-bold text-[11px] ${sitCls}">${d.situacao}${vfPill}</td>
           </tr>
         `;
       }).join('');
+    }
+
+    const vfSummaryEl = document.getElementById('modalVfSummary');
+    if (vfSummaryEl) {
+      const abertas = discs
+        .map(d => ({ d, vfInfo: calcVfNecessaria(d) }))
+        .filter(item => item.vfInfo !== null);
+      if (abertas.length > 0) {
+        vfSummaryEl.classList.remove('hidden');
+        vfSummaryEl.innerHTML = `
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+              🎯 Quanto falta na VF (mín. 4,00 na VF e média ≥ 5,00)
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono">Pesos: VE (1) · VC (1) · VF (2)</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            ${abertas.map(({ d, vfInfo }) => {
+              const highNeed = vfInfo.tipo === 'exact' && vfInfo.valor > 6.5;
+              const valCls = highNeed ? 'text-rose-400' : 'text-amber-300';
+              return `
+                <div class="p-2 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2 text-xs">
+                  <div class="min-w-0">
+                    <div class="font-bold text-slate-200 truncate" title="${d.nome}">${d.nome}</div>
+                    <div class="text-[10px] text-slate-400">${vfInfo.detalhe}</div>
+                  </div>
+                  <span class="font-extrabold font-mono-numbers shrink-0 ${valCls}">${vfInfo.label}</span>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        `;
+      } else {
+        vfSummaryEl.classList.add('hidden');
+        vfSummaryEl.innerHTML = '';
+      }
     }
 
     renderModalDisciplinesCards(discs);
