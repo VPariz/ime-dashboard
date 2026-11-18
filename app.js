@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     comparatorMetric: 'semestral',
 
     // Device & View Modes
+    theme: localStorage.getItem('ime_theme') || 'dark',
     deviceMode: 'auto',
     rankingView: 'cards',
     courseView: 'table',
@@ -3027,6 +3028,7 @@ document.addEventListener('DOMContentLoaded', () => {
       initEstagioTab();
     }
 
+    if (state.theme === 'light') applyTheme('light');
     refreshIcons();
   }
 
@@ -3449,7 +3451,50 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  function applyTheme(themeName) {
+    state.theme = themeName || 'dark';
+    document.body.setAttribute('data-theme', state.theme);
+    try {
+      localStorage.setItem('ime_theme', state.theme);
+    } catch {}
+
+    const sel = document.getElementById('selectTheme');
+    if (sel && sel.value !== state.theme) sel.value = state.theme;
+
+    const isLight = (state.theme === 'light');
+    const tickColor = isLight ? '#334155' : '#94a3b8';
+    const labelColor = isLight ? '#0f172a' : '#cbd5e1';
+    const gridColor = isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(255, 255, 255, 0.05)';
+
+    [
+      chartCursosInstance,
+      chartEvolucaoInstance,
+      chartVinculoInstance,
+      chartDistribuicaoInstance,
+      chartCursosEvolucaoInstance,
+      chartCourseH2HInstance,
+      chartComparatorInstance,
+      chartModalInstance
+    ].forEach(ch => {
+      if (!ch) return;
+      if (ch.options?.scales) {
+        Object.values(ch.options.scales).forEach(sc => {
+          if (sc.ticks) sc.ticks.color = tickColor;
+          if (sc.grid && sc.grid.display !== false) sc.grid.color = gridColor;
+        });
+      }
+      if (ch.options?.plugins?.legend?.labels) {
+        ch.options.plugins.legend.labels.color = labelColor;
+      }
+      ch.update();
+    });
+  }
+
   // Device Mode Switcher (Celular vs PC)
+  document.getElementById('selectTheme')?.addEventListener('change', (e) => {
+    applyTheme(e.target.value);
+  });
+
   document.getElementById('btnModeMobile')?.addEventListener('click', () => {
     applyDeviceMode('mobile');
   });
@@ -3746,6 +3791,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Initial Run
   applyDeviceMode('auto');
   initOverviewCharts();
+  applyTheme(state.theme);
   applyFilters();
   renderDisciplinasTab();
 });
