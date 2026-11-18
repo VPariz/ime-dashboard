@@ -56,8 +56,9 @@
         </div>
         <div>
           <div class="flex items-center gap-2">
-            <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-2">
+            <h1 class="font-extrabold text-lg sm:text-xl tracking-tight text-white flex items-center gap-2 flex-wrap">
               IME Analytics <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold">Turma 2026</span>
+              <span class="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">Atualizado 18/11</span>
             </h1>
           </div>
           <p class="text-xs text-slate-400 font-medium">Painel Estratégico de Desempenho Acadêmico • Foco em Graduação</p>
@@ -670,8 +671,23 @@
     <section id="tab-vf" class="tab-content hidden space-y-6 animate-fade-in">
       
       <!-- Radar de Risco de Recuperação (VF 3.2) -->
-      <div id="vfRiskRadarPanel" class="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
-        <!-- Populated by JS -->
+      <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
+              Radar de VF Necessária — Semestre 3.2
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Mínimo 4,00 na VF e média ≥ 5,00 (VE×1 + VC×1 + VF×2). Clique em um grupo para exibir todos os alunos da faixa, ou clique no cartão para abrir a ficha.</p>
+          </div>
+          <div class="relative w-full sm:w-56">
+            <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
+            <input type="text" id="vfSearchInput" placeholder="Buscar aluno na aba VF..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500" />
+          </div>
+        </div>
+        <div id="vfRiskRadarPanel" class="space-y-4">
+          <!-- Populated by JS -->
+        </div>
       </div>
 
       <!-- Disciplinas 3.2 por Pressão na VF -->
@@ -751,8 +767,8 @@
           </div>
 
           <!-- Disciplines Search & Filters -->
-          <div class="flex flex-wrap items-center gap-3">
-            <div class="relative w-64">
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="relative w-full sm:w-56">
               <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
               <input 
                 type="text" 
@@ -762,6 +778,28 @@
               >
             </div>
             
+            <select id="filterCursoDisciplinas" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200">
+              <option value="ALL">Todos os Cursos / Ciclos</option>
+              <option value="COMUM_BASICO">Básico / Comum</option>
+              <option value="MILITAR">Militares</option>
+              <optgroup label="Seções de Ensino (SE)">
+                <option value="SE3">SE3 (Eletrônica, Elétrica, Com.)</option>
+                <option value="SE4">SE4 (Mec. Armamento e Auto.)</option>
+              </optgroup>
+              <optgroup label="Especialidades">
+                <option value="Computação">Computação</option>
+                <option value="Fortificação e Construção">Fortificação e Construção</option>
+                <option value="Cartografia">Cartografia</option>
+                <option value="Eletrônica">Eletrônica · SE3</option>
+                <option value="Química">Química</option>
+                <option value="Comunicações">Comunicações · SE3</option>
+                <option value="Mecânica de Armamento">Mecânica de Armamento · SE4</option>
+                <option value="Mecânica de Automóveis">Mecânica de Automóveis · SE4</option>
+                <option value="Elétrica">Elétrica · SE3</option>
+                <option value="Materiais">Materiais</option>
+              </optgroup>
+            </select>
+
             <select id="filterSemestreDisciplinas" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200">
               <option value="ALL">Todos os Semestres</option>
               <option value="1.1">1º Semestre (1.1)</option>
@@ -774,12 +812,18 @@
           </div>
         </div>
 
-        <div class="overflow-x-auto max-h-[600px] overflow-y-auto rounded-xl border border-slate-800">
+        <!-- Mobile Cards Container for Disciplines -->
+        <div id="disciplinasCardsContainer" class="hidden space-y-2.5">
+          <!-- Populated by JS on mobile -->
+        </div>
+
+        <div id="disciplinasTableContainer" class="overflow-x-auto max-h-[600px] overflow-y-auto rounded-xl border border-slate-800">
           <table class="w-full text-left border-collapse text-xs">
             <thead class="sticky top-0 bg-slate-900/95 backdrop-blur z-20 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider">
               <tr>
                 <th class="py-3 px-3">Código</th>
                 <th class="py-3 px-4">Nome da Disciplina</th>
+                <th class="py-3 px-3">Curso / Grupo</th>
                 <th class="py-3 px-3">Período</th>
                 <th class="py-3 px-3">Ciclo</th>
                 <th class="py-3 px-3 text-center">Alunos</th>
@@ -1124,36 +1168,36 @@
   </footer>
 
   <!-- Mobile Bottom Navigation Bar (App Experience) -->
-  <nav id="mobileBottomNav" class="hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 px-3 py-1.5 justify-around shadow-2xl safe-area-pb bg-slate-950/95 backdrop-blur">
-    <button data-tab="overview" class="mobile-nav-btn active flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-xl text-blue-400 font-bold transition">
-      <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
-      <span class="text-[11px]">Início</span>
+  <nav id="mobileBottomNav" class="hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 px-1 py-1.5 grid-cols-6 gap-0.5 shadow-2xl safe-area-pb bg-slate-950/95 backdrop-blur">
+    <button data-tab="overview" class="mobile-nav-btn active flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-blue-400 font-bold transition">
+      <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+      <span class="text-[10px] leading-tight">Início</span>
     </button>
-    <button data-tab="cursos" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-xl text-slate-400 font-semibold transition">
-      <i data-lucide="line-chart" class="w-5 h-5"></i>
-      <span class="text-[11px]">Cursos</span>
+    <button data-tab="cursos" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+      <i data-lucide="line-chart" class="w-4 h-4"></i>
+      <span class="text-[10px] leading-tight">Cursos</span>
     </button>
-    <button data-tab="rankings" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl text-slate-400 font-semibold transition">
-      <i data-lucide="users" class="w-5 h-5"></i>
-      <span class="text-[10px]">Fichas</span>
+    <button data-tab="rankings" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+      <i data-lucide="users" class="w-4 h-4"></i>
+      <span class="text-[10px] leading-tight">Fichas</span>
     </button>
-    <button data-tab="vf" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl text-slate-400 font-semibold transition">
-      <i data-lucide="target" class="w-5 h-5"></i>
-      <span class="text-[10px]">VF 3.2</span>
+    <button data-tab="vf" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+      <i data-lucide="target" class="w-4 h-4"></i>
+      <span class="text-[10px] leading-tight">VF 3.2</span>
     </button>
-    <button data-tab="disciplinas" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl text-slate-400 font-semibold transition">
-      <i data-lucide="book-open" class="w-5 h-5"></i>
-      <span class="text-[10px]">Matérias</span>
+    <button data-tab="disciplinas" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+      <i data-lucide="book-open" class="w-4 h-4"></i>
+      <span class="text-[10px] leading-tight">Matérias</span>
     </button>
-    <button data-tab="comparator" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl text-slate-400 font-semibold transition">
-      <i data-lucide="git-compare" class="w-5 h-5"></i>
-      <span class="text-[10px]">1 x 1</span>
+    <button data-tab="comparator" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+      <i data-lucide="git-compare" class="w-4 h-4"></i>
+      <span class="text-[10px] leading-tight">1 x 1</span>
     </button>
   </nav>
 
   <!-- 1. Embedded Processed Dataset -->
-  <script src="data.js?v=20261118g"></script>
+  <script src="data.js?v=20261118h"></script>
   <!-- 2. Application Logic -->
-  <script src="app.js?v=20261118g"></script>
+  <script src="app.js?v=20261118h"></script>
 </body>
 </html>

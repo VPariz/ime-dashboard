@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     currentPage: 1,
     disciplinasSearch: '',
     disciplinasSemestre: 'ALL',
+    disciplinasCurso: 'ALL',
     comparatorA: DATA.alunos[0]?.numero || null,
     comparatorB: DATA.alunos[1]?.numero || null,
     comparatorSemester: 'ALL',
@@ -227,11 +228,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // Precompute VF risk metrics for each student (3.2 open subjects) and 3.2 disciplines
+  // Precompute VF risk metrics for each student (3.2 open subjects), 3.2 disciplines, and course classification
   const discVfAgg = new Map();
+  const discCoursesMap = new Map();
   DATA.alunos.forEach(aluno => {
     const exactList = [];
     (aluno.disciplinas || []).forEach(d => {
+      const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
+      if (!discCoursesMap.has(dKey)) discCoursesMap.set(dKey, new Set());
+      discCoursesMap.get(dKey).add(aluno.curso);
+
       if (d.semestre !== '3.2') return;
       const vfInfo = calcVfNecessaria(d);
       if (vfInfo && vfInfo.tipo === 'exact') {
@@ -241,7 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
           valor: vfInfo.valor,
           militar: d.militar
         });
-        const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
         if (!discVfAgg.has(dKey)) discVfAgg.set(dKey, []);
         discVfAgg.get(dKey).push(vfInfo.valor);
       }
@@ -263,13 +268,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  function classifyDisciplineCourse(d, cursosArr) {
+    if (d.militar) return 'Militar';
+    if (cursosArr.length >= 8) return 'Básico (Comum)';
+    const allSE3 = cursosArr.length > 1 && cursosArr.every(c => SE_GROUPS.SE3.cursos.includes(c));
+    if (allSE3) return 'SE3 (Comum)';
+    const allSE4 = cursosArr.length > 1 && cursosArr.every(c => SE_GROUPS.SE4.cursos.includes(c));
+    if (allSE4) return 'SE4 (Comum)';
+    return cursosArr.join(' · ');
+  }
+
   DATA.disciplinas.forEach(d => {
     const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
+    const cursosArr = [...(discCoursesMap.get(dKey) || [])].sort();
+    d.cursos = cursosArr;
+    d.cursoLabel = classifyDisciplineCourse(d, cursosArr);
+
     const vals = discVfAgg.get(dKey);
     if (vals && vals.length) {
       d.vfMediaNec = Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100;
       d.vfEmRisco = vals.filter(v => v > 5.0).length;
-      d.vfRiscoAlto = vals.filter(v => v >= 6.5).length;
+      d.vfRiscoAlto = vals.filter(v => v > 6.0).length;
     } else {
       d.vfMediaNec = null;
       d.vfEmRisco = 0;
@@ -358,6 +377,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (state.currentTab === 'comparator') {
       renderStudentComparator();
+    }
+    if (state.currentTab === 'disciplinas') {
+      renderDisciplinasFullTable();
     }
     refreshIcons();
   }
@@ -1406,20 +1428,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     panel.innerHTML = `
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
-            <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
-            Radar de VF Necessária — Semestre 3.2
-          </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Mínimo 4,00 na VF e média ≥ 5,00 (VE×1 + VC×1 + VF×2). Clique em um grupo para exibir todos os alunos da faixa, ou clique no cartão para abrir a ficha.</p>
-        </div>
-        <div class="relative w-full sm:w-56">
-          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
-          <input type="text" id="vfSearchInput" value="${state.vfSearch || ''}" placeholder="Buscar aluno na aba VF..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500" />
-        </div>
-      </div>
-
       <div class="flex flex-wrap items-center gap-2 text-xs font-bold pt-2 border-t border-slate-800/80">
         <button data-vfrisk="ALL" class="px-3 py-1.5 rounded-xl border transition ${state.vfRiskFilter === 'ALL' ? 'border-blue-500 bg-blue-500/20 text-blue-300 ring-2 ring-offset-1 ring-offset-slate-900' : 'border-slate-700 bg-slate-900 text-slate-400 hover:text-white'}">
           Todos (${baseAlumnos.length})
@@ -1492,24 +1500,44 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    const vfInput = document.getElementById('vfSearchInput');
-    if (vfInput) {
-      vfInput.addEventListener('input', (e) => {
-        state.vfSearch = e.target.value;
-        const pos = e.target.selectionStart;
-        renderVfTab();
-        const fresh = document.getElementById('vfSearchInput');
-        if (fresh) {
-          fresh.focus();
-          fresh.setSelectionRange(pos, pos);
-        }
-      });
-    }
-
     if (discPanel) {
-      const discs32 = DATA.disciplinas
-        .filter(d => d.semestre === '3.2' && d.vfMediaNec !== null)
-        .sort((a, b) => b.vfMediaNec - a.vfMediaNec || b.vfEmRisco - a.vfEmRisco);
+      // Compute VF pressure per 3.2 discipline using currently filtered students
+      const scopedDiscMap = new Map();
+      filteredAlunos.forEach(a => {
+        (a.disciplinas || []).forEach(d => {
+          if (d.semestre !== '3.2') return;
+          const vfInfo = calcVfNecessaria(d);
+          if (!vfInfo || vfInfo.tipo !== 'exact') return;
+          const k = `${d.codigo}||${d.disciplina}||${d.semestre}`;
+          if (!scopedDiscMap.has(k)) {
+            const meta = DATA.disciplinas.find(x => x.codigo === d.codigo && x.semestre === d.semestre);
+            scopedDiscMap.set(k, {
+              codigo: d.codigo,
+              nome: d.nome,
+              cursoLabel: meta?.cursoLabel || a.curso,
+              vals: [],
+              notas: []
+            });
+          }
+          scopedDiscMap.get(k).vals.push(vfInfo.valor);
+          if (d.notaEfetiva !== null) scopedDiscMap.get(k).notas.push(d.notaEfetiva);
+        });
+      });
+
+      const discs32 = [...scopedDiscMap.values()].map(item => {
+        const avgVf = item.vals.reduce((s, v) => s + v, 0) / item.vals.length;
+        const avgNota = item.notas.length ? item.notas.reduce((s, v) => s + v, 0) / item.notas.length : null;
+        return {
+          codigo: item.codigo,
+          nome: item.nome,
+          cursoLabel: item.cursoLabel,
+          qtdAlunos: item.vals.length,
+          media: avgNota,
+          vfMediaNec: Math.round(avgVf * 100) / 100,
+          vfEmRisco: item.vals.filter(v => v > 5.0).length,
+          vfRiscoAlto: item.vals.filter(v => v > 6.0).length
+        };
+      }).sort((a, b) => b.vfMediaNec - a.vfMediaNec || b.vfEmRisco - a.vfEmRisco);
 
       discPanel.innerHTML = discs32.map(d => {
         const high = d.vfEmRisco > 0;
@@ -1517,7 +1545,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-3 rounded-xl bg-slate-900/70 border ${high ? 'border-amber-500/30' : 'border-slate-800'} flex items-center justify-between gap-3">
             <div class="min-w-0">
               <div class="text-xs font-bold text-slate-100 truncate" title="${d.nome}">${d.nome}</div>
-              <div class="text-[10px] text-slate-400 mt-0.5">${d.codigo} · ${d.qtdAlunos} alunos · média atual ${fmtNum(d.media)}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5 truncate">${d.cursoLabel} · ${d.qtdAlunos} al. · méd ${fmtNum(d.media)}</div>
             </div>
             <div class="text-right shrink-0 font-mono-numbers">
               <div class="text-xs font-extrabold ${d.vfMediaNec > 5.0 ? 'text-rose-400' : (d.vfMediaNec > 4.2 ? 'text-amber-300' : 'text-emerald-400')}">VF ${fmtNum(d.vfMediaNec)}</div>
@@ -1525,7 +1553,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
           </div>
         `;
-      }).join('') || `<div class="col-span-full text-xs text-slate-400">Nenhuma disciplina do 3.2 com VE+VC pendente de VF.</div>`;
+      }).join('') || `<div class="col-span-full text-xs text-slate-400">Nenhuma disciplina do 3.2 com VE+VC pendente de VF para este filtro.</div>`;
     }
 
     refreshIcons();
@@ -1539,8 +1567,11 @@ document.addEventListener('DOMContentLoaded', () => {
       let valA = a[state.sortColumn];
       let valB = b[state.sortColumn];
 
-      if (valA === null || valA === undefined) valA = -9999;
-      if (valB === null || valB === undefined) valB = -9999;
+      const nullA = (valA === null || valA === undefined);
+      const nullB = (valB === null || valB === undefined);
+      if (nullA && nullB) return 0;
+      if (nullA) return 1;
+      if (nullB) return -1;
 
       if (typeof valA === 'string') {
         return state.sortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
@@ -1582,7 +1613,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         return `
-          <tr class="table-hover-row border-b border-slate-800/40">
+          <tr class="table-hover-row border-b border-slate-800/40 cursor-pointer" onclick="window.app.openStudentModal(${aluno.numero})">
             <td class="py-3 px-4 font-bold text-white font-mono-numbers">
               ${rankIcon}#${aluno.rankGraduacao}
             </td>
@@ -1592,7 +1623,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="py-3 px-3 text-slate-400 font-mono-numbers">
               #${aluno.rankCurso}
             </td>
-            <td class="py-3 px-4 font-bold text-slate-100 hover:text-blue-400 cursor-pointer" onclick="window.app.openStudentModal(${aluno.numero})">
+            <td class="py-3 px-4 font-bold text-slate-100 hover:text-blue-400">
               ${aluno.nome}
             </td>
             <td class="py-3 px-3">
@@ -1622,7 +1653,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <td class="py-3 px-4 text-center">
               <button 
                 class="px-2.5 py-1 text-[11px] font-semibold bg-blue-600/20 hover:bg-blue-600 border border-blue-500/40 hover:border-blue-500 text-blue-300 hover:text-white rounded-lg transition"
-                onclick="window.app.openStudentModal(${aluno.numero})"
+                onclick="event.stopPropagation(); window.app.openStudentModal(${aluno.numero})"
               >
                 Ver Ficha
               </button>
@@ -1678,8 +1709,74 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- TAB 4: RAIO-X DE DISCIPLINAS (168) ---
+  function getScopedDisciplinas() {
+    const cf = state.disciplinasCurso;
+    if (cf === 'ALL') return DATA.disciplinas;
+
+    if (cf === 'MILITAR') {
+      return DATA.disciplinas.filter(d => d.militar);
+    }
+    if (cf === 'COMUM_BASICO') {
+      return DATA.disciplinas.filter(d => !d.militar && d.cursos && d.cursos.length >= 8);
+    }
+
+    // Specific course or SE3 / SE4: recalculate stats using only students from that course/SE
+    const matchingStudents = DATA.alunos.filter(a => matchesCourseFilter(a.curso, cf));
+    const aggMap = new Map();
+    matchingStudents.forEach(a => {
+      (a.disciplinas || []).forEach(d => {
+        const k = `${d.codigo}||${d.disciplina}||${d.semestre}`;
+        if (!aggMap.has(k)) {
+          const meta = DATA.disciplinas.find(x => x.codigo === d.codigo && x.semestre === d.semestre && x.disciplina === d.disciplina);
+          aggMap.set(k, {
+            ...(meta || {
+              codigo: d.codigo,
+              disciplina: d.disciplina,
+              nome: d.nome,
+              semestre: d.semestre,
+              ciclo: d.ciclo,
+              militar: d.militar,
+              cursoLabel: a.curso
+            }),
+            grades: [],
+            vfVals: []
+          });
+        }
+        if (d.notaEfetiva !== null && d.notaEfetiva !== undefined) {
+          aggMap.get(k).grades.push(d.notaEfetiva);
+        }
+        if (d.semestre === '3.2') {
+          const vfInfo = calcVfNecessaria(d);
+          if (vfInfo && vfInfo.tipo === 'exact') aggMap.get(k).vfVals.push(vfInfo.valor);
+        }
+      });
+    });
+
+    return [...aggMap.values()].map(item => {
+      const grs = item.grades;
+      const n = grs.length;
+      const mean = n ? grs.reduce((s, v) => s + v, 0) / n : null;
+      const dp = n > 1 ? Math.sqrt(grs.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / n) : (n ? 0 : null);
+      const vfVals = item.vfVals;
+      const vfMean = vfVals.length ? Math.round((vfVals.reduce((s, v) => s + v, 0) / vfVals.length) * 100) / 100 : null;
+      return {
+        ...item,
+        qtdAlunos: n,
+        media: mean !== null ? Math.round(mean * 100) / 100 : null,
+        desvioPadrao: dp !== null ? Math.round(dp * 100) / 100 : null,
+        menorNota: n ? Math.min(...grs) : null,
+        maiorNota: n ? Math.max(...grs) : null,
+        vfMediaNec: vfMean,
+        vfEmRisco: vfVals.filter(v => v > 5.0).length,
+        vfRiscoAlto: vfVals.filter(v => v > 6.0).length
+      };
+    }).sort((a, b) => (a.media ?? 999) - (b.media ?? 999));
+  }
+
   function renderDisciplinasTab() {
-    const topHard = DATA.disciplinas.filter(d => d.media !== null && d.qtdAlunos >= 5).slice(0, 10);
+    const scoped = getScopedDisciplinas();
+    const minQtd = (state.disciplinasCurso === 'ALL' || state.disciplinasCurso === 'COMUM_BASICO' || state.disciplinasCurso === 'MILITAR') ? 5 : 1;
+    const topHard = scoped.filter(d => d.media !== null && d.qtdAlunos >= minQtd).slice(0, 10);
     const listHard = document.getElementById('topHardDisciplinesList');
     if (listHard) {
       listHard.innerHTML = topHard.map((d, idx) => `
@@ -1690,7 +1787,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </span>
             <div class="truncate">
               <span class="font-bold text-slate-100 block truncate">${d.nome}</span>
-              <span class="text-[10px] text-slate-400">${d.codigo} • Sem. ${d.semestre} • ${d.qtdAlunos} alunos</span>
+              <span class="text-[10px] text-slate-400">${d.codigo} • Sem. ${d.semestre} • ${d.cursoLabel || ''} • ${d.qtdAlunos} al.</span>
             </div>
           </div>
           <div class="text-right shrink-0">
@@ -1698,10 +1795,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="text-[10px] text-slate-500 block">DP: ${fmtNum(d.desvioPadrao)}</span>
           </div>
         </div>
-      `).join('');
+      `).join('') || `<div class="text-xs text-slate-500">Nenhuma disciplina para este filtro.</div>`;
     }
 
-    const topEasy = [...DATA.disciplinas.filter(d => d.media !== null && d.qtdAlunos >= 5)].sort((a, b) => b.media - a.media).slice(0, 10);
+    const topEasy = [...scoped.filter(d => d.media !== null && d.qtdAlunos >= minQtd)].sort((a, b) => b.media - a.media).slice(0, 10);
     const listEasy = document.getElementById('topEasyDisciplinesList');
     if (listEasy) {
       listEasy.innerHTML = topEasy.map((d, idx) => `
@@ -1712,7 +1809,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </span>
             <div class="truncate">
               <span class="font-bold text-slate-100 block truncate">${d.nome}</span>
-              <span class="text-[10px] text-slate-400">${d.codigo} • Sem. ${d.semestre} • ${d.qtdAlunos} alunos</span>
+              <span class="text-[10px] text-slate-400">${d.codigo} • Sem. ${d.semestre} • ${d.cursoLabel || ''} • ${d.qtdAlunos} al.</span>
             </div>
           </div>
           <div class="text-right shrink-0">
@@ -1720,7 +1817,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="text-[10px] text-slate-500 block">DP: ${fmtNum(d.desvioPadrao)}</span>
           </div>
         </div>
-      `).join('');
+      `).join('') || `<div class="text-xs text-slate-500">Nenhuma disciplina para este filtro.</div>`;
     }
 
     renderDisciplinasFullTable();
@@ -1729,9 +1826,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function renderDisciplinasFullTable() {
     const tbody = document.getElementById('disciplinasTableBody');
+    const cardsEl = document.getElementById('disciplinasCardsContainer');
+    const tableWrap = document.getElementById('disciplinasTableContainer');
     if (!tbody) return;
 
-    let filtered = DATA.disciplinas;
+    let filtered = getScopedDisciplinas();
 
     if (state.disciplinasSemestre !== 'ALL') {
       filtered = filtered.filter(d => d.semestre === state.disciplinasSemestre);
@@ -1739,7 +1838,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (state.disciplinasSearch.trim()) {
       const q = state.disciplinasSearch.toLowerCase();
-      filtered = filtered.filter(d => d.nome.toLowerCase().includes(q) || d.codigo.toLowerCase().includes(q));
+      filtered = filtered.filter(d => d.nome.toLowerCase().includes(q) || d.codigo.toLowerCase().includes(q) || (d.cursoLabel || '').toLowerCase().includes(q));
     }
 
     tbody.innerHTML = filtered.map(d => {
@@ -1761,6 +1860,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <td class="py-2.5 px-4 font-bold text-slate-200">
             ${d.nome} ${badge32}${vfRiskInfo}
           </td>
+          <td class="py-2.5 px-3 text-[11px] text-slate-300 font-semibold">${d.cursoLabel || '-'}</td>
           <td class="py-2.5 px-3 text-slate-400 font-mono-numbers">${d.semestre}</td>
           <td class="py-2.5 px-3 text-slate-400 text-[11px]">${d.ciclo}</td>
           <td class="py-2.5 px-3 text-center text-slate-400 font-mono-numbers">${d.qtdAlunos}</td>
@@ -1776,7 +1876,45 @@ document.addEventListener('DOMContentLoaded', () => {
           </td>
         </tr>
       `;
-    }).join('');
+    }).join('') || `<tr><td colspan="10" class="py-8 text-center text-slate-500">Nenhuma disciplina encontrada.</td></tr>`;
+
+    if (cardsEl && tableWrap) {
+      const isMobile = document.body.classList.contains('is-mobile');
+      if (isMobile) {
+        cardsEl.classList.remove('hidden');
+        tableWrap.classList.add('hidden');
+        cardsEl.innerHTML = filtered.map(d => {
+          const is32 = (d.semestre === '3.2');
+          return `
+            <div class="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-1.5 flex-wrap text-[10px] text-slate-400 font-mono">
+                    <span>${d.codigo}</span>
+                    <span>• Sem. ${d.semestre}</span>
+                    <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-sans font-semibold">${d.cursoLabel || d.ciclo}</span>
+                    ${is32 ? '<span class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-sans font-bold">3.2</span>' : ''}
+                  </div>
+                  <div class="text-xs font-bold text-slate-100 mt-1">${d.nome}</div>
+                </div>
+                <div class="text-right shrink-0">
+                  <span class="text-[10px] text-slate-400 block">Média</span>
+                  <span class="text-base font-extrabold text-blue-400 font-mono-numbers">${fmtNum(d.media)}</span>
+                </div>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1.5 border-t border-slate-800/70 font-mono-numbers">
+                <span>${d.qtdAlunos} al. · DP ${fmtNum(d.desvioPadrao)}</span>
+                <span><span class="text-rose-400">${fmtNum(d.menorNota)}</span> / <span class="text-emerald-400">${fmtNum(d.maiorNota)}</span></span>
+              </div>
+              ${is32 && d.vfMediaNec !== null ? `<div class="text-[11px] font-mono-numbers ${d.vfEmRisco > 0 ? 'text-amber-300' : 'text-emerald-400'}">VF nec. méd: ${fmtNum(d.vfMediaNec)}${d.vfEmRisco > 0 ? ` · ${d.vfEmRisco} em risco (>5.0)` : ''}</div>` : ''}
+            </div>
+          `;
+        }).join('') || `<div class="py-6 text-center text-xs text-slate-500">Nenhuma disciplina encontrada.</div>`;
+      } else {
+        cardsEl.classList.add('hidden');
+        tableWrap.classList.remove('hidden');
+      }
+    }
   }
 
   // --- TAB 5: COMPARADOR 1x1 ALUNOS ---
@@ -2515,33 +2653,76 @@ document.addEventListener('DOMContentLoaded', () => {
     const vfSummaryEl = document.getElementById('modalVfSummary');
     if (vfSummaryEl) {
       const abertas = discs
-        .map(d => ({ d, vfInfo: calcVfNecessaria(d) }))
+        .map((d, idx) => ({ d, idx, vfInfo: calcVfNecessaria(d) }))
         .filter(item => item.vfInfo !== null);
       if (abertas.length > 0) {
         vfSummaryEl.classList.remove('hidden');
         vfSummaryEl.innerHTML = `
           <div class="flex flex-wrap items-center justify-between gap-2">
             <span class="text-xs font-bold text-amber-300 flex items-center gap-1.5">
-              🎯 Quanto falta na VF (mín. 4,00 na VF e média ≥ 5,00)
+              🎯 Quanto falta na VF &amp; Simulador (mín. 4,00 na VF e média ≥ 5,00)
             </span>
-            <span class="text-[10px] text-slate-400 font-mono">Pesos: VE (1) · VC (1) · VF (2)</span>
+            <span id="modalSimProjResult" class="text-[11px] text-slate-300 font-mono-numbers">Pesos: VE (1) · VC (1) · VF (2)</span>
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            ${abertas.map(({ d, vfInfo }) => {
-              const highNeed = vfInfo.tipo === 'exact' && vfInfo.valor > 6.5;
+            ${abertas.map(({ d, vfInfo }, i) => {
+              const highNeed = vfInfo.tipo === 'exact' && vfInfo.valor > 6.0;
               const valCls = highNeed ? 'text-rose-400' : 'text-amber-300';
+              const canSim = (vfInfo.tipo === 'exact');
               return `
                 <div class="p-2 rounded-xl bg-slate-950/70 border border-slate-800/80 flex items-center justify-between gap-2 text-xs">
-                  <div class="min-w-0">
+                  <div class="min-w-0 flex-1">
                     <div class="font-bold text-slate-200 truncate" title="${d.nome}">${d.nome}</div>
                     <div class="text-[10px] text-slate-400">${vfInfo.detalhe}</div>
                   </div>
-                  <span class="font-extrabold font-mono-numbers shrink-0 ${valCls}">${vfInfo.label}</span>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <span class="font-extrabold font-mono-numbers ${valCls}">${vfInfo.label}</span>
+                    ${canSim ? `<input type="number" min="0" max="10" step="0.1" placeholder="Sim." data-sim-code="${d.codigo}" data-sim-ve="${d.mve ?? d.ve}" data-sim-vc="${d.vc}" data-sim-mil="${d.militar ? 1 : 0}" class="modal-vf-sim-input w-14 px-1.5 py-1 text-[11px] text-center font-mono-numbers bg-slate-900 border border-slate-700 rounded-lg text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500" title="Simular nota na VF" />` : ''}
+                  </div>
                 </div>
               `;
             }).join('')}
           </div>
         `;
+
+        const updateSimProjection = () => {
+          const inputs = [...vfSummaryEl.querySelectorAll('.modal-vf-sim-input')];
+          const simGrades = new Map();
+          inputs.forEach(inp => {
+            const raw = inp.value.trim();
+            if (raw === '') return;
+            const v = Math.min(10, Math.max(0, parseFloat(raw.replace(',', '.'))));
+            if (!isNaN(v)) {
+              const ve = parseFloat(inp.getAttribute('data-sim-ve'));
+              const vc = parseFloat(inp.getAttribute('data-sim-vc'));
+              const med = Math.round(((ve + vc + 2 * v) / 4) * 100) / 100;
+              simGrades.set(inp.getAttribute('data-sim-code'), med);
+            }
+          });
+          const projEl = document.getElementById('modalSimProjResult');
+          if (!projEl) return;
+          if (simGrades.size === 0) {
+            projEl.innerHTML = 'Pesos: VE (1) · VC (1) · VF (2)';
+            return;
+          }
+          // Projected 3.2 graduation average & overall graduation CR
+          const grad32 = (aluno.disciplinas || []).filter(x => x.semestre === '3.2' && !x.militar);
+          const vals32 = grad32.map(x => simGrades.has(x.codigo) ? simGrades.get(x.codigo) : x.notaEfetiva).filter(v => v !== null);
+          const avg32 = vals32.length ? (vals32.reduce((s, v) => s + v, 0) / vals32.length) : null;
+
+          const gradAll = (aluno.disciplinas || []).filter(x => !x.militar);
+          const valsAll = gradAll.map(x => {
+            if (x.semestre === '3.2' && simGrades.has(x.codigo)) return simGrades.get(x.codigo);
+            return x.semestreOrdem <= 5 ? x.nf : (x.semestre === '3.2' ? x.notaEfetiva : null);
+          }).filter(v => v !== null);
+          const avgAll = valsAll.length ? (valsAll.reduce((s, v) => s + v, 0) / valsAll.length) : null;
+
+          projEl.innerHTML = `<span class="text-blue-300 font-bold">Projeção 3.2: ${fmtNum(avg32)}</span> · <span class="text-emerald-300 font-bold">CR c/ 3.2: ${fmtNum(avgAll)}</span>`;
+        };
+
+        vfSummaryEl.querySelectorAll('.modal-vf-sim-input').forEach(inp => {
+          inp.addEventListener('input', updateSimProjection);
+        });
       } else {
         vfSummaryEl.classList.add('hidden');
         vfSummaryEl.innerHTML = '';
@@ -2797,14 +2978,23 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnResetFilters')?.addEventListener('click', () => {
     state.filterCurso = 'ALL';
     state.filterVinculo = 'ALL';
+    state.vfRiskFilter = 'ALL';
+    state.vfSearch = '';
     state.tableSearch = '';
     document.getElementById('filterCurso').value = 'ALL';
     document.getElementById('filterVinculo').value = 'ALL';
     const s1 = document.getElementById('globalSearchInput');
     const s2 = document.getElementById('tableSearchInput');
+    const s3 = document.getElementById('vfSearchInput');
     if (s1) s1.value = '';
     if (s2) s2.value = '';
+    if (s3) s3.value = '';
     applyFilters();
+  });
+
+  document.getElementById('vfSearchInput')?.addEventListener('input', (e) => {
+    state.vfSearch = e.target.value;
+    renderVfTab();
   });
 
   // Table Search & Page Size
@@ -2821,6 +3011,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Table Headers Sorting
+  const descFirstCols = new Set(['mediaGraduacao', 'mediaGeral', 'media32', 'maxVf32']);
   document.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
       const col = th.getAttribute('data-sort');
@@ -2828,7 +3019,7 @@ document.addEventListener('DOMContentLoaded', () => {
         state.sortAsc = !state.sortAsc;
       } else {
         state.sortColumn = col;
-        state.sortAsc = true;
+        state.sortAsc = !descFirstCols.has(col);
       }
       renderRankingsTable();
     });
@@ -2838,6 +3029,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('searchDisciplinasInput')?.addEventListener('input', (e) => {
     state.disciplinasSearch = e.target.value;
     renderDisciplinasFullTable();
+  });
+
+  document.getElementById('filterCursoDisciplinas')?.addEventListener('change', (e) => {
+    state.disciplinasCurso = e.target.value;
+    renderDisciplinasTab();
   });
 
   document.getElementById('filterSemestreDisciplinas')?.addEventListener('change', (e) => {
@@ -2919,6 +3115,11 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btnCloseModalFooter')?.addEventListener('click', closeStudentModal);
   document.getElementById('studentModal')?.addEventListener('click', (e) => {
     if (e.target.id === 'studentModal') closeStudentModal();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.activeStudentModal) {
+      closeStudentModal();
+    }
   });
 
   // Export CSV Event

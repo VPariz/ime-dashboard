@@ -154,7 +154,7 @@ body.is-mobile #navTabs {
 }
 
 body.is-mobile #mobileBottomNav {
-  display: flex !important;
+  display: grid !important;
 }
 
 body.is-mobile main {
@@ -232,7 +232,7 @@ body.is-mobile #studentModal .overflow-y-auto {
   }
 
   body:not(.is-desktop) #mobileBottomNav {
-    display: flex !important;
+    display: grid !important;
   }
 
   body:not(.is-desktop) main {
