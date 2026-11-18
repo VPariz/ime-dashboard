@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     disciplinasSemestre: 'ALL',
     comparatorA: DATA.alunos[0]?.numero || null,
     comparatorB: DATA.alunos[1]?.numero || null,
+    comparatorSemester: 'ALL',
+    comparatorOnlyCommon: false,
     courseA: 'Computação',
     courseB: 'Eletrônica',
     activeCoursesInChart: new Set(DATA.metadata.cursos),
@@ -92,9 +94,77 @@ document.addEventListener('DOMContentLoaded', () => {
     'Materiais': 'badge-materiais'
   };
 
+  const SE_GROUPS = {
+    SE3: {
+      curso: 'SE3 (Eletrônica, Elétrica, Com.)',
+      short: 'SE3',
+      cursos: ['Eletrônica', 'Elétrica', 'Comunicações'],
+      color: '#a855f7'
+    },
+    SE4: {
+      curso: 'SE4 (Mec. Armamento e Auto.)',
+      short: 'SE4',
+      cursos: ['Mecânica de Armamento', 'Mecânica de Automóveis'],
+      color: '#ef4444'
+    }
+  };
+
+  const courseToSE = {
+    'Eletrônica': 'SE3',
+    'Elétrica': 'SE3',
+    'Comunicações': 'SE3',
+    'Mecânica de Armamento': 'SE4',
+    'Mecânica de Automóveis': 'SE4'
+  };
+
+  function matchesCourseFilter(curso, filterVal) {
+    if (filterVal === 'ALL') return true;
+    if (SE_GROUPS[filterVal]) return SE_GROUPS[filterVal].cursos.includes(curso);
+    return curso === filterVal;
+  }
+
+  function getGroupCourseObj(seKey) {
+    const grp = SE_GROUPS[seKey];
+    if (!grp) return null;
+    const members = DATA.alunos.filter(a => grp.cursos.includes(a.curso));
+    if (!members.length) return null;
+
+    const avg = (arr) => arr.length ? Math.round((arr.reduce((s, v) => s + v, 0) / arr.length) * 100) / 100 : null;
+    const semestres = {};
+    const semestresCumulativo = {};
+    DATA.metadata.semestres.forEach(sem => {
+      const sVals = members.map(a => a.evolucao.find(e => e.semestre === sem)?.mediaGradSemestre).filter(v => v !== null && v !== undefined);
+      const cVals = members.map(a => a.evolucao.find(e => e.semestre === sem)?.mediaGradCumulativo).filter(v => v !== null && v !== undefined);
+      semestres[sem] = avg(sVals);
+      semestresCumulativo[sem] = avg(cVals);
+    });
+
+    const sorted = [...members].sort((a, b) => b.mediaGraduacao - a.mediaGraduacao);
+    return {
+      curso: grp.curso,
+      short: grp.short,
+      qtdAlunos: members.length,
+      mediaGraduacao: avg(members.map(a => a.mediaGraduacao)),
+      menorCR: sorted[sorted.length - 1]?.mediaGraduacao ?? null,
+      maiorCR: sorted[0]?.mediaGraduacao ?? null,
+      melhorAluno: sorted[0]?.nome ?? '-',
+      semestres,
+      semestresCumulativo,
+      isSEGroup: true
+    };
+  }
+
   function getCourseBadge(curso) {
+    if (curso === 'SE3' || curso === SE_GROUPS.SE3.curso) {
+      return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap bg-purple-500/20 text-purple-300 border border-purple-500/40">${curso}</span>`;
+    }
+    if (curso === 'SE4' || curso === SE_GROUPS.SE4.curso) {
+      return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold whitespace-nowrap bg-rose-500/20 text-rose-300 border border-rose-500/40">${curso}</span>`;
+    }
     const cls = courseClassMap[curso] || 'badge-computacao';
-    return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${cls}">${curso}</span>`;
+    const se = courseToSE[curso];
+    const seTag = se ? ` <span class="opacity-70 text-[10px]">· ${se}</span>` : '';
+    return `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${cls}">${curso}${seTag}</span>`;
   }
 
   function getVinculoBadge(vinculo) {
@@ -171,7 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Filtering & Metrics Calculation ---
   function applyFilters() {
     filteredAlunos = DATA.alunos.filter(aluno => {
-      if (state.filterCurso !== 'ALL' && aluno.curso !== state.filterCurso) return false;
+      if (!matchesCourseFilter(aluno.curso, state.filterCurso)) return false;
       if (state.filterVinculo !== 'ALL' && aluno.vinculo !== state.filterVinculo) return false;
       if (state.tableSearch.trim()) {
         const query = state.tableSearch.toLowerCase();
@@ -544,22 +614,25 @@ document.addEventListener('DOMContentLoaded', () => {
     chartEvolucaoInstance.data.datasets[0].data = cohortData;
 
     if (state.filterCurso !== 'ALL') {
-      const courseObj = DATA.cursosComparativo.find(c => c.curso === state.filterCurso);
+      const courseObj = SE_GROUPS[state.filterCurso]
+        ? getGroupCourseObj(state.filterCurso)
+        : DATA.cursosComparativo.find(c => c.curso === state.filterCurso);
       const courseData = semestres.map(s => {
         if (!courseObj) return null;
         return isSem ? courseObj.semestres[s] : courseObj.semestresCumulativo[s];
       });
 
+      const displayColor = SE_GROUPS[state.filterCurso]?.color || courseColors[state.filterCurso] || '#3b82f6';
       const courseLabel = isSem ? `Média Semestral ${state.filterCurso}` : `CR Cumulativo ${state.filterCurso}`;
 
       if (chartEvolucaoInstance.data.datasets.length === 1) {
         chartEvolucaoInstance.data.datasets.push({
           label: courseLabel,
           data: courseData,
-          borderColor: courseColors[state.filterCurso] || '#3b82f6',
+          borderColor: displayColor,
           backgroundColor: 'transparent',
           borderDash: [5, 5],
-          pointBackgroundColor: courseColors[state.filterCurso] || '#3b82f6',
+          pointBackgroundColor: displayColor,
           pointBorderColor: '#fff',
           pointRadius: 5,
           borderWidth: 2.5
@@ -567,8 +640,8 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         chartEvolucaoInstance.data.datasets[1].label = courseLabel;
         chartEvolucaoInstance.data.datasets[1].data = courseData;
-        chartEvolucaoInstance.data.datasets[1].borderColor = courseColors[state.filterCurso] || '#3b82f6';
-        chartEvolucaoInstance.data.datasets[1].pointBackgroundColor = courseColors[state.filterCurso] || '#3b82f6';
+        chartEvolucaoInstance.data.datasets[1].borderColor = displayColor;
+        chartEvolucaoInstance.data.datasets[1].pointBackgroundColor = displayColor;
       }
     } else {
       if (chartEvolucaoInstance.data.datasets.length > 1) {
@@ -619,6 +692,18 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       `;
     }).join('');
+
+    document.getElementById('btnSelectSE3Courses')?.addEventListener('click', () => {
+      state.activeCoursesInChart = new Set(SE_GROUPS.SE3.cursos);
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
+    });
+
+    document.getElementById('btnSelectSE4Courses')?.addEventListener('click', () => {
+      state.activeCoursesInChart = new Set(SE_GROUPS.SE4.cursos);
+      renderCourseTogglePills();
+      updateCourseEvolutionChart();
+    });
 
     document.getElementById('btnSelectAllCourses')?.addEventListener('click', () => {
       state.activeCoursesInChart = new Set(DATA.metadata.cursos);
@@ -766,16 +851,23 @@ document.addEventListener('DOMContentLoaded', () => {
     chartCursosEvolucaoInstance.update();
   }
 
+  function getCoursesWithSE() {
+    const se3 = getGroupCourseObj('SE3');
+    const se4 = getGroupCourseObj('SE4');
+    return [...DATA.cursosComparativo, ...(se3 ? [se3] : []), ...(se4 ? [se4] : [])];
+  }
+
   function renderCourseCards() {
     const container = document.getElementById('courseCardsContainer');
     if (!container) return;
 
     const isSem = (state.courseMetric === 'semestral');
 
-    container.innerHTML = DATA.cursosComparativo.map(c => {
+    container.innerHTML = getCoursesWithSE().map(c => {
       const src = isSem ? c.semestres : c.semestresCumulativo;
+      const highlight = c.isSEGroup ? 'border-purple-500/30 bg-slate-900/80' : 'border-slate-800';
       return `
-        <div class="glass-panel p-4 rounded-2xl border border-slate-800 space-y-3 shadow-md">
+        <div class="glass-panel p-4 rounded-2xl border ${highlight} space-y-3 shadow-md">
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               ${getCourseBadge(c.curso)}
@@ -848,10 +940,11 @@ document.addEventListener('DOMContentLoaded', () => {
         : 'CR de Graduação Cumulativo acumulado até cada período (evolução do histórico) e destaques por curso';
     }
 
-    tbody.innerHTML = DATA.cursosComparativo.map(c => {
+    tbody.innerHTML = getCoursesWithSE().map(c => {
       const src = isSem ? c.semestres : c.semestresCumulativo;
+      const rowCls = c.isSEGroup ? 'table-hover-row border-b border-slate-800/60 bg-slate-900/60' : 'table-hover-row border-b border-slate-800/40';
       return `
-        <tr class="table-hover-row border-b border-slate-800/40">
+        <tr class="${rowCls}">
           <td class="py-3 px-4 font-bold text-white">
             ${getCourseBadge(c.curso)}
           </td>
@@ -908,7 +1001,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const selB = document.getElementById('selectCourseB');
     if (!selA || !selB) return;
 
-    const opts = DATA.metadata.cursos.map(c => `<option value="${c}">${c}</option>`).join('');
+    const opts = [
+      ...DATA.metadata.cursos.map(c => `<option value="${c}">${c}${courseToSE[c] ? ` (${courseToSE[c]})` : ''}</option>`),
+      `<option value="SE3">SE3 — Eletrônica, Elétrica, Comunicações</option>`,
+      `<option value="SE4">SE4 — Mec. Armamento e Automóveis</option>`
+    ].join('');
     selA.innerHTML = opts;
     selB.innerHTML = opts;
 
@@ -929,8 +1026,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderCourseHeadToHead() {
-    const cA = DATA.cursosComparativo.find(c => c.curso === state.courseA) || DATA.cursosComparativo[0];
-    const cB = DATA.cursosComparativo.find(c => c.curso === state.courseB) || DATA.cursosComparativo[1];
+    const findCourseOrSE = (val, fallbackIdx) => {
+      if (SE_GROUPS[val]) return getGroupCourseObj(val);
+      return DATA.cursosComparativo.find(c => c.curso === val) || DATA.cursosComparativo[fallbackIdx];
+    };
+    const cA = findCourseOrSE(state.courseA, 0);
+    const cB = findCourseOrSE(state.courseB, 1);
 
     const cardsContainer = document.getElementById('courseHeadToHeadCards');
     if (cardsContainer) {
@@ -1353,6 +1454,19 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
+    // Only common subjects toggle
+    const chkCommon = document.getElementById('chkComparatorOnlyCommon');
+    if (chkCommon) {
+      chkCommon.checked = state.comparatorOnlyCommon;
+      chkCommon.addEventListener('change', (e) => {
+        state.comparatorOnlyCommon = e.target.checked;
+        renderComparatorSubjects(
+          DATA.alunos.find(a => a.numero === state.comparatorA) || DATA.alunos[0],
+          DATA.alunos.find(a => a.numero === state.comparatorB) || DATA.alunos[1]
+        );
+      });
+    }
+
     renderStudentComparator();
   }
 
@@ -1487,7 +1601,181 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    renderComparatorSubjects(a1, a2);
     refreshIcons();
+  }
+
+  function renderComparatorSubjects(a1, a2) {
+    const semFilterEl = document.getElementById('comparatorSemesterFilter');
+    const summaryEl = document.getElementById('comparatorSemesterSummary');
+    const tbody = document.getElementById('comparatorSubjectsTableBody');
+    const th1 = document.getElementById('thCompAluno1');
+    const th2 = document.getElementById('thCompAluno2');
+    if (!semFilterEl || !tbody) return;
+
+    if (th1) th1.textContent = a1.nome;
+    if (th2) th2.textContent = a2.nome;
+
+    const semestres = DATA.metadata.semestres;
+    const pills = [
+      { id: 'ALL', label: 'Todos os Semestres' },
+      ...semestres.map(s => ({ id: s, label: s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}` }))
+    ];
+
+    semFilterEl.innerHTML = pills.map(p => {
+      const active = state.comparatorSemester === p.id;
+      const cls = active
+        ? 'bg-indigo-600 text-white border-indigo-500 shadow-sm'
+        : 'bg-slate-900/70 text-slate-400 border-slate-700/80 hover:text-white hover:bg-slate-800';
+      return `<button data-csem="${p.id}" class="px-3 py-1.5 rounded-xl text-xs font-bold border transition ${cls}">${p.label}</button>`;
+    }).join('');
+
+    semFilterEl.querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.comparatorSemester = btn.getAttribute('data-csem');
+        renderComparatorSubjects(a1, a2);
+      });
+    });
+
+    const filterSem = (d) => state.comparatorSemester === 'ALL' || d.semestre === state.comparatorSemester;
+    const map1 = new Map();
+    const map2 = new Map();
+    const rowsMap = new Map();
+
+    const addToMap = (discList, targetMap) => {
+      discList.filter(filterSem).forEach(d => {
+        const key = `${d.semestre}||${d.grupoEquivalente || d.nome}`;
+        if (!targetMap.has(key)) targetMap.set(key, d);
+        if (!rowsMap.has(key)) {
+          rowsMap.set(key, {
+            key,
+            semestre: d.semestre,
+            semestreOrdem: d.semestreOrdem,
+            nome: d.grupoEquivalente || d.nome,
+            militar: d.militar,
+            isParcial: d.isParcial,
+            mediaTurma: d.mediaTurma
+          });
+        } else if (rowsMap.get(key).mediaTurma == null && d.mediaTurma != null) {
+          rowsMap.get(key).mediaTurma = d.mediaTurma;
+        }
+      });
+    };
+
+    addToMap(a1.disciplinas || [], map1);
+    addToMap(a2.disciplinas || [], map2);
+
+    let rows = [...rowsMap.values()].sort((x, y) => {
+      if (x.semestreOrdem !== y.semestreOrdem) return x.semestreOrdem - y.semestreOrdem;
+      return x.nome.localeCompare(y.nome, 'pt-BR');
+    });
+
+    if (state.comparatorOnlyCommon) {
+      rows = rows.filter(r => map1.has(r.key) && map2.has(r.key));
+    }
+
+    let wins1 = 0, wins2 = 0, ties = 0;
+    const grades1 = [], grades2 = [];
+
+    const fmtSub = (d) => {
+      if (!d) return '';
+      const parts = [];
+      const veVal = d.mve ?? d.ve;
+      if (veVal !== null && veVal !== undefined) parts.push(`VE ${fmtNum(veVal)}`);
+      if (d.vc !== null && d.vc !== undefined) parts.push(`VC ${fmtNum(d.vc)}`);
+      if (d.vf !== null && d.vf !== undefined) parts.push(`VF ${fmtNum(d.vf)}`);
+      return parts.join(' · ');
+    };
+
+    const htmlRows = rows.map(r => {
+      const d1 = map1.get(r.key);
+      const d2 = map2.get(r.key);
+      const g1 = d1?.notaEfetiva ?? null;
+      const g2 = d2?.notaEfetiva ?? null;
+
+      if (g1 !== null && !r.militar) grades1.push(g1);
+      if (g2 !== null && !r.militar) grades2.push(g2);
+
+      let diffHtml = '<span class="text-slate-500">-</span>';
+      if (g1 !== null && g2 !== null) {
+        const diff = Math.round((g1 - g2) * 100) / 100;
+        if (diff > 0) {
+          wins1++;
+          diffHtml = `<span class="text-blue-400 font-bold">+${diff.toFixed(2)}</span>`;
+        } else if (diff < 0) {
+          wins2++;
+          diffHtml = `<span class="text-emerald-400 font-bold">${diff.toFixed(2)}</span>`;
+        } else {
+          ties++;
+          diffHtml = `<span class="text-slate-400 font-semibold">0.00</span>`;
+        }
+      }
+
+      const badges = [];
+      if (r.militar) badges.push('<span class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 text-[10px] font-bold">Militar</span>');
+      if (r.isParcial) badges.push('<span class="px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-300 text-[10px] font-bold">Parcial</span>');
+
+      const sub1 = fmtSub(d1);
+      const sub2 = fmtSub(d2);
+
+      return `
+        <tr class="table-hover-row border-b border-slate-800/40">
+          <td class="py-2.5 px-3 font-mono-numbers text-slate-400">${r.semestre}</td>
+          <td class="py-2.5 px-4 text-slate-200 font-semibold">
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span>${r.nome}</span>
+              ${badges.join('')}
+            </div>
+          </td>
+          <td class="py-2.5 px-3 text-right font-mono-numbers">
+            <div class="font-bold ${g1 !== null && g2 !== null && g1 > g2 ? 'text-blue-400' : 'text-slate-200'}">${g1 !== null ? fmtNum(g1) : '-'}</div>
+            ${sub1 ? `<div class="text-[10px] text-slate-500">${sub1}</div>` : ''}
+          </td>
+          <td class="py-2.5 px-3 text-right font-mono-numbers">
+            <div class="font-bold ${g1 !== null && g2 !== null && g2 > g1 ? 'text-emerald-400' : 'text-slate-200'}">${g2 !== null ? fmtNum(g2) : '-'}</div>
+            ${sub2 ? `<div class="text-[10px] text-slate-500">${sub2}</div>` : ''}
+          </td>
+          <td class="py-2.5 px-3 text-right font-mono-numbers">${diffHtml}</td>
+          <td class="py-2.5 px-3 text-right font-mono-numbers text-slate-400">${fmtNum(r.mediaTurma)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.innerHTML = htmlRows || `<tr><td colspan="6" class="py-6 text-center text-slate-400">Nenhuma disciplina encontrada para o filtro selecionado.</td></tr>`;
+
+    if (summaryEl) {
+      const avg1 = grades1.length ? grades1.reduce((s, v) => s + v, 0) / grades1.length : null;
+      const avg2 = grades2.length ? grades2.reduce((s, v) => s + v, 0) / grades2.length : null;
+      const scopeLabel = state.comparatorSemester === 'ALL' ? 'Todos os semestres' : `Semestre ${state.comparatorSemester}`;
+      summaryEl.innerHTML = `
+        <div class="p-3 rounded-xl bg-slate-900/60 border border-blue-500/20 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-blue-400 block">${a1.nome} (${scopeLabel})</span>
+            <span class="text-xs text-slate-400">Média Graduação (${grades1.length} disc.)</span>
+          </div>
+          <span class="text-lg font-extrabold text-blue-400 font-mono-numbers">${fmtNum(avg1)}</span>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900/60 border border-emerald-500/20 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-emerald-400 block">${a2.nome} (${scopeLabel})</span>
+            <span class="text-xs text-slate-400">Média Graduação (${grades2.length} disc.)</span>
+          </div>
+          <span class="text-lg font-extrabold text-emerald-400 font-mono-numbers">${fmtNum(avg2)}</span>
+        </div>
+        <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-700/60 flex items-center justify-between">
+          <div>
+            <span class="text-[10px] uppercase font-bold text-indigo-400 block">Confronto Direto</span>
+            <span class="text-xs text-slate-400">${wins1 + wins2 + ties} matérias em comum</span>
+          </div>
+          <div class="text-xs font-extrabold font-mono-numbers">
+            <span class="text-blue-400">${wins1}</span>
+            <span class="text-slate-500 mx-1">×</span>
+            <span class="text-emerald-400">${wins2}</span>
+            <span class="text-slate-500 ml-1.5 font-normal">(${ties} emp.)</span>
+          </div>
+        </div>
+      `;
+    }
   }
 
   // --- MODAL: FICHA COMPLETA DO ALUNO ---

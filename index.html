@@ -169,16 +169,22 @@
           </label>
           <select id="filterCurso" class="text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
             <option value="ALL">Todas as Especialidades (10)</option>
-            <option value="Computação">Computação (20)</option>
-            <option value="Fortificação e Construção">Fortificação e Construção (10)</option>
-            <option value="Cartografia">Cartografia (9)</option>
-            <option value="Eletrônica">Eletrônica (9)</option>
-            <option value="Química">Química (8)</option>
-            <option value="Comunicações">Comunicações (8)</option>
-            <option value="Mecânica de Armamento">Mecânica de Armamento (7)</option>
-            <option value="Mecânica de Automóveis">Mecânica de Automóveis (6)</option>
-            <option value="Elétrica">Elétrica (5)</option>
-            <option value="Materiais">Materiais (4)</option>
+            <optgroup label="Seções de Ensino (SE)">
+              <option value="SE3">SE3 — Eletrônica, Elétrica, Comunicações (22)</option>
+              <option value="SE4">SE4 — Mec. Armamento e Automóveis (13)</option>
+            </optgroup>
+            <optgroup label="Especialidades">
+              <option value="Computação">Computação (20)</option>
+              <option value="Fortificação e Construção">Fortificação e Construção (10)</option>
+              <option value="Cartografia">Cartografia (9)</option>
+              <option value="Eletrônica">Eletrônica (9) · SE3</option>
+              <option value="Química">Química (8)</option>
+              <option value="Comunicações">Comunicações (8) · SE3</option>
+              <option value="Mecânica de Armamento">Mecânica de Armamento (7) · SE4</option>
+              <option value="Mecânica de Automóveis">Mecânica de Automóveis (6) · SE4</option>
+              <option value="Elétrica">Elétrica (5) · SE3</option>
+              <option value="Materiais">Materiais (4)</option>
+            </optgroup>
           </select>
         </div>
 
@@ -412,6 +418,12 @@
             </div>
 
             <div class="flex items-center gap-2">
+              <button id="btnSelectSE3Courses" class="px-3 py-1.5 rounded-xl bg-purple-500/15 hover:bg-purple-500/25 border border-purple-500/30 text-xs font-bold text-purple-300 transition" title="Eletrônica, Elétrica e Comunicações">
+                SE3
+              </button>
+              <button id="btnSelectSE4Courses" class="px-3 py-1.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-xs font-bold text-rose-300 transition" title="Mecânica de Armamento e Mecânica de Automóveis">
+                SE4
+              </button>
               <button id="btnSelectAllCourses" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition">
                 Todos
               </button>
@@ -816,6 +828,52 @@
         </div>
       </div>
 
+      <!-- Comparativo por Semestre e Matéria -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+              <i data-lucide="book-open-check" class="w-4 h-4 text-indigo-400"></i>
+              Comparativo por Semestre e Matéria
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Compare as notas em cada disciplina por semestre (equivalências do Básico agrupadas automaticamente)</p>
+          </div>
+          <label class="flex items-center gap-2 text-xs text-slate-300 font-semibold cursor-pointer select-none bg-slate-900/70 border border-slate-700/80 px-3 py-1.5 rounded-xl">
+            <input type="checkbox" id="chkComparatorOnlyCommon" class="rounded border-slate-600 bg-slate-800 text-blue-500 focus:ring-blue-500" />
+            <span>Apenas matérias em comum</span>
+          </label>
+        </div>
+
+        <!-- Semester Filter Pills -->
+        <div id="comparatorSemesterFilter" class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Semester Summary Strip -->
+        <div id="comparatorSemesterSummary" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Subjects Comparison Table -->
+        <div class="overflow-x-auto rounded-xl border border-slate-800">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-900 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+              <tr>
+                <th class="py-3 px-3">Sem.</th>
+                <th class="py-3 px-4">Disciplina</th>
+                <th class="py-3 px-3 text-right text-blue-400" id="thCompAluno1">Aluno 1</th>
+                <th class="py-3 px-3 text-right text-emerald-400" id="thCompAluno2">Aluno 2</th>
+                <th class="py-3 px-3 text-right">Dif. (A1 - A2)</th>
+                <th class="py-3 px-3 text-right text-slate-400">Média Turma</th>
+              </tr>
+            </thead>
+            <tbody id="comparatorSubjectsTableBody" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </section>
 
   </main>
@@ -1025,8 +1083,8 @@
   </nav>
 
   <!-- 1. Embedded Processed Dataset -->
-  <script src="data.js"></script>
+  <script src="data.js?v=20261118"></script>
   <!-- 2. Application Logic -->
-  <script src="app.js"></script>
+  <script src="app.js?v=20261118"></script>
 </body>
 </html>
