@@ -206,17 +206,23 @@
           </select>
         </div>
 
-        <!-- Vínculo Filter -->
-        <div class="flex items-center gap-2 w-full sm:w-auto">
-          <label for="filterVinculo" class="text-xs font-semibold text-slate-400 flex items-center gap-1.5 shrink-0">
-            <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-400"></i> Vínculo:
+        <!-- Vínculo Multi-Toggle Checkboxes -->
+        <div class="flex flex-wrap items-center gap-1.5 w-full sm:w-auto" id="vinculoToggles">
+          <span class="text-xs font-semibold text-slate-400 flex items-center gap-1.5 mr-1">
+            <i data-lucide="shield" class="w-3.5 h-3.5 text-emerald-400"></i> Incluir:
+          </span>
+          <label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs font-bold text-emerald-300 cursor-pointer select-none transition hover:bg-emerald-500/20">
+            <input type="checkbox" data-vinculo="Ativa" checked class="vinculo-chk rounded border-emerald-500/50 bg-slate-900 text-emerald-500 focus:ring-emerald-500" />
+            <span>Ativa (68)</span>
           </label>
-          <select id="filterVinculo" class="flex-1 sm:flex-initial min-w-0 text-xs bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
-            <option value="ALL">Todos os Vínculos (86)</option>
-            <option value="Ativa">Ativa (68)</option>
-            <option value="Reserva">Reserva (9)</option>
-            <option value="CG">CG (9)</option>
-          </select>
+          <label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs font-bold text-blue-300 cursor-pointer select-none transition hover:bg-blue-500/20">
+            <input type="checkbox" data-vinculo="Reserva" checked class="vinculo-chk rounded border-blue-500/50 bg-slate-900 text-blue-500 focus:ring-blue-500" />
+            <span>Reserva (9)</span>
+          </label>
+          <label class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs font-bold text-amber-300 cursor-pointer select-none transition hover:bg-amber-500/20">
+            <input type="checkbox" data-vinculo="CG" checked class="vinculo-chk rounded border-amber-500/50 bg-slate-900 text-amber-500 focus:ring-amber-500" />
+            <span>CG (9)</span>
+          </label>
         </div>
 
         <!-- Reset Button -->
@@ -1051,10 +1057,6 @@
                 <option value="geral">CR Geral (80/20)</option>
               </select>
             </div>
-            <label class="flex items-center gap-2 text-xs text-slate-300 font-semibold cursor-pointer select-none bg-slate-900 border border-slate-700 px-3 py-2 rounded-xl">
-              <input type="checkbox" id="chkEstagioIncludeCG" checked class="rounded border-slate-600 bg-slate-800 text-cyan-500 focus:ring-cyan-500" />
-              <span>Incluir CGs</span>
-            </label>
           </div>
           <div id="estagioStatusMsg" class="text-xs text-slate-400 font-medium"></div>
         </div>
@@ -1382,8 +1384,8 @@
   </nav>
 
   <!-- 1. Embedded Processed Dataset -->
-  <script src="data.js?v=20261118n"></script>
+  <script src="data.js?v=20261118o"></script>
   <!-- 2. Application Logic -->
-  <script src="app.js?v=20261118n"></script>
+  <script src="app.js?v=20261118o"></script>
 </body>
 </html>

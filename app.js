@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const state = {
     currentTab: 'overview',
     filterCurso: 'ALL',
-    filterVinculo: 'ALL',
+    includedVinculos: new Set(['Ativa', 'Reserva', 'CG']),
     vfRiskFilter: 'ALL',
     vfSearch: '',
     tableSearch: '',
@@ -58,7 +58,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Estágio
     estagioCurso: DATA.metadata.cursos[0] || 'Computação',
     estagioCriterio: 'grad',
-    estagioIncludeCG: true,
     estagioExpandedAluno: null,
     estagioInitialized: false,
     estagioData: (() => {
@@ -145,11 +144,28 @@ document.addEventListener('DOMContentLoaded', () => {
     return curso === filterVal;
   }
 
-  function getGroupCourseObj(seKey) {
-    const grp = SE_GROUPS[seKey];
-    if (!grp) return null;
-    const members = DATA.alunos.filter(a => grp.cursos.includes(a.curso));
-    if (!members.length) return null;
+  function getVinculoScopedAlunos() {
+    return DATA.alunos.filter(a => state.includedVinculos.has(a.vinculo));
+  }
+
+  function computeCourseStats(cursoLabel, members, isSEGroup = false, short = null) {
+    if (!members.length) {
+      const emptySem = {};
+      DATA.metadata.semestres.forEach(s => { emptySem[s] = null; });
+      return {
+        curso: cursoLabel,
+        short: short || cursoLabel,
+        qtdAlunos: 0,
+        mediaGraduacao: null,
+        mediaGeral: null,
+        menorCR: null,
+        maiorCR: null,
+        melhorAluno: '-',
+        semestres: { ...emptySem },
+        semestresCumulativo: { ...emptySem },
+        isSEGroup
+      };
+    }
 
     const avg = (arr) => arr.length ? Math.round((arr.reduce((s, v) => s + v, 0) / arr.length) * 100) / 100 : null;
     const semestres = {};
@@ -163,17 +179,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const sorted = [...members].sort((a, b) => b.mediaGraduacao - a.mediaGraduacao);
     return {
-      curso: grp.curso,
-      short: grp.short,
+      curso: cursoLabel,
+      short: short || cursoLabel,
       qtdAlunos: members.length,
       mediaGraduacao: avg(members.map(a => a.mediaGraduacao)),
+      mediaGeral: avg(members.map(a => a.mediaGeral)),
       menorCR: sorted[sorted.length - 1]?.mediaGraduacao ?? null,
       maiorCR: sorted[0]?.mediaGraduacao ?? null,
       melhorAluno: sorted[0]?.nome ?? '-',
       semestres,
       semestresCumulativo,
-      isSEGroup: true
+      isSEGroup
     };
+  }
+
+  function getScopedCursosComparativo() {
+    const scoped = getVinculoScopedAlunos();
+    return DATA.metadata.cursos.map(curso => {
+      const members = scoped.filter(a => a.curso === curso);
+      return computeCourseStats(curso, members, false);
+    });
+  }
+
+  function getScopedSemestresBenchmark() {
+    const scoped = getVinculoScopedAlunos();
+    const avg = (arr) => arr.length ? Math.round((arr.reduce((s, v) => s + v, 0) / arr.length) * 100) / 100 : null;
+    return DATA.metadata.semestres.map(sem => {
+      const sVals = scoped.map(a => a.evolucao.find(e => e.semestre === sem)?.mediaGradSemestre).filter(v => v !== null && v !== undefined);
+      const cVals = scoped.map(a => a.evolucao.find(e => e.semestre === sem)?.mediaGradCumulativo).filter(v => v !== null && v !== undefined);
+      return {
+        semestre: sem,
+        mediaGraduacaoTurma: avg(sVals),
+        mediaGraduacaoTurmaCumulativa: avg(cVals),
+        qtdAlunos: sVals.length,
+        isParcial: (sem === '3.2')
+      };
+    });
+  }
+
+  function getGroupCourseObj(seKey) {
+    const grp = SE_GROUPS[seKey];
+    if (!grp) return null;
+    const members = getVinculoScopedAlunos().filter(a => grp.cursos.includes(a.curso));
+    return computeCourseStats(grp.curso, members, true, grp.short);
   }
 
   function getCourseBadge(curso) {
@@ -441,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyFilters() {
     filteredAlunos = DATA.alunos.filter(aluno => {
       if (!matchesCourseFilter(aluno.curso, state.filterCurso)) return false;
-      if (state.filterVinculo !== 'ALL' && aluno.vinculo !== state.filterVinculo) return false;
+      if (!state.includedVinculos.has(aluno.vinculo)) return false;
       if (state.tableSearch.trim()) {
         const query = state.tableSearch.toLowerCase();
         const matchesName = aluno.nome.toLowerCase().includes(query);
@@ -457,8 +505,18 @@ document.addEventListener('DOMContentLoaded', () => {
     renderOverviewVfBanner();
     updateOverviewCharts();
     renderRankingsTable();
-    if (state.currentTab === 'vf') {
+    if (state.currentTab === 'cursos') {
+      updateCourseEvolutionChart();
+      renderCourseMatrixTable();
+      renderCourseHeadToHead();
+    } else if (state.currentTab === 'vf') {
       renderVfTab();
+    } else if (state.currentTab === 'disciplinas') {
+      renderDisciplinasTab();
+    } else if (state.currentTab === 'comparator') {
+      renderStudentComparator();
+    } else if (state.currentTab === 'estagio') {
+      renderEstagioTab();
     }
     updateFilterResetButton();
   }
@@ -508,7 +566,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateFilterResetButton() {
     const btnReset = document.getElementById('btnResetFilters');
-    const isFiltered = (state.filterCurso !== 'ALL' || state.filterVinculo !== 'ALL' || state.tableSearch !== '');
+    const isFiltered = (state.filterCurso !== 'ALL' || state.includedVinculos.size !== 3 || state.tableSearch !== '');
     if (isFiltered) {
       btnReset.classList.remove('hidden');
       btnReset.classList.add('flex');
@@ -851,8 +909,21 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateOverviewCharts() {
+    const scopedCursos = getScopedCursosComparativo();
+    const scopedBench = getScopedSemestresBenchmark();
+
     if (chartCursosInstance) {
-      const labels = chartCursosInstance.data.labels || [];
+      const sortedCursos = [...scopedCursos]
+        .filter(c => c.qtdAlunos > 0)
+        .sort((a, b) => (b.mediaGraduacao ?? 0) - (a.mediaGraduacao ?? 0));
+      const labels = sortedCursos.map(c => c.curso);
+      const dataGrad = sortedCursos.map(c => c.mediaGraduacao);
+      const dataGeral = sortedCursos.map(c => c.mediaGeral);
+      const xBounds = computeDynamicBounds([dataGrad, dataGeral], 0.8, 0.15);
+
+      chartCursosInstance.data.labels = labels;
+      chartCursosInstance.data.datasets[0].data = dataGrad;
+      chartCursosInstance.data.datasets[1].data = dataGeral;
       chartCursosInstance.data.datasets[0].backgroundColor = labels.map(c =>
         state.filterCurso === 'ALL' || matchesCourseFilter(c, state.filterCurso)
           ? 'rgba(59, 130, 246, 0.85)'
@@ -863,7 +934,34 @@ document.addEventListener('DOMContentLoaded', () => {
           ? 'rgba(99, 102, 241, 0.5)'
           : 'rgba(99, 102, 241, 0.1)'
       );
+      chartCursosInstance.options.scales.x.min = xBounds.min;
+      chartCursosInstance.options.scales.x.max = xBounds.max;
+      chartCursosInstance.options.scales.x.ticks.stepSize = xBounds.stepSize;
       chartCursosInstance.update();
+    }
+
+    if (chartVinculoInstance) {
+      chartVinculoInstance.data.datasets[0].data = [
+        filteredAlunos.filter(a => a.vinculo === 'Ativa').length,
+        filteredAlunos.filter(a => a.vinculo === 'Reserva').length,
+        filteredAlunos.filter(a => a.vinculo === 'CG').length
+      ];
+      chartVinculoInstance.update();
+    }
+
+    if (chartDistribuicaoInstance) {
+      const ranges = [0, 0, 0, 0, 0, 0];
+      filteredAlunos.forEach(a => {
+        const cr = a.mediaGraduacao;
+        if (cr >= 9.0) ranges[0]++;
+        else if (cr >= 8.5) ranges[1]++;
+        else if (cr >= 8.0) ranges[2]++;
+        else if (cr >= 7.5) ranges[3]++;
+        else if (cr >= 7.0) ranges[4]++;
+        else ranges[5]++;
+      });
+      chartDistribuicaoInstance.data.datasets[0].data = ranges;
+      chartDistribuicaoInstance.update();
     }
 
     if (!chartEvolucaoInstance) return;
@@ -872,8 +970,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const isSem = (state.overviewMetric === 'semestral');
 
     const cohortData = isSem
-      ? DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma)
-      : DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurmaCumulativa);
+      ? scopedBench.map(s => s.mediaGraduacaoTurma)
+      : scopedBench.map(s => s.mediaGraduacaoTurmaCumulativa);
 
     const cohortLabel = isSem ? 'Média de Graduação (Semestral)' : 'CR Cumulativo (Turma)';
 
@@ -883,7 +981,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (state.filterCurso !== 'ALL') {
       const courseObj = SE_GROUPS[state.filterCurso]
         ? getGroupCourseObj(state.filterCurso)
-        : DATA.cursosComparativo.find(c => c.curso === state.filterCurso);
+        : scopedCursos.find(c => c.curso === state.filterCurso);
       const courseData = semestres.map(s => {
         if (!courseObj) return null;
         return isSem ? courseObj.semestres[s] : courseObj.semestresCumulativo[s];
@@ -995,9 +1093,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function buildCourseChartDatasets(semestres, isSem) {
+    const scopedBench = getScopedSemestresBenchmark();
+    const scopedCursos = getScopedCursosComparativo();
     const cohortData = isSem
-      ? DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurma)
-      : DATA.semestresBenchmark.map(b => b.mediaGraduacaoTurmaCumulativa);
+      ? scopedBench.map(b => b.mediaGraduacaoTurma)
+      : scopedBench.map(b => b.mediaGraduacaoTurmaCumulativa);
 
     const cohortLabel = isSem ? 'Média da Turma (Semestral)' : 'CR Cumulativo Turma';
 
@@ -1014,8 +1114,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     ];
 
-    DATA.cursosComparativo.forEach(c => {
-      if (state.activeCoursesInChart.has(c.curso)) {
+    scopedCursos.forEach(c => {
+      if (c.qtdAlunos > 0 && state.activeCoursesInChart.has(c.curso)) {
         const color = courseColors[c.curso] || '#3b82f6';
         const vals = isSem
           ? semestres.map(s => c.semestres[s])
@@ -1133,7 +1233,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getCoursesWithSE() {
     const se3 = getGroupCourseObj('SE3');
     const se4 = getGroupCourseObj('SE4');
-    return [...DATA.cursosComparativo, ...(se3 ? [se3] : []), ...(se4 ? [se4] : [])];
+    return [...getScopedCursosComparativo().filter(c => c.qtdAlunos > 0), ...(se3 && se3.qtdAlunos > 0 ? [se3] : []), ...(se4 && se4.qtdAlunos > 0 ? [se4] : [])];
   }
 
   function renderCourseCards() {
@@ -1305,9 +1405,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderCourseHeadToHead() {
+    const scopedCursos = getScopedCursosComparativo();
     const findCourseOrSE = (val, fallbackIdx) => {
       if (SE_GROUPS[val]) return getGroupCourseObj(val);
-      return DATA.cursosComparativo.find(c => c.curso === val) || DATA.cursosComparativo[fallbackIdx];
+      return scopedCursos.find(c => c.curso === val) || scopedCursos[fallbackIdx];
     };
     const cA = findCourseOrSE(state.courseA, 0);
     const cB = findCourseOrSE(state.courseB, 1);
@@ -1828,23 +1929,29 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- TAB 4: RAIO-X DE DISCIPLINAS (168) ---
   function getScopedDisciplinas() {
     const cf = state.disciplinasCurso;
-    if (cf === 'ALL') return DATA.disciplinas;
+    const allVinculos = (state.includedVinculos.size === 3);
+    if (cf === 'ALL' && allVinculos) return DATA.disciplinas;
 
-    if (cf === 'MILITAR') {
+    if (allVinculos && cf === 'MILITAR') {
       return DATA.disciplinas.filter(d => d.militar);
     }
-    if (cf === 'COMUM_BASICO') {
+    if (allVinculos && cf === 'COMUM_BASICO') {
       return DATA.disciplinas.filter(d => !d.militar && d.cursos && d.cursos.length >= 8);
     }
 
-    // Specific course or SE3 / SE4: recalculate stats using only students from that course/SE
-    const matchingStudents = DATA.alunos.filter(a => matchesCourseFilter(a.curso, cf));
+    // Recalculate stats using only students matching includedVinculos and selected course/SE
+    const vinculoStudents = getVinculoScopedAlunos();
+    const matchingStudents = (cf === 'ALL' || cf === 'MILITAR' || cf === 'COMUM_BASICO')
+      ? vinculoStudents
+      : vinculoStudents.filter(a => matchesCourseFilter(a.curso, cf));
     const aggMap = new Map();
     matchingStudents.forEach(a => {
       (a.disciplinas || []).forEach(d => {
+        const meta = DATA.disciplinas.find(x => x.codigo === d.codigo && x.semestre === d.semestre && x.disciplina === d.disciplina);
+        if (cf === 'MILITAR' && !d.militar) return;
+        if (cf === 'COMUM_BASICO' && (d.militar || !meta || !meta.cursos || meta.cursos.length < 8)) return;
         const k = `${d.codigo}||${d.disciplina}||${d.semestre}`;
         if (!aggMap.has(k)) {
-          const meta = DATA.disciplinas.find(x => x.codigo === d.codigo && x.semestre === d.semestre && x.disciplina === d.disciplina);
           aggMap.set(k, {
             ...(meta || {
               codigo: d.codigo,
@@ -2046,7 +2153,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderMatches = (query) => {
       const q = (query || '').trim().toLowerCase();
-      const matches = DATA.alunos.filter(a => {
+      const matches = getVinculoScopedAlunos().filter(a => {
         if (!q) return true;
         const se = courseToSE[a.curso] || '';
         return a.nome.toLowerCase().includes(q) ||
@@ -2232,11 +2339,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
       };
 
+      const scopedBench = getScopedSemestresBenchmark();
       const dataA1 = getTrajectory(a1);
       const dataA2 = getTrajectory(a2);
       const dataTurma = isSem
-        ? DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma)
-        : DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurmaCumulativa);
+        ? scopedBench.map(s => s.mediaGraduacaoTurma)
+        : scopedBench.map(s => s.mediaGraduacaoTurmaCumulativa);
 
       const turmaLabel = isSem ? 'Média da Turma (Semestral)' : 'CR Cumulativo Turma';
 
@@ -2625,15 +2733,17 @@ document.addEventListener('DOMContentLoaded', () => {
       return isSem ? ev.mediaGradSemestre : ev.mediaGradCumulativo;
     });
 
+    const scopedCursos = getScopedCursosComparativo();
+    const scopedBench = getScopedSemestresBenchmark();
     const cursoVals = semestres.map(s => {
-      const c = DATA.cursosComparativo.find(cc => cc.curso === aluno.curso);
+      const c = scopedCursos.find(cc => cc.curso === aluno.curso);
       if (!c) return null;
       return isSem ? c.semestres[s] : c.semestresCumulativo[s];
     });
 
     const turmaVals = isSem
-      ? DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurma)
-      : DATA.semestresBenchmark.map(s => s.mediaGraduacaoTurmaCumulativa);
+      ? scopedBench.map(s => s.mediaGraduacaoTurma)
+      : scopedBench.map(s => s.mediaGraduacaoTurmaCumulativa);
 
     const alunoLabel = isSem ? `${aluno.nome} (Semestral)` : `${aluno.nome} (CR Cumulativo)`;
 
@@ -2968,7 +3078,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
     link.setAttribute('href', encodedUri);
-    link.setAttribute('download', `ime_turma_2026_${state.filterCurso}_${state.filterVinculo}.csv`);
+    link.setAttribute('download', `ime_turma_2026_${state.filterCurso}_${[...state.includedVinculos].join('-')}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -3043,7 +3153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function getEstagioRankedAlunos(curso) {
     const field = state.estagioCriterio === 'geral' ? 'mediaGeral' : 'mediaGraduacao';
     return DATA.alunos
-      .filter(a => a.curso === curso && (state.estagioIncludeCG || a.vinculo !== 'CG'))
+      .filter(a => a.curso === curso && state.includedVinculos.has(a.vinculo))
       .sort((a, b) => (b[field] ?? 0) - (a[field] ?? 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
@@ -3087,15 +3197,6 @@ document.addEventListener('DOMContentLoaded', () => {
         state.estagioCriterio = e.target.value;
         renderEstagioTab();
       });
-
-      const chkCG = document.getElementById('chkEstagioIncludeCG');
-      if (chkCG) {
-        chkCG.checked = state.estagioIncludeCG;
-        chkCG.addEventListener('change', (e) => {
-          state.estagioIncludeCG = e.target.checked;
-          renderEstagioTab();
-        });
-      }
 
       document.getElementById('btnEstagioCopy')?.addEventListener('click', async () => {
         const curso = state.estagioCurso;
@@ -3603,19 +3704,27 @@ document.addEventListener('DOMContentLoaded', () => {
     applyFilters();
   });
 
-  document.getElementById('filterVinculo')?.addEventListener('change', (e) => {
-    state.filterVinculo = e.target.value;
-    applyFilters();
+  document.querySelectorAll('.vinculo-chk').forEach(chk => {
+    chk.addEventListener('change', () => {
+      const v = chk.getAttribute('data-vinculo');
+      if (chk.checked) {
+        state.includedVinculos.add(v);
+      } else {
+        state.includedVinculos.delete(v);
+      }
+      state.currentPage = 1;
+      applyFilters();
+    });
   });
 
   document.getElementById('btnResetFilters')?.addEventListener('click', () => {
     state.filterCurso = 'ALL';
-    state.filterVinculo = 'ALL';
+    state.includedVinculos = new Set(['Ativa', 'Reserva', 'CG']);
     state.vfRiskFilter = 'ALL';
     state.vfSearch = '';
     state.tableSearch = '';
     document.getElementById('filterCurso').value = 'ALL';
-    document.getElementById('filterVinculo').value = 'ALL';
+    document.querySelectorAll('.vinculo-chk').forEach(chk => { chk.checked = true; });
     const s1 = document.getElementById('globalSearchInput');
     const s2 = document.getElementById('tableSearchInput');
     const s3 = document.getElementById('vfSearchInput');
