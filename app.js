@@ -5860,6 +5860,19 @@ document.addEventListener('DOMContentLoaded', () => {
       rows.sort((r1, r2) => r1.entry.nome.localeCompare(r2.entry.nome, 'pt-BR'));
     }
 
+    const praticaWrap = document.getElementById('gestaoPraticaToggleWrap');
+    const praticaChk = document.getElementById('chkGestaoDisciplinaPratica');
+    if (praticaWrap && praticaChk) {
+      const showPraticaToggle = (gestaoState.viewMode === 'disciplina' && rows.length > 0);
+      praticaWrap.classList.toggle('hidden', !showPraticaToggle);
+      if (showPraticaToggle) {
+        praticaChk.checked = rows.every(r => Boolean(r.entry.isPratica));
+        praticaChk.disabled = !isEditable;
+        praticaWrap.classList.toggle('opacity-50', !isEditable);
+        praticaWrap.classList.toggle('cursor-not-allowed', !isEditable);
+      }
+    }
+
     if (rows.length === 0) {
       tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">Nenhum registro encontrado para ${escapeHtml(sem)}.</td></tr>`;
       return;
@@ -5882,23 +5895,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     tbody.innerHTML = rows.map((row, idx) => {
       const d = row.entry;
+      const isPrat = Boolean(d.isPratica);
       const disAttr = isEditable ? '' : 'disabled';
-      const inpCls = `excel-cell w-16 text-center font-mono-numbers text-xs py-1 px-1.5 rounded-lg border ${
-        isEditable
-          ? 'bg-slate-900 border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500'
-          : 'bg-slate-950/60 border-slate-800/70 text-slate-500 cursor-not-allowed'
-      }`;
+      const disVcVfAttr = (isEditable && !isPrat) ? '' : 'disabled';
+      const editableCls = 'excel-cell w-16 text-center font-mono-numbers text-xs py-1 px-1.5 rounded-lg border bg-slate-900 border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500';
+      const disabledCls = 'excel-cell w-16 text-center font-mono-numbers text-xs py-1 px-1.5 rounded-lg border bg-slate-950/60 border-slate-800/70 text-slate-500 cursor-not-allowed';
+      const inpCls = isEditable ? editableCls : disabledCls;
+      const vcVfCls = (isEditable && !isPrat) ? editableCls : disabledCls;
+      const vcVfPh = isPrat ? '—' : '';
+      const praticaBadge = isPrat
+        ? ' <span class="inline-block ml-1 px-1.5 py-0.5 rounded bg-cyan-500/15 border border-cyan-500/30 text-[9px] font-bold text-cyan-300 align-middle">Prática</span>'
+        : '';
       const statusHtml = formatRowStatusHtml(d);
 
       return `
         <tr class="hover:bg-slate-900/40 transition" data-row-idx="${idx}">
           <td class="py-2 px-3">
-            <div class="font-bold text-slate-100 text-xs">${escapeHtml(row.label)}</div>
+            <div class="font-bold text-slate-100 text-xs">${escapeHtml(row.label)}${praticaBadge}</div>
             <div class="text-[10px] text-slate-400">${escapeHtml(row.sub)}</div>
           </td>
           <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="ve" value="${d.ve ?? ''}" class="${inpCls}"></td>
-          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="vc" value="${d.vc ?? ''}" class="${inpCls}"></td>
-          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="vf" value="${d.vf ?? ''}" class="${inpCls}"></td>
+          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disVcVfAttr} data-row="${idx}" data-field="vc" value="${isPrat ? '' : (d.vc ?? '')}" placeholder="${vcVfPh}" class="${vcVfCls}"></td>
+          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disVcVfAttr} data-row="${idx}" data-field="vf" value="${isPrat ? '' : (d.vf ?? '')}" placeholder="${vcVfPh}" class="${vcVfCls}"></td>
           <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="mve" value="${d.mve ?? ''}" class="${inpCls}"></td>
           <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="nf" value="${d.nf ?? ''}" placeholder="${d.notaEfetiva !== null ? fmtNum(d.notaEfetiva) : '-'}" class="${inpCls}"></td>
           <td class="py-2 px-3 text-center" id="gestaoRowStatus_${idx}">${statusHtml}</td>
@@ -6359,6 +6377,47 @@ document.addEventListener('DOMContentLoaded', () => {
       gestaoState.selectedDisciplinaKey = e.target.value;
       renderGestaoGrid();
     });
+    document.getElementById('chkGestaoDisciplinaPratica')?.addEventListener('change', (e) => {
+      if (gestaoState.selectedSemestre !== CURRENT_SEM || gestaoState.viewMode !== 'disciplina') {
+        renderGestaoGrid();
+        return;
+      }
+      const [code, ...nameParts] = (gestaoState.selectedDisciplinaKey || '').split('||');
+      const dName = nameParts.join('||');
+      if (!code) return;
+      const nextPratica = Boolean(e.target.checked);
+      let affected = 0;
+
+      DATA.alunos.forEach(a => {
+        (a.disciplinas || []).forEach(d => {
+          if (d.semestre !== CURRENT_SEM || d.codigo !== code || (dName && d.nome !== dName)) return;
+          d.isPratica = nextPratica;
+          d._manualNf = false;
+          if (nextPratica) {
+            d.vc = null;
+            d.vf = null;
+            d.med = null;
+            if (d.mve === null && d.ve !== null) d.mve = d.ve;
+          } else {
+            if (d.ve === null && d.mve !== null) d.ve = d.mve;
+          }
+          recomputeDisciplineEntry(d);
+          affected++;
+        });
+      });
+
+      if (affected > 0) {
+        markGestaoDirty(true);
+        recalculateFullDataset();
+        const label = dName || code;
+        setGestaoStatus(
+          nextPratica
+            ? `Disciplina "${label}" marcada como Prática (somente VE/MVE) para ${affected} aluno(s) em ${CURRENT_SEM}.`
+            : `Disciplina "${label}" alterada para avaliação padrão (VE + VC + VF) para ${affected} aluno(s) em ${CURRENT_SEM}.`,
+          'ok'
+        );
+      }
+    });
     document.getElementById('gestaoAlunoSelect')?.addEventListener('change', (e) => {
       gestaoState.selectedAlunoNum = e.target.value;
       renderGestaoGrid();
@@ -6627,8 +6686,11 @@ document.addEventListener('DOMContentLoaded', () => {
           setGestaoStatus(`Dataset completo substituído pelo Super Admin (${DATA.alunos.length} alunos). Clique em "Salvar no Supabase" para publicar.`, 'ok');
           return;
         }
-        // Merge ONLY CURRENT_SEM entries cleanly
+        // Merge ONLY CURRENT_SEM entries cleanly (non-destructive by default)
+        const overwriteNulls = Boolean(document.getElementById('impJsonOverwriteNulls')?.checked);
+        const gradeFields = ['ve', 'vc', 'vf', 'mve', 'med', 'erp', 'ero', 'nf', 'notaEfetiva'];
         let updatedEntries = 0;
+        let preservedFields = 0;
         const alunoMapByNum = new Map(DATA.alunos.map(a => [String(a.numero), a]));
         const alunoMapByName = new Map(DATA.alunos.map(a => [normStr(a.nome), a]));
         src.alunos.forEach(sa => {
@@ -6637,15 +6699,62 @@ document.addEventListener('DOMContentLoaded', () => {
           (sa.disciplinas || []).filter(d => d.semestre === CURRENT_SEM).forEach(sd => {
             target.disciplinas = target.disciplinas || [];
             const idx = target.disciplinas.findIndex(td => td.semestre === CURRENT_SEM && td.codigo === sd.codigo);
-            if (idx >= 0) target.disciplinas[idx] = { ...target.disciplinas[idx], ...structuredClone(sd) };
-            else target.disciplinas.push(structuredClone(sd));
+            if (idx >= 0) {
+              const cur = target.disciplinas[idx];
+              const inc = structuredClone(sd);
+              const merged = structuredClone(cur);
+
+              // Copy non-empty metadata fields
+              ['disciplina', 'nome', 'grupoEquivalente', 'tipo', 'ciclo', 'semestre', 'semestreOrdem', 'codigo'].forEach(k => {
+                if (inc[k] !== undefined && inc[k] !== null && inc[k] !== '') merged[k] = inc[k];
+              });
+              if (typeof inc.militar === 'boolean') merged.militar = inc.militar;
+              if (typeof inc.isPratica === 'boolean') {
+                if (overwriteNulls || inc.isPratica === true || numOrNull(inc.vc) !== null || numOrNull(inc.vf) !== null) {
+                  merged.isPratica = inc.isPratica;
+                }
+              }
+
+              // Merge numeric grade fields without overwriting existing values with null unless explicitly enabled
+              gradeFields.forEach(f => {
+                const incVal = numOrNull(inc[f]);
+                const curVal = numOrNull(cur[f]);
+                if (overwriteNulls) {
+                  merged[f] = incVal;
+                } else if (incVal !== null) {
+                  merged[f] = incVal;
+                } else if (curVal !== null) {
+                  merged[f] = curVal;
+                  preservedFields++;
+                } else {
+                  merged[f] = null;
+                }
+              });
+
+              if (numOrNull(inc.nf) !== null && numOrNull(merged.vf) === null && !merged.isPratica) {
+                merged._manualNf = true;
+              } else if (overwriteNulls && numOrNull(inc.nf) === null) {
+                merged._manualNf = false;
+              }
+              recomputeDisciplineEntry(merged);
+              target.disciplinas[idx] = merged;
+            } else {
+              const created = structuredClone(sd);
+              recomputeDisciplineEntry(created);
+              target.disciplinas.push(created);
+            }
             updatedEntries++;
           });
         });
         markGestaoDirty(true);
         recalculateFullDataset();
         impWs?.classList.add('hidden');
-        setGestaoStatus(`Importação JSON aplicada: ${updatedEntries} registros atualizados exclusivamente em ${CURRENT_SEM}.`, 'ok');
+        const impInputReset = document.getElementById('gestaoImportFileInput');
+        if (impInputReset) impInputReset.value = '';
+        const preservedMsg = (!overwriteNulls && preservedFields > 0)
+          ? ` (${preservedFields} campo(s) já preenchido(s) preservado(s) contra sobrescrita por vazio).`
+          : '.';
+        setGestaoStatus(`Importação JSON aplicada: ${updatedEntries} registros atualizados exclusivamente em ${CURRENT_SEM}${preservedMsg}`, 'ok');
         return;
       }
 
