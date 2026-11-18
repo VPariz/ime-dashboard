@@ -623,24 +623,28 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lblCg) lblCg.textContent = `CG (${DATA.alunos.filter(a => a.vinculo === 'CG').length})`;
       if (headerSemestreBadge) headerSemestreBadge.textContent = `Sem. ${CURRENT_SEM}`;
 
-      // Atualizar contagens no filtro de cursos
+      // Atualizar opções e contagens no filtro de cursos dinamicamente
       const filterCursoSel = document.getElementById('filterCurso');
       if (filterCursoSel) {
-        filterCursoSel.querySelectorAll('option').forEach(opt => {
-          const val = opt.value;
-          if (val === 'ALL') {
-            opt.textContent = `Todas as Especialidades (${(DATA.metadata?.cursos || []).length})`;
-          } else if (val === 'SE3' || val === 'SE4') {
-            const grp = val === 'SE3'
-              ? ['Eletrônica', 'Elétrica', 'Comunicações']
-              : ['Mecânica de Armamento', 'Mecânica de Automóveis'];
-            const cnt = DATA.alunos.filter(a => grp.includes(a.curso)).length;
-            opt.textContent = opt.textContent.replace(/\(\d+\)/, `(${cnt})`);
-          } else {
-            const cnt = DATA.alunos.filter(a => a.curso === val).length;
-            opt.textContent = opt.textContent.replace(/\(\d+\)/, `(${cnt})`);
-          }
-        });
+        const prevVal = filterCursoSel.value || 'ALL';
+        const cursos = [...new Set([
+          ...(DATA.metadata?.cursos || []),
+          ...DATA.alunos.map(a => a.curso).filter(Boolean)
+        ])];
+        const se3Cnt = DATA.alunos.filter(a => ['Eletrônica', 'Elétrica', 'Comunicações'].includes(a.curso)).length;
+        const se4Cnt = DATA.alunos.filter(a => ['Mecânica de Armamento', 'Mecânica de Automóveis'].includes(a.curso)).length;
+        const seHtml = (se3Cnt > 0 || se4Cnt > 0) ? `
+          <optgroup label="Seções de Ensino (SE)">
+            ${se3Cnt > 0 ? `<option value="SE3">SE3 — Eletrônica, Elétrica, Comunicações (${se3Cnt})</option>` : ''}
+            ${se4Cnt > 0 ? `<option value="SE4">SE4 — Mec. Armamento e Automóveis (${se4Cnt})</option>` : ''}
+          </optgroup>` : '';
+        const espHtml = cursos.map(c => {
+          const cnt = DATA.alunos.filter(a => a.curso === c).length;
+          return `<option value="${c}">${c} (${cnt})</option>`;
+        }).join('');
+        filterCursoSel.innerHTML = `<option value="ALL">Todas (${cursos.length})</option>${seHtml}<optgroup label="Especialidades / Ciclos">${espHtml}</optgroup>`;
+        const stillExists = [...filterCursoSel.options].some(o => o.value === prevVal);
+        filterCursoSel.value = stillExists ? prevVal : 'ALL';
       }
     }
     syncDynamicDataLabels();
@@ -670,8 +674,8 @@ document.addEventListener('DOMContentLoaded', () => {
       comparatorSubjectSearch: '',
       comparatorTypeFilter: 'ALL',
       comparatorSubjectSort: 'semestre',
-      courseA: 'Computação',
-      courseB: 'Eletrônica',
+      courseA: DATA.metadata.cursos?.[0] || 'Computação',
+      courseB: DATA.metadata.cursos?.[1] || DATA.metadata.cursos?.[0] || 'Eletrônica',
       activeCoursesInChart: new Set(DATA.metadata.cursos),
       activeStudentModal: null,
       modalSemesterFilter: 'ALL',
@@ -727,7 +731,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'Mecânica de Armamento': '#ef4444',
     'Mecânica de Automóveis': '#f97316',
     'Elétrica': '#eab308',
-    'Materiais': '#14b8a6'
+    'Materiais': '#14b8a6',
+    'Ciclo Básico': '#38bdf8'
   };
 
   const courseClassMap = {
@@ -740,7 +745,8 @@ document.addEventListener('DOMContentLoaded', () => {
     'Mecânica de Armamento': 'badge-armamento',
     'Mecânica de Automóveis': 'badge-automoveis',
     'Elétrica': 'badge-eletrica',
-    'Materiais': 'badge-materiais'
+    'Materiais': 'badge-materiais',
+    'Ciclo Básico': 'badge-comunicacoes'
   };
 
   const SE_GROUPS = {
@@ -2045,13 +2051,19 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderCourseHeadToHead() {
     const scopedCursos = getScopedCursosComparativo();
     const findCourseOrSE = (val, fallbackIdx) => {
-      if (SE_GROUPS[val]) return getGroupCourseObj(val);
-      return scopedCursos.find(c => c.curso === val) || scopedCursos[fallbackIdx];
+      if (SE_GROUPS[val] && DATA.alunos.some(a => SE_GROUPS[val].cursos.includes(a.curso))) {
+        return getGroupCourseObj(val);
+      }
+      return scopedCursos.find(c => c.curso === val) || scopedCursos[fallbackIdx] || scopedCursos[0];
     };
     const cA = findCourseOrSE(state.courseA, 0);
     const cB = findCourseOrSE(state.courseB, 1);
 
     const cardsContainer = document.getElementById('courseHeadToHeadCards');
+    if (!cA || !cB) {
+      if (cardsContainer) cardsContainer.innerHTML = `<div class="col-span-2 p-4 text-xs text-slate-400">Nenhuma especialidade disponível para comparação.</div>`;
+      return;
+    }
     if (cardsContainer) {
       cardsContainer.innerHTML = [cA, cB].map((c, idx) => {
         const color = idx === 0 ? 'text-blue-400' : 'text-emerald-400';
