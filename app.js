@@ -14,9 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginEmail = document.getElementById('loginEmail');
   const loginPassword = document.getElementById('loginPassword');
   const loginError = document.getElementById('loginError');
+  const loginInfo = document.getElementById('loginInfo');
   const btnLoginSubmit = document.getElementById('btnLoginSubmit');
+  const btnLoginSubmitText = document.getElementById('btnLoginSubmitText');
+  const authHeadingTitle = document.getElementById('authHeadingTitle');
+  const btnAuthTabSignIn = document.getElementById('btnAuthTabSignIn');
+  const btnAuthTabSignUp = document.getElementById('btnAuthTabSignUp');
   const checkingBanner = document.getElementById('authCheckingBanner');
   const notConfiguredNote = document.getElementById('supabaseNotConfiguredNote');
+
+  let authMode = 'signin'; // 'signin' | 'signup'
 
   function applyPreBootTheme(themeName) {
     const t = themeName || 'dark';
@@ -34,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showLoginError(msg) {
+    if (loginInfo && msg) loginInfo.classList.add('hidden');
     if (!loginError) return;
     if (!msg) {
       loginError.classList.add('hidden');
@@ -44,25 +52,146 @@ document.addEventListener('DOMContentLoaded', () => {
     loginError.classList.remove('hidden');
   }
 
+  function showLoginInfo(msg) {
+    if (loginError && msg) loginError.classList.add('hidden');
+    if (!loginInfo) return;
+    if (!msg) {
+      loginInfo.classList.add('hidden');
+      loginInfo.textContent = '';
+      return;
+    }
+    loginInfo.textContent = msg;
+    loginInfo.classList.remove('hidden');
+  }
+
+  function setAuthTabMode(nextMode) {
+    authMode = nextMode;
+    showLoginError('');
+    showLoginInfo('');
+    const isSignUp = nextMode === 'signup';
+    if (btnAuthTabSignIn) {
+      btnAuthTabSignIn.className = isSignUp
+        ? 'py-1.5 px-2 rounded-lg text-slate-400 hover:text-white transition'
+        : 'py-1.5 px-2 rounded-lg bg-blue-600 text-white transition';
+    }
+    if (btnAuthTabSignUp) {
+      btnAuthTabSignUp.className = isSignUp
+        ? 'py-1.5 px-2 rounded-lg bg-emerald-600 text-white transition'
+        : 'py-1.5 px-2 rounded-lg text-slate-400 hover:text-white transition';
+    }
+    if (authHeadingTitle) {
+      authHeadingTitle.textContent = isSignUp ? 'Primeiro Acesso (Criar Senha)' : 'Entrar no Painel';
+    }
+    if (btnLoginSubmitText) {
+      btnLoginSubmitText.textContent = isSignUp ? 'Criar Conta com E-mail Autorizado' : 'Entrar com Login';
+    }
+    if (loginPassword) {
+      loginPassword.setAttribute('autocomplete', isSignUp ? 'new-password' : 'current-password');
+    }
+  }
+
+  btnAuthTabSignIn?.addEventListener('click', () => setAuthTabMode('signin'));
+  btnAuthTabSignUp?.addEventListener('click', () => setAuthTabMode('signup'));
+
   const sbCfg = window.SUPABASE_CONFIG || {};
   const isSupabaseConfigured = Boolean(
     sbCfg.url && sbCfg.anonKey && window.supabase && typeof window.supabase.createClient === 'function'
   );
   const sbClient = isSupabaseConfigured ? window.supabase.createClient(sbCfg.url, sbCfg.anonKey) : null;
 
-  async function fetchSupabaseDataset(sb) {
+  async function resolveSupabaseSessionAndLoad(sb, user) {
     const bucket = sbCfg.bucket || 'ime-private';
-    const objectPath = sbCfg.objectPath || 'data.json';
-    const { data, error } = await sb.storage.from(bucket).download(objectPath);
-    if (error) {
-      throw new Error(error.message || 'Erro ao baixar dataset privado no Supabase.');
+    let role = 'viewer';
+    let userTurmaId = null;
+    let turmas = [];
+
+    // 1. Buscar papel na tabela user_roles (se existir)
+    try {
+      const { data: roleRow, error: roleErr } = await sb
+        .from('user_roles')
+        .select('role, turma_id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (!roleErr && roleRow) {
+        role = roleRow.role || 'viewer';
+        userTurmaId = roleRow.turma_id || null;
+      } else if (!roleErr && !roleRow) {
+        // Caso schema multi-turma esteja ativo mas conta não tenha entrada em user_roles
+        const { error: probeErr } = await sb.from('turmas').select('id').limit(1);
+        if (!probeErr) {
+          throw new Error('Sua conta ainda não possui papel atribuído em user_roles. Peça ao Super Admin.');
+        }
+      }
+    } catch (err) {
+      if (err.message?.includes('user_roles')) throw err;
     }
+
+    // 2. Buscar turmas visíveis pelo usuário (RLS filtra automaticamente)
+    try {
+      const { data: turmaRows, error: turmaErr } = await sb
+        .from('turmas')
+        .select('*')
+        .order('id', { ascending: true });
+      if (!turmaErr && Array.isArray(turmaRows) && turmaRows.length > 0) {
+        turmas = turmaRows;
+      }
+    } catch {
+      turmas = [];
+    }
+
+    // Selecionar turma ativa
+    let preferredTurmaId = null;
+    try { preferredTurmaId = sessionStorage.getItem('ime_super_turma'); } catch {}
+    let activeTurma = null;
+    if (turmas.length > 0) {
+      activeTurma = turmas.find(t => t.id === (role === 'super_admin' && preferredTurmaId ? preferredTurmaId : userTurmaId))
+        || turmas[0];
+    } else {
+      activeTurma = {
+        id: userTurmaId || 'turma_28',
+        nome: 'Turma 28',
+        semestre_atual: '3.2',
+        storage_path: sbCfg.objectPath || 'turma_28/data.json'
+      };
+      turmas = [activeTurma];
+    }
+
+    // 3. Baixar JSON do bucket privado (com fallback para data.json raiz se bucket legado)
+    const objectPath = activeTurma.storage_path || `${activeTurma.id}/data.json`;
+    let { data, error } = await sb.storage.from(bucket).download(objectPath);
+    if (error && objectPath !== 'data.json') {
+      const fb = await sb.storage.from(bucket).download('data.json');
+      if (!fb.error && fb.data) {
+        data = fb.data;
+        error = null;
+      }
+    }
+    if (error) {
+      throw new Error(error.message || `Não foi possível baixar ${objectPath} no bucket privado.`);
+    }
+
     const text = await data.text();
     const parsed = JSON.parse(text);
     if (!parsed || !Array.isArray(parsed.alunos)) {
       throw new Error('Arquivo JSON inválido no bucket privado.');
     }
-    return parsed;
+
+    return {
+      dataset: parsed,
+      sessionMeta: {
+        mode: 'supabase',
+        email: user.email || 'Autenticado',
+        role,
+        userId: user.id,
+        turma: activeTurma,
+        turmas,
+        semestreAtual: activeTurma.semestre_atual || parsed.metadata?.semestreAtual || '3.2',
+        storagePath: objectPath,
+        bucket,
+        sb
+      }
+    };
   }
 
   function parseLocalDatasetText(text) {
@@ -90,8 +219,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const { data: sessData } = await sbClient.auth.getSession();
       const session = sessData?.session;
       if (session?.user) {
-        const dataset = await fetchSupabaseDataset(sbClient);
-        startDashboard(dataset, { mode: 'supabase', email: session.user.email || 'Autenticado', sb: sbClient });
+        const res = await resolveSupabaseSessionAndLoad(sbClient, session.user);
+        startDashboard(res.dataset, res.sessionMeta);
         return;
       }
     } catch (err) {
@@ -104,6 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loginForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     showLoginError('');
+    showLoginInfo('');
     if (!sbClient) {
       showLoginError('Configure url e anonKey em supabase-config.js antes de usar o login.');
       return;
@@ -115,20 +245,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const origHtml = btnLoginSubmit ? btnLoginSubmit.innerHTML : '';
     if (btnLoginSubmit) {
       btnLoginSubmit.disabled = true;
-      btnLoginSubmit.textContent = 'Autenticando e baixando dados...';
+      btnLoginSubmit.textContent = authMode === 'signup' ? 'Criando acesso...' : 'Autenticando e baixando dados...';
     }
 
     try {
-      const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
-      if (error) {
-        throw new Error(error.message === 'Invalid login credentials'
-          ? 'E-mail ou senha inválidos.'
-          : error.message);
+      if (authMode === 'signup') {
+        const { data, error } = await sbClient.auth.signUp({ email, password });
+        if (error) throw new Error(error.message);
+        if (data?.session?.user) {
+          const res = await resolveSupabaseSessionAndLoad(sbClient, data.session.user);
+          startDashboard(res.dataset, res.sessionMeta);
+          return;
+        }
+        showLoginInfo('Cadastro criado! Verifique seu e-mail para confirmar (ou faça login agora se a confirmação estiver desligada).');
+        setAuthTabMode('signin');
+      } else {
+        const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          throw new Error(error.message === 'Invalid login credentials'
+            ? 'E-mail ou senha inválidos.'
+            : error.message);
+        }
+        const res = await resolveSupabaseSessionAndLoad(sbClient, data.user);
+        startDashboard(res.dataset, res.sessionMeta);
       }
-      const dataset = await fetchSupabaseDataset(sbClient);
-      startDashboard(dataset, { mode: 'supabase', email: data.user?.email || email, sb: sbClient });
     } catch (err) {
-      showLoginError(err.message || 'Não foi possível entrar.');
+      showLoginError(err.message || 'Não foi possível concluir a autenticação.');
+    } finally {
       if (btnLoginSubmit) {
         btnLoginSubmit.disabled = false;
         btnLoginSubmit.innerHTML = origHtml;
@@ -141,7 +284,13 @@ document.addEventListener('DOMContentLoaded', () => {
       showLoginError('Dataset Demo não encontrado.');
       return;
     }
-    startDashboard(window.IME_DEMO_DATA, { mode: 'demo' });
+    startDashboard(structuredClone(window.IME_DEMO_DATA), {
+      mode: 'demo',
+      role: 'demo',
+      turma: { id: 'demo', nome: 'Demo Fictícia', semestre_atual: '3.2' },
+      turmas: [{ id: 'demo', nome: 'Demo Fictícia', semestre_atual: '3.2' }],
+      semestreAtual: '3.2'
+    });
   });
 
   const localFileInput = document.getElementById('localDataFileInput');
@@ -156,7 +305,14 @@ document.addEventListener('DOMContentLoaded', () => {
     reader.onload = () => {
       try {
         const parsed = parseLocalDatasetText(String(reader.result || ''));
-        startDashboard(parsed, { mode: 'local' });
+        const curSem = parsed.metadata?.semestreAtual || parsed.metadata?.semestres?.[parsed.metadata.semestres.length - 1] || '3.2';
+        startDashboard(parsed, {
+          mode: 'local',
+          role: 'gestor',
+          turma: { id: 'local', nome: parsed.metadata?.turma || 'Arquivo Local', semestre_atual: curSem },
+          turmas: [{ id: 'local', nome: parsed.metadata?.turma || 'Arquivo Local', semestre_atual: curSem }],
+          semestreAtual: curSem
+        });
       } catch (err) {
         showLoginError(`Erro ao ler arquivo local: ${err.message}`);
       }
@@ -170,49 +326,136 @@ document.addEventListener('DOMContentLoaded', () => {
     dashboardBooted = true;
     window.IME_DATA = DATA;
 
+    const USER_ROLE = sessionMeta.role || (sessionMeta.mode === 'demo' ? 'demo' : 'viewer');
+    const IS_SUPER_ADMIN = USER_ROLE === 'super_admin';
+    const CAN_MANAGE_GRADES = USER_ROLE === 'gestor' || USER_ROLE === 'super_admin' || sessionMeta.mode === 'demo';
+    let CURRENT_SEM = sessionMeta.semestreAtual
+      || DATA.metadata?.semestreAtual
+      || DATA.metadata?.semestres?.[DATA.metadata.semestres.length - 1]
+      || '3.2';
+    const ACTIVE_TURMA = sessionMeta.turma || {
+      id: 'turma_28',
+      nome: DATA.metadata?.turma || 'Turma 28',
+      semestre_atual: CURRENT_SEM,
+      storage_path: 'turma_28/data.json'
+    };
+    const VISIBLE_TURMAS = sessionMeta.turmas || [ACTIVE_TURMA];
+
     gateEl?.classList.add('hidden');
     shellEl?.classList.remove('hidden');
 
-    const ESTAGIO_STORAGE_KEY = sessionMeta.mode === 'demo' ? 'ime_estagio_demo_v1' : 'ime_estagio_v1';
+    const ESTAGIO_STORAGE_KEY = sessionMeta.mode === 'demo'
+      ? 'ime_estagio_demo_v1'
+      : `ime_estagio_${ACTIVE_TURMA.id || 'v1'}`;
+
+    // Visibilidade da aba Gestão & Notas (apenas Gestor / Super Admin / Demo)
+    if (CAN_MANAGE_GRADES) {
+      document.getElementById('navTabGestaoBtn')?.classList.remove('hidden');
+      const mobileGestaoBtn = document.getElementById('mobileNavGestaoBtn');
+      mobileGestaoBtn?.classList.remove('hidden');
+      const mobileNav = document.getElementById('mobileBottomNav');
+      if (mobileNav) {
+        mobileNav.classList.remove('grid-cols-7');
+        mobileNav.classList.add('grid-cols-8');
+      }
+    }
+
+    // Header Turma Switcher (Super Admin com múltiplas turmas)
+    const selectTurmaHeader = document.getElementById('selectTurmaHeader');
+    const headerTurmaBadge = document.getElementById('headerTurmaBadge');
+    const headerSemestreBadge = document.getElementById('headerSemestreBadge');
+    if (IS_SUPER_ADMIN && VISIBLE_TURMAS.length > 0 && selectTurmaHeader) {
+      selectTurmaHeader.innerHTML = VISIBLE_TURMAS.map(t =>
+        `<option value="${t.id}" ${t.id === ACTIVE_TURMA.id ? 'selected' : ''}>${t.nome} (${t.semestre_atual})</option>`
+      ).join('');
+      selectTurmaHeader.classList.remove('hidden');
+      headerTurmaBadge?.classList.add('hidden');
+      selectTurmaHeader.addEventListener('change', (e) => {
+        try { sessionStorage.setItem('ime_super_turma', e.target.value); } catch {}
+        window.location.reload();
+      });
+    } else if (headerTurmaBadge) {
+      headerTurmaBadge.textContent = ACTIVE_TURMA.nome || DATA.metadata?.turma || 'Turma 28';
+    }
+    if (headerSemestreBadge) {
+      headerSemestreBadge.textContent = `Sem. ${CURRENT_SEM}`;
+    }
 
     // Header auth badge & logout/switch button
     const badgeEl = document.getElementById('authSessionBadge');
     const actionLabelEl = document.getElementById('authActionLabel');
     const btnAuthAction = document.getElementById('btnAuthAction');
+    const roleLabelMap = {
+      super_admin: '👑 Super Admin',
+      gestor: '✏️ Gestor',
+      viewer: '👁️ Turma',
+      demo: '🧪 Demo (Portfólio)'
+    };
     if (badgeEl) {
       badgeEl.classList.remove('hidden');
       if (sessionMeta.mode === 'supabase') {
-        badgeEl.textContent = sessionMeta.email || 'Autenticado';
-        badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-emerald-500/35 bg-emerald-500/15 text-emerald-300 max-w-[160px] truncate';
+        badgeEl.textContent = `${roleLabelMap[USER_ROLE] || USER_ROLE} • ${sessionMeta.email || ''}`;
+        const colorCls = USER_ROLE === 'super_admin'
+          ? 'border-purple-500/40 bg-purple-500/15 text-purple-300'
+          : (USER_ROLE === 'gestor'
+            ? 'border-emerald-500/40 bg-emerald-500/15 text-emerald-300'
+            : 'border-sky-500/35 bg-sky-500/15 text-sky-300');
+        badgeEl.className = `hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border max-w-[210px] truncate ${colorCls}`;
         if (actionLabelEl) actionLabelEl.textContent = 'Sair';
       } else if (sessionMeta.mode === 'demo') {
-        badgeEl.textContent = 'Demo (Fictício)';
+        badgeEl.textContent = '🧪 Demo (Fictício)';
         badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-amber-500/35 bg-amber-500/15 text-amber-300 max-w-[160px] truncate';
         if (actionLabelEl) actionLabelEl.textContent = 'Login';
       } else {
-        badgeEl.textContent = 'Arquivo Local';
+        badgeEl.textContent = '📁 Arquivo Local';
         badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-sky-500/35 bg-sky-500/15 text-sky-300 max-w-[160px] truncate';
         if (actionLabelEl) actionLabelEl.textContent = 'Trocar';
       }
     }
     btnAuthAction?.addEventListener('click', async () => {
+      try { sessionStorage.removeItem('ime_super_turma'); } catch {}
       if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
         try { await sessionMeta.sb.auth.signOut(); } catch {}
       }
       window.location.reload();
     });
 
-    // Dynamic tab & vínculo counts
-    const tabRankingsLabel = document.getElementById('tabRankingsLabel');
-    if (tabRankingsLabel) tabRankingsLabel.textContent = `Fichas dos Alunos (${DATA.alunos.length})`;
-    const tabDisciplinasLabel = document.getElementById('tabDisciplinasLabel');
-    if (tabDisciplinasLabel) tabDisciplinasLabel.textContent = `Raio-X de Disciplinas (${DATA.disciplinas.length})`;
-    const lblAtiva = document.getElementById('lblVinculoAtiva');
-    if (lblAtiva) lblAtiva.textContent = `Ativa (${DATA.alunos.filter(a => a.vinculo === 'Ativa').length})`;
-    const lblReserva = document.getElementById('lblVinculoReserva');
-    if (lblReserva) lblReserva.textContent = `Reserva (${DATA.alunos.filter(a => a.vinculo === 'Reserva').length})`;
-    const lblCg = document.getElementById('lblVinculoCg');
-    if (lblCg) lblCg.textContent = `CG (${DATA.alunos.filter(a => a.vinculo === 'CG').length})`;
+    function syncDynamicDataLabels() {
+      const tabRankingsLabel = document.getElementById('tabRankingsLabel');
+      if (tabRankingsLabel) tabRankingsLabel.textContent = `Fichas dos Alunos (${DATA.alunos.length})`;
+      const tabDisciplinasLabel = document.getElementById('tabDisciplinasLabel');
+      if (tabDisciplinasLabel) tabDisciplinasLabel.textContent = `Raio-X de Disciplinas (${DATA.disciplinas.length})`;
+      const tabVfLabel = document.getElementById('tabVfLabel');
+      if (tabVfLabel) tabVfLabel.textContent = `VF ${CURRENT_SEM} (Risco & Metas)`;
+      const lblAtiva = document.getElementById('lblVinculoAtiva');
+      if (lblAtiva) lblAtiva.textContent = `Ativa (${DATA.alunos.filter(a => a.vinculo === 'Ativa').length})`;
+      const lblReserva = document.getElementById('lblVinculoReserva');
+      if (lblReserva) lblReserva.textContent = `Reserva (${DATA.alunos.filter(a => a.vinculo === 'Reserva').length})`;
+      const lblCg = document.getElementById('lblVinculoCg');
+      if (lblCg) lblCg.textContent = `CG (${DATA.alunos.filter(a => a.vinculo === 'CG').length})`;
+      if (headerSemestreBadge) headerSemestreBadge.textContent = `Sem. ${CURRENT_SEM}`;
+
+      // Atualizar contagens no filtro de cursos
+      const filterCursoSel = document.getElementById('filterCurso');
+      if (filterCursoSel) {
+        filterCursoSel.querySelectorAll('option').forEach(opt => {
+          const val = opt.value;
+          if (val === 'ALL') {
+            opt.textContent = `Todas as Especialidades (${(DATA.metadata?.cursos || []).length})`;
+          } else if (val === 'SE3' || val === 'SE4') {
+            const grp = val === 'SE3'
+              ? ['Eletrônica', 'Elétrica', 'Comunicações']
+              : ['Mecânica de Armamento', 'Mecânica de Automóveis'];
+            const cnt = DATA.alunos.filter(a => grp.includes(a.curso)).length;
+            opt.textContent = opt.textContent.replace(/\(\d+\)/, `(${cnt})`);
+          } else {
+            const cnt = DATA.alunos.filter(a => a.curso === val).length;
+            opt.textContent = opt.textContent.replace(/\(\d+\)/, `(${cnt})`);
+          }
+        });
+      }
+    }
+    syncDynamicDataLabels();
 
     let filteredAlunos = [...DATA.alunos];
   
@@ -415,7 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mediaGraduacaoTurma: avg(sVals),
         mediaGraduacaoTurmaCumulativa: avg(cVals),
         qtdAlunos: sVals.length,
-        isParcial: (sem === '3.2')
+        isParcial: (sem === CURRENT_SEM)
       };
     });
   }
@@ -532,46 +775,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  // Precompute VF risk metrics for each student (3.2 open subjects), 3.2 disciplines, and course classification
-  const discVfAgg = new Map();
-  const discCoursesMap = new Map();
-  DATA.alunos.forEach(aluno => {
-    const exactList = [];
-    (aluno.disciplinas || []).forEach(d => {
-      const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
-      if (!discCoursesMap.has(dKey)) discCoursesMap.set(dKey, new Set());
-      discCoursesMap.get(dKey).add(aluno.curso);
-
-      if (d.semestre !== '3.2') return;
-      const vfInfo = calcVfNecessaria(d);
-      if (vfInfo && vfInfo.tipo === 'exact') {
-        exactList.push({
-          nome: d.nome,
-          codigo: d.codigo,
-          valor: vfInfo.valor,
-          militar: d.militar
-        });
-        if (!discVfAgg.has(dKey)) discVfAgg.set(dKey, []);
-        discVfAgg.get(dKey).push(vfInfo.valor);
-      }
-    });
-    exactList.sort((a, b) => b.valor - a.valor);
-    aluno.vfRiskSubjects = exactList;
-    if (exactList.length > 0) {
-      aluno.maxVf32 = exactList[0].valor;
-      aluno.avgVf32 = Math.round((exactList.reduce((s, x) => s + x.valor, 0) / exactList.length) * 100) / 100;
-      aluno.vfRiskCount = exactList.filter(x => x.valor > 5.0).length;
-      aluno.vfRiskLevel = aluno.maxVf32 > 6.0
-        ? 'risk'
-        : (aluno.maxVf32 > 5.0 ? 'warn' : (aluno.maxVf32 > 4.0 ? 'mid' : 'safe'));
-    } else {
-      aluno.maxVf32 = null;
-      aluno.avgVf32 = null;
-      aluno.vfRiskCount = 0;
-      aluno.vfRiskLevel = 'none';
-    }
-  });
-
   function classifyDisciplineCourse(d, cursosArr) {
     if (d.militar) return 'Militar';
     if (cursosArr.length >= 8) return 'Básico (Comum)';
@@ -582,23 +785,66 @@ document.addEventListener('DOMContentLoaded', () => {
     return cursosArr.join(' · ');
   }
 
-  DATA.disciplinas.forEach(d => {
-    const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
-    const cursosArr = [...(discCoursesMap.get(dKey) || [])].sort();
-    d.cursos = cursosArr;
-    d.cursoLabel = classifyDisciplineCourse(d, cursosArr);
+  function recomputeDerivedClientFields() {
+    const discVfAgg = new Map();
+    const discCoursesMap = new Map();
+    DATA.alunos.forEach(aluno => {
+      const exactList = [];
+      (aluno.disciplinas || []).forEach(d => {
+        const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
+        if (!discCoursesMap.has(dKey)) discCoursesMap.set(dKey, new Set());
+        discCoursesMap.get(dKey).add(aluno.curso);
 
-    const vals = discVfAgg.get(dKey);
-    if (vals && vals.length) {
-      d.vfMediaNec = Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100;
-      d.vfEmRisco = vals.filter(v => v > 5.0).length;
-      d.vfRiscoAlto = vals.filter(v => v > 6.0).length;
-    } else {
-      d.vfMediaNec = null;
-      d.vfEmRisco = 0;
-      d.vfRiscoAlto = 0;
-    }
-  });
+        if (d.semestre !== CURRENT_SEM) return;
+        const vfInfo = calcVfNecessaria(d);
+        if (vfInfo && vfInfo.tipo === 'exact') {
+          exactList.push({
+            nome: d.nome,
+            codigo: d.codigo,
+            valor: vfInfo.valor,
+            militar: d.militar
+          });
+          if (!discVfAgg.has(dKey)) discVfAgg.set(dKey, []);
+          discVfAgg.get(dKey).push(vfInfo.valor);
+        }
+      });
+      exactList.sort((a, b) => b.valor - a.valor);
+      aluno.vfRiskSubjects = exactList;
+      if (exactList.length > 0) {
+        aluno.maxVf32 = exactList[0].valor;
+        aluno.avgVf32 = Math.round((exactList.reduce((s, x) => s + x.valor, 0) / exactList.length) * 100) / 100;
+        aluno.vfRiskCount = exactList.filter(x => x.valor > 5.0).length;
+        aluno.vfRiskLevel = aluno.maxVf32 > 6.0
+          ? 'risk'
+          : (aluno.maxVf32 > 5.0 ? 'warn' : (aluno.maxVf32 > 4.0 ? 'mid' : 'safe'));
+      } else {
+        aluno.maxVf32 = null;
+        aluno.avgVf32 = null;
+        aluno.vfRiskCount = 0;
+        aluno.vfRiskLevel = 'none';
+      }
+    });
+
+    DATA.disciplinas.forEach(d => {
+      const dKey = `${d.codigo}||${d.disciplina}||${d.semestre}`;
+      const cursosArr = [...(discCoursesMap.get(dKey) || [])].sort();
+      d.cursos = cursosArr;
+      d.cursoLabel = classifyDisciplineCourse(d, cursosArr);
+
+      const vals = discVfAgg.get(dKey);
+      if (vals && vals.length) {
+        d.vfMediaNec = Math.round((vals.reduce((s, v) => s + v, 0) / vals.length) * 100) / 100;
+        d.vfEmRisco = vals.filter(v => v > 5.0).length;
+        d.vfRiscoAlto = vals.filter(v => v > 6.0).length;
+      } else {
+        d.vfMediaNec = null;
+        d.vfEmRisco = 0;
+        d.vfRiscoAlto = 0;
+      }
+    });
+  }
+
+  recomputeDerivedClientFields();
 
   function computeDynamicBounds(datasets, minSpan = 1.0, pad = 0.2) {
     const vals = [];
@@ -1909,11 +2155,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     if (discPanel) {
-      // Compute VF pressure per 3.2 discipline using currently filtered students
+      // Compute VF pressure per current semester discipline using currently filtered students
       const scopedDiscMap = new Map();
       filteredAlunos.forEach(a => {
         (a.disciplinas || []).forEach(d => {
-          if (d.semestre !== '3.2') return;
+          if (d.semestre !== CURRENT_SEM) return;
           const vfInfo = calcVfNecessaria(d);
           if (!vfInfo || vfInfo.tipo !== 'exact') return;
           const k = `${d.codigo}||${d.disciplina}||${d.semestre}`;
@@ -3197,19 +3443,19 @@ document.addEventListener('DOMContentLoaded', () => {
             projEl.innerHTML = 'Pesos: VE (1) · VC (1) · VF (2)';
             return;
           }
-          // Projected 3.2 graduation average & overall graduation CR
-          const grad32 = (aluno.disciplinas || []).filter(x => x.semestre === '3.2' && !x.militar);
+          // Projected current semester graduation average & overall graduation CR
+          const grad32 = (aluno.disciplinas || []).filter(x => x.semestre === CURRENT_SEM && !x.militar);
           const vals32 = grad32.map(x => simGrades.has(x.codigo) ? simGrades.get(x.codigo) : x.notaEfetiva).filter(v => v !== null);
           const avg32 = vals32.length ? (vals32.reduce((s, v) => s + v, 0) / vals32.length) : null;
 
           const gradAll = (aluno.disciplinas || []).filter(x => !x.militar);
           const valsAll = gradAll.map(x => {
-            if (x.semestre === '3.2' && simGrades.has(x.codigo)) return simGrades.get(x.codigo);
-            return x.semestreOrdem <= 5 ? x.nf : (x.semestre === '3.2' ? x.notaEfetiva : null);
+            if (x.semestre === CURRENT_SEM && simGrades.has(x.codigo)) return simGrades.get(x.codigo);
+            return x.semestre !== CURRENT_SEM ? x.nf : x.notaEfetiva;
           }).filter(v => v !== null);
           const avgAll = valsAll.length ? (valsAll.reduce((s, v) => s + v, 0) / valsAll.length) : null;
 
-          projEl.innerHTML = `<span class="text-blue-300 font-bold">Projeção 3.2: ${fmtNum(avg32)}</span> · <span class="text-emerald-300 font-bold">CR c/ 3.2: ${fmtNum(avgAll)}</span>`;
+          projEl.innerHTML = `<span class="text-blue-300 font-bold">Projeção ${CURRENT_SEM}: ${fmtNum(avg32)}</span> · <span class="text-emerald-300 font-bold">CR c/ ${CURRENT_SEM}: ${fmtNum(avgAll)}</span>`;
         };
 
         vfSummaryEl.querySelectorAll('.modal-vf-sim-input').forEach(inp => {
@@ -3339,6 +3585,9 @@ document.addEventListener('DOMContentLoaded', () => {
       initStudentComparator();
     } else if (targetTab === 'estagio') {
       initEstagioTab();
+    } else if (targetTab === 'gestao') {
+      if (!CAN_MANAGE_GRADES) return;
+      initGestaoTab();
     }
 
     if (state.theme === 'light') applyTheme('light');
@@ -3363,16 +3612,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function getEstagioScore(aluno) {
     if (state.estagioCriterio === 'geral') return aluno.mediaGeral;
     if (state.estagioCriterio === 'cumulativo') {
-      const ev32 = (aluno.evolucao || []).find(e => e.semestre === '3.2');
-      return ev32?.mediaGradCumulativo ?? aluno.mediaGraduacao;
+      const evCur = (aluno.evolucao || []).find(e => e.semestre === CURRENT_SEM)
+        || (aluno.evolucao || [])[(aluno.evolucao || []).length - 1];
+      return evCur?.mediaGradCumulativo ?? aluno.mediaGraduacao;
     }
     return aluno.mediaGraduacao;
   }
 
   function getEstagioCriterioLabel() {
     if (state.estagioCriterio === 'geral') return 'CR Geral';
-    if (state.estagioCriterio === 'cumulativo') return 'Cumulativa Graduação (c/ 3.2)';
-    return 'CR Graduação (até 3.1)';
+    if (state.estagioCriterio === 'cumulativo') return `Cumulativa Graduação (c/ ${CURRENT_SEM})`;
+    return 'CR Graduação (Consolidado)';
   }
 
   function getEstagioRankedAlunos(curso) {
@@ -4165,6 +4415,1222 @@ document.addEventListener('DOMContentLoaded', () => {
       updateCourseEvolutionChart();
     }
   };
+
+  // ===========================================================================
+  // TAB: GESTÃO DE NOTAS, IMPORTADOR MULTI-FORMATO & SUPER ADMIN
+  // ===========================================================================
+  let gestaoInitialized = false;
+  let gestaoState = {
+    selectedSemestre: CURRENT_SEM,
+    viewMode: 'disciplina', // 'disciplina' | 'aluno'
+    selectedDisciplinaKey: '',
+    selectedAlunoNum: DATA.alunos[0]?.numero || null,
+    search: '',
+    dirty: false,
+    importWorkbook: null,
+    importSheetName: '',
+    importRows: [],
+    importHeaders: [],
+    importJsonPayload: null,
+    importFileType: null // 'sheet' | 'json'
+  };
+
+  const r2 = (v) => Math.round(v * 100) / 100;
+  const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const normStr = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
+  const numOrNull = (val) => {
+    if (val === null || val === undefined || val === '') return null;
+    const n = typeof val === 'number' ? val : parseFloat(String(val).trim().replace(',', '.'));
+    return isNaN(n) ? null : Math.max(0, Math.min(10, r2(n)));
+  };
+  function semOrder(sem) {
+    const parts = String(sem || '').split('.');
+    const ano = parseInt(parts[0], 10);
+    const per = parseInt(parts[1], 10);
+    if (isNaN(ano)) return 99;
+    return ano * 2 - (per === 1 ? 1 : 0);
+  }
+
+  function ensureSemesterInMetadata(sem) {
+    if (!DATA.metadata.semestres.includes(sem)) {
+      DATA.metadata.semestres.push(sem);
+      DATA.metadata.semestres.sort((a, b) => semOrder(a) - semOrder(b));
+    }
+    DATA.metadata.semestresNomes = DATA.metadata.semestresNomes || {};
+    if (!DATA.metadata.semestresNomes[sem]) {
+      DATA.metadata.semestresNomes[sem] = `${semOrder(sem)}º Semestre (${sem})`;
+    }
+  }
+
+  function recomputeDisciplineEntry(d) {
+    const ve = numOrNull(d.ve);
+    const vc = numOrNull(d.vc);
+    const vf = numOrNull(d.vf);
+    const mve = numOrNull(d.mve);
+    d.ve = ve;
+    d.vc = vc;
+    d.vf = vf;
+    d.mve = mve;
+
+    if (d.isPratica) {
+      const val = mve ?? ve ?? numOrNull(d.nf);
+      d.nf = val;
+      d.notaEfetiva = val;
+      d.isParcial = (val === null);
+      d.situacao = val === null ? 'Em Andamento (Parcial)' : (val >= 5.0 ? 'Aprovado' : 'Reprovado');
+      return;
+    }
+
+    if (vf !== null) {
+      if (ve !== null && vc !== null) {
+        d.med = r2((ve + vc + 2 * vf) / 4);
+      }
+      if (!d._manualNf) {
+        d.nf = d.med ?? numOrNull(d.nf);
+      } else {
+        d.nf = numOrNull(d.nf);
+      }
+      d.notaEfetiva = d.nf;
+      d.isParcial = (d.nf === null);
+      if (d.nf === null) {
+        d.situacao = 'Em Andamento (Parcial)';
+      } else {
+        d.situacao = (d.nf >= 5.0 && vf >= 4.0) ? 'Aprovado' : 'Reprovado';
+      }
+      return;
+    }
+
+    const manualNf = d._manualNf ? numOrNull(d.nf) : null;
+    if (manualNf !== null) {
+      d.nf = manualNf;
+      d.notaEfetiva = manualNf;
+      d.isParcial = false;
+      d.situacao = manualNf >= 5.0 ? 'Aprovado' : 'Reprovado';
+      return;
+    }
+
+    d.nf = null;
+    d.med = null;
+    d.isParcial = true;
+    const partialVals = [mve ?? ve, vc].filter(v => v !== null);
+    d.notaEfetiva = partialVals.length ? r2(partialVals.reduce((s, v) => s + v, 0) / partialVals.length) : null;
+    d.situacao = 'Em Andamento (Parcial)';
+  }
+
+  function recalculateFullDataset({ skipGestaoRender = false } = {}) {
+    ensureSemesterInMetadata(CURRENT_SEM);
+    const semList = DATA.metadata.semestres;
+
+    // 1. Recalcular notas do semestre atual (semestres históricos ficam intactos)
+    const discAggMap = new Map();
+    const existingMetaMap = new Map();
+    (DATA.disciplinas || []).forEach(d => {
+      existingMetaMap.set(`${d.codigo}||${d.semestre}`, d);
+    });
+
+    DATA.alunos.forEach(aluno => {
+      (aluno.disciplinas || []).forEach(d => {
+        if (d.semestre === CURRENT_SEM) {
+          recomputeDisciplineEntry(d);
+        }
+        const key = `${d.codigo}||${d.semestre}`;
+        if (!discAggMap.has(key)) {
+          const prev = existingMetaMap.get(key);
+          discAggMap.set(key, {
+            codigo: d.codigo,
+            disciplina: d.disciplina || `${d.nome} (${d.codigo})`,
+            nome: d.nome,
+            grupoEquivalente: d.grupoEquivalente || prev?.grupoEquivalente || d.nome,
+            semestre: d.semestre,
+            semestreOrdem: d.semestreOrdem || semOrder(d.semestre),
+            ciclo: d.ciclo || prev?.ciclo || (d.militar ? 'Militar' : 'Profissional'),
+            tipo: d.tipo || prev?.tipo || (d.militar ? 'Militar' : 'Profissional'),
+            militar: Boolean(d.militar),
+            isParcial: false,
+            entries: []
+          });
+        }
+        discAggMap.get(key).entries.push(d);
+      });
+    });
+
+    // 2. Reconstruir catálogo DATA.disciplinas e atualizar mediaTurma / delta
+    const newDisciplinas = [];
+    discAggMap.forEach(group => {
+      const vals = group.entries.map(e => e.notaEfetiva).filter(v => v !== null && !isNaN(v));
+      const avg = vals.length ? r2(vals.reduce((s, v) => s + v, 0) / vals.length) : null;
+      const variance = vals.length && avg !== null
+        ? vals.reduce((s, v) => s + Math.pow(v - avg, 2), 0) / vals.length
+        : 0;
+      const anyParcial = group.entries.some(e => e.isParcial);
+      group.entries.forEach(e => {
+        e.mediaTurma = avg;
+        e.delta = (e.notaEfetiva !== null && avg !== null) ? r2(e.notaEfetiva - avg) : null;
+      });
+      newDisciplinas.push({
+        codigo: group.codigo,
+        disciplina: group.disciplina,
+        nome: group.nome,
+        grupoEquivalente: group.grupoEquivalente,
+        semestre: group.semestre,
+        semestreOrdem: group.semestreOrdem,
+        ciclo: group.ciclo,
+        tipo: group.tipo,
+        militar: group.militar,
+        isParcial: anyParcial || group.semestre === CURRENT_SEM,
+        qtdAlunos: group.entries.length,
+        media: avg,
+        desvioPadrao: r2(Math.sqrt(variance)),
+        menorNota: vals.length ? r2(Math.min(...vals)) : null,
+        maiorNota: vals.length ? r2(Math.max(...vals)) : null
+      });
+    });
+    DATA.disciplinas = newDisciplinas;
+
+    // 3. Recalcular médias individuais e evolução de cada aluno
+    const avgArr = (arr) => arr.length ? r2(arr.reduce((s, v) => s + v, 0) / arr.length) : null;
+
+    DATA.alunos.forEach(aluno => {
+      const dis = aluno.disciplinas || [];
+      const gradClosed = dis.filter(d => !d.militar && !d.isParcial && d.notaEfetiva !== null).map(d => d.notaEfetiva);
+      const gradAll = dis.filter(d => !d.militar && d.notaEfetiva !== null).map(d => d.notaEfetiva);
+      const milClosed = dis.filter(d => d.militar && !d.isParcial && d.notaEfetiva !== null).map(d => d.notaEfetiva);
+      const milAll = dis.filter(d => d.militar && d.notaEfetiva !== null).map(d => d.notaEfetiva);
+      const curSemVals = dis.filter(d => d.semestre === CURRENT_SEM && !d.militar && d.notaEfetiva !== null).map(d => d.notaEfetiva);
+      const allValid = dis.map(d => d.notaEfetiva).filter(v => v !== null);
+
+      const mGrad = avgArr(gradClosed) ?? avgArr(gradAll) ?? 0;
+      const mMil = avgArr(milClosed) ?? avgArr(milAll) ?? mGrad;
+      aluno.mediaGraduacao = mGrad;
+      aluno.mediaMilitar = mMil;
+      aluno.mediaGeral = aluno.cg ? mGrad : r2(0.8 * mGrad + 0.2 * mMil);
+      aluno.media32 = avgArr(curSemVals);
+      aluno.concluidas = dis.filter(d => !d.isParcial).length;
+      aluno.matriculadas = dis.filter(d => d.isParcial).length;
+      aluno.totalDisciplinas = dis.length;
+      aluno.maiorNota = allValid.length ? r2(Math.max(...allValid)) : 0;
+      aluno.menorNota = allValid.length ? r2(Math.min(...allValid)) : 0;
+
+      let cumSum = 0;
+      let cumCnt = 0;
+      aluno.evolucao = semList.map((sem, idx) => {
+        const semGrad = dis.filter(d => d.semestre === sem && !d.militar && d.notaEfetiva !== null);
+        semGrad.forEach(d => { cumSum += d.notaEfetiva; cumCnt += 1; });
+        return {
+          semestre: sem,
+          ordem: idx + 1,
+          mediaGradSemestre: avgArr(semGrad.map(d => d.notaEfetiva)),
+          mediaGradCumulativo: cumCnt > 0 ? r2(cumSum / cumCnt) : null,
+          qtdDisciplinasSemestre: semGrad.length,
+          qtdDisciplinasCumulativo: cumCnt,
+          mediaTurmaGrad: null,
+          mediaTurmaCumulativa: null,
+          mediaCursoGrad: null,
+          mediaCursoCumulativa: null
+        };
+      }).filter(ev => ev.qtdDisciplinasSemestre > 0 || ev.semestre === CURRENT_SEM);
+    });
+
+    // 4. Ranks globais e por curso
+    [...DATA.alunos].sort((a, b) => b.mediaGraduacao - a.mediaGraduacao).forEach((a, i) => { a.rankGraduacao = i + 1; });
+    [...DATA.alunos].sort((a, b) => b.mediaGeral - a.mediaGeral).forEach((a, i) => { a.rankGeral = i + 1; });
+    (DATA.metadata.cursos || []).forEach(c => {
+      DATA.alunos.filter(a => a.curso === c).sort((a, b) => b.mediaGraduacao - a.mediaGraduacao).forEach((a, i) => { a.rankCurso = i + 1; });
+    });
+
+    // 5. Benchmarks de semestre e cursos
+    DATA.semestresBenchmark = semList.map(sem => {
+      const sVals = DATA.alunos.map(a => a.evolucao.find(e => e.semestre === sem)?.mediaGradSemestre).filter(v => v !== null && v !== undefined);
+      const cVals = DATA.alunos.map(a => a.evolucao.find(e => e.semestre === sem)?.mediaGradCumulativo).filter(v => v !== null && v !== undefined);
+      const mTurmaSem = avgArr(sVals);
+      const mTurmaCum = avgArr(cVals);
+      DATA.alunos.forEach(a => {
+        const ev = a.evolucao.find(e => e.semestre === sem);
+        if (ev) {
+          ev.mediaTurmaGrad = mTurmaSem;
+          ev.mediaTurmaCumulativa = mTurmaCum;
+        }
+      });
+      return {
+        semestre: sem,
+        mediaGraduacaoTurma: mTurmaSem,
+        mediaGraduacaoTurmaCumulativa: mTurmaCum,
+        qtdAlunos: sVals.length,
+        isParcial: sem === CURRENT_SEM
+      };
+    });
+
+    DATA.cursosComparativo = (DATA.metadata.cursos || []).map(curso => {
+      const members = DATA.alunos.filter(a => a.curso === curso);
+      const obj = computeCourseStats(curso, members, false);
+      semList.forEach(sem => {
+        members.forEach(a => {
+          const ev = a.evolucao.find(e => e.semestre === sem);
+          if (ev) {
+            ev.mediaCursoGrad = obj.semestres[sem];
+            ev.mediaCursoCumulativa = obj.semestresCumulativo[sem];
+          }
+        });
+      });
+      return obj;
+    });
+
+    DATA.metadata.totalAlunos = DATA.alunos.length;
+    DATA.metadata.totalDisciplinas = DATA.disciplinas.length;
+    DATA.metadata.semestreAtual = CURRENT_SEM;
+    DATA.metadata.mediaGraduacaoTurma = avgArr(DATA.alunos.map(a => a.mediaGraduacao)) ?? 0;
+    DATA.metadata.mediaGeralTurma = avgArr(DATA.alunos.map(a => a.mediaGeral)) ?? 0;
+    DATA.metadata.mediaMilitarTurma = avgArr(DATA.alunos.map(a => a.mediaMilitar)) ?? 0;
+    DATA.metadata.vinculos = {
+      Ativa: DATA.alunos.filter(a => a.vinculo === 'Ativa').length,
+      Reserva: DATA.alunos.filter(a => a.vinculo === 'Reserva').length,
+      CG: DATA.alunos.filter(a => a.vinculo === 'CG').length
+    };
+
+    recomputeDerivedClientFields();
+    syncDynamicDataLabels();
+    applyFilters();
+    renderDisciplinasTab();
+    if (gestaoInitialized && !skipGestaoRender) {
+      renderGestaoSelectors();
+      renderGestaoGrid();
+    }
+  }
+
+  function buildCleanPayloadForStorage() {
+    const clone = structuredClone(DATA);
+    clone.metadata.semestreAtual = CURRENT_SEM;
+    clone.metadata.turma = ACTIVE_TURMA.nome || clone.metadata.turma;
+    clone.disciplinas = (clone.disciplinas || []).map(({ cursos, cursoLabel, vfMediaNec, vfEmRisco, vfRiscoAlto, ...rest }) => rest);
+    clone.alunos = (clone.alunos || []).map(({ vfRiskSubjects, maxVf32, avgVf32, vfRiskCount, vfRiskLevel, ...a }) => ({
+      ...a,
+      disciplinas: (a.disciplinas || []).map(({ _manualNf, ...d }) => d)
+    }));
+    return clone;
+  }
+
+  function setGestaoStatus(msg, type = 'info') {
+    const el = document.getElementById('gestaoStatusBanner');
+    if (!el) return;
+    if (!msg) {
+      el.classList.add('hidden');
+      return;
+    }
+    const styles = {
+      ok: 'p-3 rounded-xl text-xs font-semibold bg-emerald-500/15 border border-emerald-500/35 text-emerald-300',
+      warn: 'p-3 rounded-xl text-xs font-semibold bg-amber-500/15 border border-amber-500/35 text-amber-300',
+      err: 'p-3 rounded-xl text-xs font-semibold bg-rose-500/15 border border-rose-500/35 text-rose-300',
+      info: 'p-3 rounded-xl text-xs font-semibold bg-sky-500/15 border border-sky-500/35 text-sky-300'
+    };
+    el.className = styles[type] || styles.info;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+  function markGestaoDirty(isDirty = true) {
+    gestaoState.dirty = isDirty;
+    const b = document.getElementById('gestaoDirtyBadge');
+    if (b) b.classList.toggle('hidden', !isDirty);
+  }
+
+  function renderGestaoSelectors() {
+    ensureSemesterInMetadata(CURRENT_SEM);
+    const pillsEl = document.getElementById('gestaoSemestrePills');
+    if (pillsEl) {
+      pillsEl.innerHTML = DATA.metadata.semestres.map(s => {
+        const isCurrent = s === CURRENT_SEM;
+        const isActive = s === gestaoState.selectedSemestre;
+        const baseCls = isActive
+          ? (isCurrent ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-blue-600 text-white border-blue-500')
+          : 'bg-slate-900 text-slate-300 border-slate-700 hover:bg-slate-800';
+        return `<button type="button" data-gsem="${escapeHtml(s)}" class="gestao-sem-pill px-2.5 py-1 rounded-lg border font-bold text-xs transition flex items-center gap-1 ${baseCls}">
+          <span>${isCurrent ? '🔓' : '🔒'} ${escapeHtml(s)}</span>
+        </button>`;
+      }).join('');
+      pillsEl.querySelectorAll('.gestao-sem-pill').forEach(btn => {
+        btn.addEventListener('click', () => {
+          gestaoState.selectedSemestre = btn.getAttribute('data-gsem');
+          renderGestaoSelectors();
+          renderGestaoGrid();
+        });
+      });
+    }
+
+    const sem = gestaoState.selectedSemestre;
+    const discSel = document.getElementById('gestaoDisciplinaSelect');
+    if (discSel) {
+      const discs = [];
+      const seen = new Set();
+      DATA.alunos.forEach(a => {
+        (a.disciplinas || []).forEach(d => {
+          if (d.semestre !== sem) return;
+          const k = `${d.codigo}||${d.nome}`;
+          if (!seen.has(k)) {
+            seen.add(k);
+            discs.push({ key: k, codigo: d.codigo, nome: d.nome });
+          }
+        });
+      });
+      discs.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+      if (!discs.some(d => d.key === gestaoState.selectedDisciplinaKey)) {
+        gestaoState.selectedDisciplinaKey = discs[0]?.key || '';
+      }
+      discSel.innerHTML = discs.length
+        ? discs.map(d => `<option value="${escapeHtml(d.key)}" ${d.key === gestaoState.selectedDisciplinaKey ? 'selected' : ''}>${escapeHtml(d.nome)} (${escapeHtml(d.codigo)})</option>`).join('')
+        : `<option value="">Nenhuma disciplina em ${escapeHtml(sem)}</option>`;
+    }
+
+    const aluSel = document.getElementById('gestaoAlunoSelect');
+    if (aluSel) {
+      const sortedAl = [...DATA.alunos].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
+      if (!sortedAl.some(a => String(a.numero) === String(gestaoState.selectedAlunoNum))) {
+        gestaoState.selectedAlunoNum = sortedAl[0]?.numero || null;
+      }
+      aluSel.innerHTML = sortedAl.map(a =>
+        `<option value="${a.numero}" ${String(a.numero) === String(gestaoState.selectedAlunoNum) ? 'selected' : ''}>${escapeHtml(a.nome)} (${escapeHtml(a.curso)})</option>`
+      ).join('');
+    }
+
+    const newSubjCurso = document.getElementById('newSubjCurso');
+    if (newSubjCurso) {
+      newSubjCurso.innerHTML = `<option value="ALL">Toda a Turma (Comum)</option>` +
+        (DATA.metadata.cursos || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    }
+    const newStudCurso = document.getElementById('newStudCurso');
+    if (newStudCurso) {
+      newStudCurso.innerHTML = (DATA.metadata.cursos || []).map(c => `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+    }
+  }
+
+  function renderGestaoGrid() {
+    const tbody = document.getElementById('gestaoGridBody');
+    if (!tbody) return;
+
+    const sem = gestaoState.selectedSemestre;
+    const isEditable = (sem === CURRENT_SEM);
+    document.getElementById('gestaoLockAlert')?.classList.toggle('hidden', isEditable);
+    const lockSemSpan = document.getElementById('gestaoLockSemSpan');
+    if (lockSemSpan) lockSemSpan.textContent = CURRENT_SEM;
+
+    const addSubjBtn = document.getElementById('btnGestaoAddSubjectToggle');
+    if (addSubjBtn) addSubjBtn.disabled = !isEditable;
+    const lblCurSemBtn = document.getElementById('lblGestaoCurSemBtn');
+    if (lblCurSemBtn) lblCurSemBtn.textContent = CURRENT_SEM;
+
+    const q = normStr(gestaoState.search);
+    const rows = [];
+
+    if (gestaoState.viewMode === 'disciplina') {
+      document.getElementById('thGestaoMainCol').textContent = 'Aluno / Curso';
+      const [code, ...nameParts] = (gestaoState.selectedDisciplinaKey || '').split('||');
+      const dName = nameParts.join('||');
+      DATA.alunos.forEach(a => {
+        const entry = (a.disciplinas || []).find(d => d.semestre === sem && d.codigo === code && (!dName || d.nome === dName));
+        if (!entry) return;
+        if (q && !normStr(`${a.nome} ${a.curso} ${a.numero}`).includes(q)) return;
+        rows.push({ aluno: a, entry, label: a.nome, sub: `${a.curso} · Nº ${a.numero}` });
+      });
+      rows.sort((r1, r2) => r1.aluno.nome.localeCompare(r2.aluno.nome, 'pt-BR'));
+    } else {
+      document.getElementById('thGestaoMainCol').textContent = 'Disciplina';
+      const aluno = DATA.alunos.find(a => String(a.numero) === String(gestaoState.selectedAlunoNum));
+      if (aluno) {
+        (aluno.disciplinas || []).filter(d => d.semestre === sem).forEach(entry => {
+          if (q && !normStr(`${entry.nome} ${entry.codigo}`).includes(q)) return;
+          rows.push({ aluno, entry, label: entry.nome, sub: `${entry.codigo} · ${entry.tipo || ''}` });
+        });
+      }
+      rows.sort((r1, r2) => r1.entry.nome.localeCompare(r2.entry.nome, 'pt-BR'));
+    }
+
+    if (rows.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="7" class="py-8 text-center text-slate-500">Nenhum registro encontrado para ${escapeHtml(sem)}.</td></tr>`;
+      return;
+    }
+
+    function formatRowStatusHtml(d) {
+      if (d.nf !== null) {
+        const sitCls = d.situacao === 'Aprovado'
+          ? 'bg-emerald-500/15 text-emerald-300'
+          : 'bg-rose-500/15 text-rose-300';
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${sitCls}">${escapeHtml(d.situacao)}</span>`;
+      }
+      const vfInfo = calcVfNecessaria(d);
+      if (vfInfo) {
+        const vfStyle = getVfColorStyle(vfInfo);
+        return `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${vfStyle.pill}">${escapeHtml(vfInfo.label)}</span>`;
+      }
+      return `<span class="text-[11px] text-slate-400">Parcial (${fmtNum(d.notaEfetiva)})</span>`;
+    }
+
+    tbody.innerHTML = rows.map((row, idx) => {
+      const d = row.entry;
+      const disAttr = isEditable ? '' : 'disabled';
+      const inpCls = `excel-cell w-16 text-center font-mono-numbers text-xs py-1 px-1.5 rounded-lg border ${
+        isEditable
+          ? 'bg-slate-900 border-slate-700 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500'
+          : 'bg-slate-950/60 border-slate-800/70 text-slate-500 cursor-not-allowed'
+      }`;
+      const statusHtml = formatRowStatusHtml(d);
+
+      return `
+        <tr class="hover:bg-slate-900/40 transition" data-row-idx="${idx}">
+          <td class="py-2 px-3">
+            <div class="font-bold text-slate-100 text-xs">${escapeHtml(row.label)}</div>
+            <div class="text-[10px] text-slate-400">${escapeHtml(row.sub)}</div>
+          </td>
+          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="ve" value="${d.ve ?? ''}" class="${inpCls}"></td>
+          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="vc" value="${d.vc ?? ''}" class="${inpCls}"></td>
+          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="vf" value="${d.vf ?? ''}" class="${inpCls}"></td>
+          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="mve" value="${d.mve ?? ''}" class="${inpCls}"></td>
+          <td class="py-1.5 px-1.5 text-center"><input type="number" step="0.01" min="0" max="10" ${disAttr} data-row="${idx}" data-field="nf" value="${d.nf ?? ''}" placeholder="${d.notaEfetiva !== null ? fmtNum(d.notaEfetiva) : '-'}" class="${inpCls}"></td>
+          <td class="py-2 px-3 text-center" id="gestaoRowStatus_${idx}">${statusHtml}</td>
+        </tr>
+      `;
+    }).join('');
+
+    if (!isEditable) return;
+
+    const recalcRowAndSave = (inp) => {
+      const rIdx = parseInt(inp.getAttribute('data-row'), 10);
+      const field = inp.getAttribute('data-field');
+      const target = rows[rIdx]?.entry;
+      if (!target) return;
+      const val = numOrNull(inp.value);
+      if (field === 'nf') {
+        target._manualNf = (val !== null);
+        target.nf = val;
+      } else {
+        target[field] = val;
+        if (field === 'vf' && val !== null) target._manualNf = false;
+      }
+      recomputeDisciplineEntry(target);
+      if (field !== 'nf') {
+        const nfCell = tbody.querySelector(`input[data-row="${rIdx}"][data-field="nf"]`);
+        if (nfCell) {
+          nfCell.value = target.nf ?? '';
+          nfCell.placeholder = target.notaEfetiva !== null ? fmtNum(target.notaEfetiva) : '-';
+        }
+      }
+      const statusCell = document.getElementById(`gestaoRowStatus_${rIdx}`);
+      if (statusCell) statusCell.innerHTML = formatRowStatusHtml(target);
+      markGestaoDirty(true);
+      recalculateFullDataset({ skipGestaoRender: true });
+    };
+
+    tbody.querySelectorAll('.excel-cell').forEach(inp => {
+      inp.addEventListener('change', () => recalcRowAndSave(inp));
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === 'ArrowUp') {
+          e.preventDefault();
+          recalcRowAndSave(inp);
+          const rIdx = parseInt(inp.getAttribute('data-row'), 10);
+          const field = inp.getAttribute('data-field');
+          const nextIdx = e.key === 'ArrowUp' ? rIdx - 1 : rIdx + 1;
+          const nextEl = tbody.querySelector(`input[data-row="${nextIdx}"][data-field="${field}"]`);
+          if (nextEl) {
+            nextEl.focus();
+            nextEl.select();
+          }
+        }
+      });
+    });
+  }
+
+  function autoDetectMapping(headers) {
+    const find = (patterns) => headers.find(h => {
+      const n = normStr(h);
+      return patterns.some(p => p instanceof RegExp ? p.test(n) : n === p || n.includes(p));
+    }) || '';
+    return {
+      numero: find([/^MATRICULA$/, /^NUMERO$/, /^NUM$/, /^ID$/, /^RA$/]),
+      nome: find([/^NOME/, /ALUNO/, /ESTUDANTE/]),
+      codigo: find([/^COD/, /^CODIGO/]),
+      disciplina: find([/DISCIPLINA/, /MATERIA/, /ASIGNATURA/, /^NOME_DISC/]),
+      semestre: find([/SEMESTRE/, /^SEM$/]),
+      curso: find([/CURSO/, /ESPECIALIDADE/, /^ENG/]),
+      vinculo: find([/VINCULO/, /CATEGORIA/]),
+      ve: find([/^VE$/, /^NOTA_VE/, /AVALIACAO VE/]),
+      vc: find([/^VC$/, /^NOTA_VC/, /AVALIACAO VC/]),
+      vf: find([/^VF$/, /^NOTA_VF/, /PROVA FINAL/]),
+      nf: find([/^NF$/, /^NOTA_FINAL/, /^MEDIA_FINAL/]),
+      mve: find([/^MVE$/, /PRATICA/])
+    };
+  }
+
+  function loadImportSheetRows(sheetName) {
+    const wb = gestaoState.importWorkbook;
+    if (!wb || !window.XLSX) return;
+    gestaoState.importSheetName = sheetName;
+    const sheet = wb.Sheets[sheetName];
+    const rows = window.XLSX.utils.sheet_to_json(sheet, { defval: '' });
+    gestaoState.importRows = rows;
+    const headers = rows.length ? Object.keys(rows[0]) : [];
+    gestaoState.importHeaders = headers;
+
+    const autoMap = autoDetectMapping(headers);
+    const optionsHtml = `<option value="">-- Ignorar --</option>` + headers.map(h => `<option value="${escapeHtml(h)}">${escapeHtml(h)}</option>`).join('');
+    document.querySelectorAll('.imp-col-map').forEach(sel => {
+      const k = sel.getAttribute('data-map');
+      sel.innerHTML = optionsHtml;
+      if (autoMap[k]) sel.value = autoMap[k];
+    });
+
+    const previewWrap = document.getElementById('impPreviewTableWrap');
+    if (previewWrap) {
+      if (!rows.length) {
+        previewWrap.innerHTML = `<div class="p-4 text-slate-400 text-xs">Planilha vazia.</div>`;
+      } else {
+        const sample = rows.slice(0, 5);
+        previewWrap.innerHTML = `
+          <table class="w-full text-left border-collapse">
+            <thead class="bg-slate-900 text-slate-300"><tr>${headers.map(h => `<th class="py-1.5 px-2.5 border-b border-slate-800 whitespace-nowrap">${escapeHtml(h)}</th>`).join('')}</tr></thead>
+            <tbody class="divide-y divide-slate-800/60">${sample.map(r => `<tr>${headers.map(h => `<td class="py-1.5 px-2.5 whitespace-nowrap text-slate-300">${escapeHtml(r[h])}</td>`).join('')}</tr>`).join('')}</tbody>
+          </table>
+        `;
+      }
+    }
+    const report = document.getElementById('impMatchReport');
+    if (report) report.textContent = `${rows.length} linhas detectadas na aba "${sheetName}". Apenas linhas de ${CURRENT_SEM} (ou sem coluna Semestre) serão aplicadas.`;
+  }
+
+  async function initSuperAdminPanel() {
+    const panel = document.getElementById('superAdminPanel');
+    if (!panel) return;
+    if (!IS_SUPER_ADMIN && sessionMeta.mode !== 'demo') {
+      panel.classList.add('hidden');
+      return;
+    }
+    panel.classList.remove('hidden');
+    document.getElementById('saDemoNotice')?.classList.toggle('hidden', sessionMeta.mode !== 'demo');
+
+    const semInp = document.getElementById('saSemestreAtualInput');
+    if (semInp) semInp.value = CURRENT_SEM;
+
+    const wlTurmaSel = document.getElementById('saWlTurma');
+    if (wlTurmaSel) {
+      wlTurmaSel.innerHTML = VISIBLE_TURMAS.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.nome)}</option>`).join('') +
+        `<option value="">Todas (Super Admin)</option>`;
+      wlTurmaSel.value = ACTIVE_TURMA.id;
+    }
+
+    const loadUsersList = async () => {
+      const box = document.getElementById('saUsersList');
+      if (!box) return;
+      if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb) {
+        box.innerHTML = `<div class="p-3 text-slate-400">Modo Demo: conecte ao Supabase para listar e editar contas reais de <code>user_roles</code> e <code>allowed_emails</code>.</div>`;
+        return;
+      }
+      box.innerHTML = `<div class="p-3 text-slate-400">Carregando usuários e whitelist...</div>`;
+      try {
+        const [{ data: roles }, { data: wl }] = await Promise.all([
+          sessionMeta.sb.from('user_roles').select('*').order('email'),
+          sessionMeta.sb.from('allowed_emails').select('*').order('email')
+        ]);
+        const activeRows = (roles || []).map(u => `
+          <div class="p-2 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="font-semibold text-slate-100 truncate">${escapeHtml(u.email)}</div>
+              <div class="text-[10px] text-emerald-400">Ativo • ${escapeHtml(u.role)} • ${escapeHtml(u.turma_id || 'Todas')}</div>
+            </div>
+            <button type="button" data-del-role="${escapeHtml(u.user_id)}" class="text-[10px] text-rose-400 hover:text-rose-300 px-2 py-0.5 rounded bg-rose-500/10">Remover</button>
+          </div>
+        `).join('');
+        const wlRows = (wl || []).map(w => `
+          <div class="p-2 flex items-center justify-between gap-2 bg-slate-900/40">
+            <div class="min-w-0">
+              <div class="font-semibold text-slate-200 truncate">${escapeHtml(w.email)}</div>
+              <div class="text-[10px] text-amber-300">Whitelist • ${escapeHtml(w.role)} • ${escapeHtml(w.turma_id || 'Todas')}</div>
+            </div>
+            <button type="button" data-del-wl="${escapeHtml(w.email)}" class="text-[10px] text-rose-400 hover:text-rose-300 px-2 py-0.5 rounded bg-rose-500/10">Remover</button>
+          </div>
+        `).join('');
+        box.innerHTML = (activeRows + wlRows) || `<div class="p-3 text-slate-500">Nenhum usuário listado em user_roles ou allowed_emails.</div>`;
+
+        box.querySelectorAll('button[data-del-role]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            await sessionMeta.sb.from('user_roles').delete().eq('user_id', btn.getAttribute('data-del-role'));
+            loadUsersList();
+          });
+        });
+        box.querySelectorAll('button[data-del-wl]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            await sessionMeta.sb.from('allowed_emails').delete().eq('email', btn.getAttribute('data-del-wl'));
+            loadUsersList();
+          });
+        });
+      } catch (err) {
+        box.innerHTML = `<div class="p-3 text-rose-300">Erro: ${escapeHtml(err.message)}</div>`;
+      }
+    };
+
+    loadUsersList();
+    document.getElementById('btnSaRefreshUsers')?.addEventListener('click', loadUsersList);
+
+    document.getElementById('btnSaSaveSemestre')?.addEventListener('click', async () => {
+      const nextSem = (document.getElementById('saSemestreAtualInput')?.value || '').trim();
+      if (!nextSem) return;
+      CURRENT_SEM = nextSem;
+      gestaoState.selectedSemestre = nextSem;
+      ensureSemesterInMetadata(nextSem);
+      if (sessionMeta.mode === 'supabase' && sessionMeta.sb && IS_SUPER_ADMIN) {
+        const { error } = await sessionMeta.sb.from('turmas').update({ semestre_atual: nextSem }).eq('id', ACTIVE_TURMA.id);
+        if (error) {
+          setGestaoStatus(`Erro ao atualizar semestre no banco: ${error.message}`, 'err');
+          return;
+        }
+      }
+      ACTIVE_TURMA.semestre_atual = nextSem;
+      document.getElementById('gestaoSemestreLockPill').textContent = `Semestre Editável: ${nextSem}`;
+      document.getElementById('impSemAtualLabel').textContent = nextSem;
+      markGestaoDirty(true);
+      recalculateFullDataset();
+      setGestaoStatus(`Semestre editável da turma atualizado para ${nextSem}!`, 'ok');
+    });
+
+    document.getElementById('btnSaCreateTurma')?.addEventListener('click', async () => {
+      const id = (document.getElementById('saNewTurmaId')?.value || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+      const nome = (document.getElementById('saNewTurmaNome')?.value || '').trim();
+      const sem = (document.getElementById('saNewTurmaSem')?.value || '1.1').trim();
+      if (!id || !nome) {
+        setGestaoStatus('Informe ID (ex: turma_29) e Nome da nova turma.', 'warn');
+        return;
+      }
+      if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb || !IS_SUPER_ADMIN) {
+        setGestaoStatus(`Simulação Demo: nova turma "${nome}" (${id}, sem. ${sem}) seria criada no Supabase Storage (${id}/data.json).`, 'info');
+        return;
+      }
+      const storagePath = `${id}/data.json`;
+      const starterData = {
+        metadata: {
+          titulo: `Dashboard de Desempenho Acadêmico e Militar • ${nome}`,
+          turma: nome,
+          semestreAtual: sem,
+          totalAlunos: 0,
+          totalDisciplinas: 0,
+          mediaGraduacaoTurma: 0,
+          mediaGeralTurma: 0,
+          mediaMilitarTurma: 0,
+          cursos: [...(DATA.metadata?.cursos || [])],
+          semestres: [sem],
+          semestresNomes: { [sem]: `${semOrder(sem)}º Semestre (${sem})` },
+          vinculos: { Ativa: 0, Reserva: 0, CG: 0 }
+        },
+        cursosComparativo: [],
+        semestresBenchmark: [],
+        disciplinas: [],
+        alunos: []
+      };
+      const { error: tErr } = await sessionMeta.sb.from('turmas').insert({
+        id, nome, semestre_atual: sem, storage_path: storagePath
+      });
+      if (tErr) {
+        setGestaoStatus(`Erro ao criar turma: ${tErr.message}`, 'err');
+        return;
+      }
+      const blob = new Blob([JSON.stringify(starterData)], { type: 'application/json' });
+      const { error: uErr } = await sessionMeta.sb.storage.from(sessionMeta.bucket).upload(storagePath, blob, {
+        upsert: true, contentType: 'application/json'
+      });
+      if (uErr) {
+        setGestaoStatus(`Turma criada, mas erro ao inicializar ${storagePath}: ${uErr.message}`, 'warn');
+        return;
+      }
+      try { sessionStorage.setItem('ime_super_turma', id); } catch {}
+      setGestaoStatus(`Turma "${nome}" criada! Recarregando para abrir a nova turma...`, 'ok');
+      setTimeout(() => window.location.reload(), 900);
+    });
+
+    const addWhitelistEmails = async (emails) => {
+      const role = document.getElementById('saWlRole')?.value || 'viewer';
+      const turma_id = role === 'super_admin' ? null : (document.getElementById('saWlTurma')?.value || null);
+      if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb || !IS_SUPER_ADMIN) {
+        setGestaoStatus(`Simulação Demo: ${emails.length} e-mail(s) autorizados como "${role}" (${turma_id || 'Todas'}).`, 'info');
+        return;
+      }
+      const rows = emails.map(em => ({ email: em.trim().toLowerCase(), role, turma_id }));
+      const { error } = await sessionMeta.sb.from('allowed_emails').upsert(rows, { onConflict: 'email' });
+      if (error) {
+        setGestaoStatus(`Erro ao salvar whitelist: ${error.message}`, 'err');
+        return;
+      }
+      setGestaoStatus(`${rows.length} e-mail(s) pré-autorizado(s) com sucesso!`, 'ok');
+      loadUsersList();
+    };
+
+    document.getElementById('btnSaAddWhitelist')?.addEventListener('click', () => {
+      const em = (document.getElementById('saWlEmail')?.value || '').trim();
+      if (!em || !em.includes('@')) return;
+      addWhitelistEmails([em]);
+      document.getElementById('saWlEmail').value = '';
+    });
+
+    document.getElementById('btnSaBatchWhitelist')?.addEventListener('click', () => {
+      document.getElementById('saBatchBox')?.classList.toggle('hidden');
+    });
+
+    document.getElementById('btnSaSubmitBatch')?.addEventListener('click', () => {
+      const raw = document.getElementById('saBatchEmailsText')?.value || '';
+      const emails = raw.split(/[\n,;]+/).map(s => s.trim()).filter(s => s.includes('@'));
+      if (!emails.length) return;
+      addWhitelistEmails(emails);
+      document.getElementById('saBatchEmailsText').value = '';
+      document.getElementById('saBatchBox')?.classList.add('hidden');
+    });
+  }
+
+  function initGestaoTab() {
+    if (gestaoInitialized) {
+      renderGestaoSelectors();
+      renderGestaoGrid();
+      return;
+    }
+    gestaoInitialized = true;
+
+    const rolePill = document.getElementById('gestaoRolePill');
+    if (rolePill) {
+      rolePill.textContent = USER_ROLE === 'super_admin' ? 'Super Admin' : (USER_ROLE === 'gestor' ? 'Gestor da Turma' : 'Simulação Demo');
+    }
+    document.getElementById('gestaoSemestreLockPill').textContent = `Semestre Editável: ${CURRENT_SEM}`;
+    document.getElementById('impSemAtualLabel').textContent = CURRENT_SEM;
+    if (sessionMeta.mode !== 'supabase') {
+      document.getElementById('btnGestaoPublishLabel').textContent = 'Aplicar & Exportar';
+    }
+
+    initSuperAdminPanel();
+    renderGestaoSelectors();
+    renderGestaoGrid();
+
+    // Mode toggle (Por Disciplina vs Por Aluno)
+    document.querySelectorAll('.gestao-mode-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-gmode');
+        gestaoState.viewMode = mode;
+        document.querySelectorAll('.gestao-mode-btn').forEach(b => {
+          const active = b.getAttribute('data-gmode') === mode;
+          b.className = active
+            ? 'gestao-mode-btn active px-2.5 py-1 rounded-lg bg-blue-600 text-white transition'
+            : 'gestao-mode-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition';
+        });
+        document.getElementById('gestaoDisciplinaSelect')?.classList.toggle('hidden', mode !== 'disciplina');
+        document.getElementById('gestaoAlunoSelect')?.classList.toggle('hidden', mode !== 'aluno');
+        renderGestaoGrid();
+      });
+    });
+
+    document.getElementById('gestaoDisciplinaSelect')?.addEventListener('change', (e) => {
+      gestaoState.selectedDisciplinaKey = e.target.value;
+      renderGestaoGrid();
+    });
+    document.getElementById('gestaoAlunoSelect')?.addEventListener('change', (e) => {
+      gestaoState.selectedAlunoNum = e.target.value;
+      renderGestaoGrid();
+    });
+    document.getElementById('gestaoSearchInput')?.addEventListener('input', (e) => {
+      gestaoState.search = e.target.value;
+      renderGestaoGrid();
+    });
+
+    // Inline Add Subject & Add Student
+    document.getElementById('btnGestaoAddSubjectToggle')?.addEventListener('click', () => {
+      document.getElementById('gestaoAddSubjectForm')?.classList.toggle('hidden');
+    });
+    document.getElementById('btnGestaoAddStudentToggle')?.addEventListener('click', () => {
+      document.getElementById('gestaoAddStudentForm')?.classList.toggle('hidden');
+    });
+
+    document.getElementById('gestaoAddSubjectForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const codigo = (document.getElementById('newSubjCodigo')?.value || '').trim();
+      const nome = (document.getElementById('newSubjNome')?.value || '').trim().toUpperCase();
+      const targetCurso = document.getElementById('newSubjCurso')?.value || 'ALL';
+      const tipoRaw = document.getElementById('newSubjTipo')?.value || 'Profissional';
+      if (!codigo || !nome) return;
+
+      const isMil = tipoRaw === 'Militar';
+      const isPrat = tipoRaw === 'Prática';
+      const tipo = isPrat ? 'Profissional' : tipoRaw;
+      let count = 0;
+
+      DATA.alunos.forEach(a => {
+        if (targetCurso !== 'ALL' && a.curso !== targetCurso) return;
+        const already = (a.disciplinas || []).some(d => d.semestre === CURRENT_SEM && d.codigo === codigo);
+        if (already) return;
+        a.disciplinas = a.disciplinas || [];
+        a.disciplinas.push({
+          semestre: CURRENT_SEM,
+          semestreOrdem: semOrder(CURRENT_SEM),
+          disciplina: `${nome} (${codigo})`,
+          nome,
+          codigo,
+          grupoEquivalente: nome,
+          tipo,
+          ciclo: isMil ? 'Militar' : tipo,
+          militar: isMil,
+          ve: null, vc: null, vf: null, med: null, erp: null, ero: null, nf: null, notaEfetiva: null,
+          isParcial: true, isPratica: isPrat, mve: null,
+          situacao: 'Em Andamento (Parcial)',
+          mediaTurma: null, delta: null
+        });
+        count++;
+      });
+
+      gestaoState.selectedSemestre = CURRENT_SEM;
+      gestaoState.selectedDisciplinaKey = `${codigo}||${nome}`;
+      markGestaoDirty(true);
+      recalculateFullDataset();
+      e.target.reset();
+      document.getElementById('gestaoAddSubjectForm')?.classList.add('hidden');
+      setGestaoStatus(`Disciplina "${nome}" adicionada em ${CURRENT_SEM} para ${count} aluno(s).`, 'ok');
+    });
+
+    document.getElementById('gestaoAddStudentForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const numero = parseInt(document.getElementById('newStudNumero')?.value, 10);
+      const nome = (document.getElementById('newStudNome')?.value || '').trim().toUpperCase();
+      const curso = document.getElementById('newStudCurso')?.value || (DATA.metadata.cursos?.[0] || 'Computação');
+      const vinculo = document.getElementById('newStudVinculo')?.value || 'Ativa';
+      if (!numero || !nome) return;
+      if (DATA.alunos.some(a => Number(a.numero) === numero)) {
+        setGestaoStatus(`Já existe um aluno com matrícula ${numero}.`, 'warn');
+        return;
+      }
+      DATA.alunos.push({
+        numero,
+        nome,
+        curso,
+        cg: vinculo === 'CG',
+        reserva: vinculo === 'Reserva',
+        vinculo,
+        mediaGraduacao: 0,
+        mediaGeral: 0,
+        mediaMilitar: 0,
+        media32: null,
+        concluidas: 0,
+        matriculadas: 0,
+        totalDisciplinas: 0,
+        maiorNota: 0,
+        menorNota: 0,
+        evolucao: [],
+        disciplinas: [],
+        rankGraduacao: DATA.alunos.length + 1,
+        rankGeral: DATA.alunos.length + 1,
+        rankCurso: 1
+      });
+      gestaoState.selectedAlunoNum = numero;
+      markGestaoDirty(true);
+      recalculateFullDataset();
+      e.target.reset();
+      document.getElementById('gestaoAddStudentForm')?.classList.add('hidden');
+      setGestaoStatus(`Aluno "${nome}" adicionado em ${curso}.`, 'ok');
+    });
+
+    // Download Excel Model (.xlsx) for CURRENT_SEM
+    document.getElementById('btnGestaoDownloadModel')?.addEventListener('click', () => {
+      if (!window.XLSX) {
+        setGestaoStatus('Biblioteca Excel (SheetJS) não carregada.', 'err');
+        return;
+      }
+      const rows = [];
+      DATA.alunos.forEach(a => {
+        (a.disciplinas || []).filter(d => d.semestre === CURRENT_SEM).forEach(d => {
+          rows.push({
+            Matricula: a.numero,
+            Nome: a.nome,
+            Curso: a.curso,
+            Vinculo: a.vinculo,
+            Semestre: d.semestre,
+            Codigo: d.codigo,
+            Disciplina: d.nome,
+            VE: d.ve ?? '',
+            VC: d.vc ?? '',
+            VF: d.vf ?? '',
+            MVE: d.mve ?? '',
+            NF: d.nf ?? '',
+            Situacao: d.situacao || ''
+          });
+        });
+      });
+      const ws = window.XLSX.utils.json_to_sheet(rows);
+      const wb = window.XLSX.utils.book_new();
+      window.XLSX.utils.book_append_sheet(wb, ws, `Notas_${CURRENT_SEM}`);
+      window.XLSX.writeFile(wb, `modelo_notas_${ACTIVE_TURMA.id || 'turma'}_${CURRENT_SEM}.xlsx`);
+    });
+
+    // Export clean data.json
+    document.getElementById('btnGestaoExportJson')?.addEventListener('click', () => {
+      const payload = buildCleanPayloadForStorage();
+      const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `data_${ACTIVE_TURMA.id || 'turma'}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    // Publish to Supabase Storage (or notify Demo/Local)
+    document.getElementById('btnGestaoPublish')?.addEventListener('click', async () => {
+      recalculateFullDataset();
+      if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb) {
+        markGestaoDirty(false);
+        setGestaoStatus('Recalculado e aplicado no dashboard (Modo Demo/Local). Use "Baixar data.json" para guardar o arquivo atualizado.', 'ok');
+        return;
+      }
+      const btn = document.getElementById('btnGestaoPublish');
+      const lbl = document.getElementById('btnGestaoPublishLabel');
+      const prev = lbl ? lbl.textContent : 'Salvar no Supabase';
+      if (btn) btn.disabled = true;
+      if (lbl) lbl.textContent = 'Enviando...';
+      try {
+        const payload = buildCleanPayloadForStorage();
+        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+        const { error } = await sessionMeta.sb.storage
+          .from(sessionMeta.bucket)
+          .upload(sessionMeta.storagePath, blob, { upsert: true, contentType: 'application/json' });
+        if (error) throw new Error(error.message);
+        markGestaoDirty(false);
+        setGestaoStatus(`Dataset publicado com sucesso em "${sessionMeta.storagePath}"!`, 'ok');
+      } catch (err) {
+        setGestaoStatus(`Erro ao publicar no Supabase (verifique se seu usuário é Gestor/Super Admin desta turma): ${err.message}`, 'err');
+      } finally {
+        if (btn) btn.disabled = false;
+        if (lbl) lbl.textContent = prev;
+      }
+    });
+
+    // Multi-Format File Importer (.xlsx, .xls, .csv, .ods, .json, .js)
+    const impInput = document.getElementById('gestaoImportFileInput');
+    const impWs = document.getElementById('gestaoImportWorkspace');
+    const sheetSel = document.getElementById('impSheetSelect');
+
+    document.getElementById('btnImpCancel')?.addEventListener('click', () => {
+      impWs?.classList.add('hidden');
+      gestaoState.importWorkbook = null;
+      gestaoState.importJsonPayload = null;
+      if (impInput) impInput.value = '';
+    });
+
+    sheetSel?.addEventListener('change', (e) => loadImportSheetRows(e.target.value));
+
+    impInput?.addEventListener('change', async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      document.getElementById('impFileSummary').textContent = `Arquivo: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+
+      if (ext === 'json' || ext === 'js') {
+        const txt = await file.text();
+        try {
+          const parsed = parseLocalDatasetText(txt);
+          gestaoState.importFileType = 'json';
+          gestaoState.importJsonPayload = parsed;
+          document.getElementById('impSpreadsheetMapper')?.classList.add('hidden');
+          document.getElementById('impJsonOptions')?.classList.remove('hidden');
+          document.getElementById('impPreviewTableWrap').innerHTML = '';
+          sheetSel?.classList.add('hidden');
+          document.getElementById('impSheetSelectLabel')?.classList.add('hidden');
+          document.getElementById('impJsonInfo').textContent = `Dataset estruturado detectado: ${parsed.alunos.length} alunos e ${(parsed.disciplinas || []).length} disciplinas. Apenas notas de ${CURRENT_SEM} serão mescladas (trava ativa 🔒).`;
+          document.getElementById('impSaFullReplaceWrap')?.classList.toggle('hidden', !IS_SUPER_ADMIN);
+          document.getElementById('impMatchReport').textContent = 'Pronto para aplicar importação JSON.';
+          impWs?.classList.remove('hidden');
+        } catch (err) {
+          setGestaoStatus(`Erro ao ler JSON/JS: ${err.message}`, 'err');
+        }
+        return;
+      }
+
+      if (!window.XLSX) {
+        setGestaoStatus('SheetJS (xlsx) ainda não carregado. Verifique sua conexão.', 'err');
+        return;
+      }
+      try {
+        const buf = await file.arrayBuffer();
+        const wb = window.XLSX.read(buf, { type: 'array' });
+        gestaoState.importFileType = 'sheet';
+        gestaoState.importWorkbook = wb;
+        document.getElementById('impSpreadsheetMapper')?.classList.remove('hidden');
+        document.getElementById('impJsonOptions')?.classList.add('hidden');
+
+        const names = wb.SheetNames || [];
+        if (sheetSel) {
+          sheetSel.innerHTML = names.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+          const showMulti = names.length > 1;
+          sheetSel.classList.toggle('hidden', !showMulti);
+          document.getElementById('impSheetSelectLabel')?.classList.toggle('hidden', !showMulti);
+        }
+        if (names.length > 0) loadImportSheetRows(names[0]);
+        impWs?.classList.remove('hidden');
+      } catch (err) {
+        setGestaoStatus(`Não foi possível ler a planilha: ${err.message}`, 'err');
+      }
+    });
+
+    document.getElementById('btnImpApply')?.addEventListener('click', () => {
+      if (gestaoState.importFileType === 'json' && gestaoState.importJsonPayload) {
+        const src = gestaoState.importJsonPayload;
+        const fullReplace = IS_SUPER_ADMIN && document.getElementById('impSaFullReplace')?.checked;
+        if (fullReplace) {
+          DATA.alunos = structuredClone(src.alunos);
+          DATA.disciplinas = structuredClone(src.disciplinas || []);
+          if (src.metadata?.cursos?.length) DATA.metadata.cursos = [...src.metadata.cursos];
+          if (src.metadata?.semestres?.length) DATA.metadata.semestres = [...src.metadata.semestres];
+          markGestaoDirty(true);
+          recalculateFullDataset();
+          impWs?.classList.add('hidden');
+          setGestaoStatus(`Dataset completo substituído pelo Super Admin (${DATA.alunos.length} alunos). Clique em "Salvar no Supabase" para publicar.`, 'ok');
+          return;
+        }
+        // Merge ONLY CURRENT_SEM entries cleanly
+        let updatedEntries = 0;
+        const alunoMapByNum = new Map(DATA.alunos.map(a => [String(a.numero), a]));
+        const alunoMapByName = new Map(DATA.alunos.map(a => [normStr(a.nome), a]));
+        src.alunos.forEach(sa => {
+          const target = alunoMapByNum.get(String(sa.numero)) || alunoMapByName.get(normStr(sa.nome));
+          if (!target) return;
+          (sa.disciplinas || []).filter(d => d.semestre === CURRENT_SEM).forEach(sd => {
+            target.disciplinas = target.disciplinas || [];
+            const idx = target.disciplinas.findIndex(td => td.semestre === CURRENT_SEM && td.codigo === sd.codigo);
+            if (idx >= 0) target.disciplinas[idx] = { ...target.disciplinas[idx], ...structuredClone(sd) };
+            else target.disciplinas.push(structuredClone(sd));
+            updatedEntries++;
+          });
+        });
+        markGestaoDirty(true);
+        recalculateFullDataset();
+        impWs?.classList.add('hidden');
+        setGestaoStatus(`Importação JSON aplicada: ${updatedEntries} registros atualizados exclusivamente em ${CURRENT_SEM}.`, 'ok');
+        return;
+      }
+
+      // Spreadsheet Apply
+      const rows = gestaoState.importRows || [];
+      if (!rows.length) return;
+      const map = {};
+      document.querySelectorAll('.imp-col-map').forEach(sel => {
+        map[sel.getAttribute('data-map')] = sel.value;
+      });
+      if (!map.numero && !map.nome) {
+        setGestaoStatus('Mapeie ao menos Matrícula ou Nome do Aluno para importar.', 'warn');
+        return;
+      }
+      if (!map.codigo && !map.disciplina) {
+        setGestaoStatus('Mapeie ao menos Código ou Nome da Disciplina para importar.', 'warn');
+        return;
+      }
+
+      const createSubj = document.getElementById('impCreateMissingSubjects')?.checked;
+      const createStud = document.getElementById('impCreateMissingStudents')?.checked;
+      let updated = 0;
+      let skippedLockedSem = 0;
+      let skippedNotFound = 0;
+
+      rows.forEach(r => {
+        if (map.semestre && String(r[map.semestre] ?? '').trim() !== '') {
+          const rowSem = String(r[map.semestre]).trim();
+          if (rowSem !== CURRENT_SEM) {
+            skippedLockedSem++;
+            return;
+          }
+        }
+        const numVal = map.numero ? String(r[map.numero] ?? '').trim() : '';
+        const nameVal = map.nome ? String(r[map.nome] ?? '').trim() : '';
+        if (!numVal && !nameVal) return;
+
+        let aluno = (numVal && DATA.alunos.find(a => String(a.numero) === numVal))
+          || (nameVal && DATA.alunos.find(a => normStr(a.nome) === normStr(nameVal)));
+
+        if (!aluno && createStud && nameVal) {
+          const newNum = parseInt(numVal, 10) || (99000 + DATA.alunos.length + 1);
+          const cursoVal = (map.curso ? String(r[map.curso] ?? '').trim() : '') || (DATA.metadata.cursos?.[0] || 'Computação');
+          const vincVal = (map.vinculo ? String(r[map.vinculo] ?? '').trim() : '') || 'Ativa';
+          aluno = {
+            numero: newNum,
+            nome: nameVal.toUpperCase(),
+            curso: DATA.metadata.cursos.includes(cursoVal) ? cursoVal : (DATA.metadata.cursos?.[0] || 'Computação'),
+            cg: vincVal === 'CG',
+            reserva: vincVal === 'Reserva',
+            vinculo: ['Ativa', 'Reserva', 'CG'].includes(vincVal) ? vincVal : 'Ativa',
+            mediaGraduacao: 0, mediaGeral: 0, mediaMilitar: 0, media32: null,
+            concluidas: 0, matriculadas: 0, totalDisciplinas: 0, maiorNota: 0, menorNota: 0,
+            evolucao: [], disciplinas: [], rankGraduacao: DATA.alunos.length + 1, rankGeral: DATA.alunos.length + 1, rankCurso: 1
+          };
+          DATA.alunos.push(aluno);
+        }
+        if (!aluno) {
+          skippedNotFound++;
+          return;
+        }
+
+        const codVal = map.codigo ? String(r[map.codigo] ?? '').trim() : '';
+        const discNameRaw = map.disciplina ? String(r[map.disciplina] ?? '').trim() : '';
+        if (!codVal && !discNameRaw) {
+          skippedNotFound++;
+          return;
+        }
+
+        aluno.disciplinas = aluno.disciplinas || [];
+        let entry = aluno.disciplinas.find(d =>
+          d.semestre === CURRENT_SEM &&
+          ((codVal && d.codigo === codVal) || (discNameRaw && normStr(d.nome) === normStr(discNameRaw)))
+        );
+
+        if (!entry && createSubj) {
+          const finalName = (discNameRaw || codVal).toUpperCase();
+          const finalCod = codVal || normStr(finalName).slice(0, 6).replace(/\s+/g, '');
+          const isPrat = Boolean(map.mve && numOrNull(r[map.mve]) !== null);
+          entry = {
+            semestre: CURRENT_SEM,
+            semestreOrdem: semOrder(CURRENT_SEM),
+            disciplina: `${finalName} (${finalCod})`,
+            nome: finalName,
+            codigo: finalCod,
+            grupoEquivalente: finalName,
+            tipo: 'Profissional',
+            ciclo: 'Profissional',
+            militar: false,
+            ve: null, vc: null, vf: null, med: null, erp: null, ero: null, nf: null, notaEfetiva: null,
+            isParcial: true, isPratica: isPrat, mve: null,
+            situacao: 'Em Andamento (Parcial)', mediaTurma: null, delta: null
+          };
+          aluno.disciplinas.push(entry);
+        }
+        if (!entry) {
+          skippedNotFound++;
+          return;
+        }
+
+        if (map.ve && String(r[map.ve] ?? '').trim() !== '') entry.ve = numOrNull(r[map.ve]);
+        if (map.vc && String(r[map.vc] ?? '').trim() !== '') entry.vc = numOrNull(r[map.vc]);
+        if (map.vf && String(r[map.vf] ?? '').trim() !== '') {
+          entry.vf = numOrNull(r[map.vf]);
+          entry._manualNf = false;
+        }
+        if (map.mve && String(r[map.mve] ?? '').trim() !== '') entry.mve = numOrNull(r[map.mve]);
+        if (map.nf && String(r[map.nf] ?? '').trim() !== '') {
+          const nfVal = numOrNull(r[map.nf]);
+          if (nfVal !== null) {
+            entry.nf = nfVal;
+            entry._manualNf = true;
+          }
+        }
+        recomputeDisciplineEntry(entry);
+        updated++;
+      });
+
+      markGestaoDirty(true);
+      recalculateFullDataset();
+      impWs?.classList.add('hidden');
+      setGestaoStatus(
+        `Importação aplicada em ${CURRENT_SEM}: ${updated} nota(s) atualizada(s)` +
+        (skippedLockedSem ? ` · ${skippedLockedSem} linha(s) de semestres fechados ignoradas 🔒` : '') +
+        (skippedNotFound ? ` · ${skippedNotFound} sem correspondência.` : '.'),
+        updated > 0 ? 'ok' : 'warn'
+      );
+    });
+  }
 
   // Initial Run
   applyDeviceMode('auto');

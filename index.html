@@ -72,12 +72,18 @@
         <div class="space-y-1.5">
           <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-bold text-emerald-300">
             <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-            <span>Login via Supabase Auth + Bucket Privado</span>
+            <span>Login Multi-Turma • Visualizador / Gestor / Super Admin</span>
           </div>
-          <h2 class="text-base sm:text-lg font-extrabold text-white pt-1">Entrar na Turma 2026</h2>
+          <h2 id="authHeadingTitle" class="text-base sm:text-lg font-extrabold text-white pt-1">Entrar no Painel</h2>
           <p class="text-xs text-slate-400 leading-relaxed">
-            Os dados reais dos alunos não ficam expostos no GitHub. Faça login com uma conta autorizada ou teste o painel no Modo Demo com dados fictícios.
+            Os dados reais das turmas ficam protegidos por RLS no Supabase. Entre com seu acesso ou teste o painel completo no Modo Demo com dados fictícios.
           </p>
+        </div>
+
+        <!-- Mode Toggle: Sign In vs First Access Signup (Whitelist) -->
+        <div class="grid grid-cols-2 gap-1 p-1 bg-slate-950/90 border border-slate-800 rounded-xl text-xs font-bold">
+          <button type="button" id="btnAuthTabSignIn" class="py-1.5 px-2 rounded-lg bg-blue-600 text-white transition">Já tenho conta</button>
+          <button type="button" id="btnAuthTabSignUp" class="py-1.5 px-2 rounded-lg text-slate-400 hover:text-white transition">Primeiro Acesso</button>
         </div>
 
         <!-- Status / Auto-session check banner -->
@@ -94,9 +100,10 @@
           </div>
           <div>
             <label for="loginPassword" class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
-            <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="loginPassword" required minlength="6" autocomplete="current-password" placeholder="••••••••" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
           </div>
 
+          <div id="loginInfo" class="hidden p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300 font-medium"></div>
           <div id="loginError" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-medium"></div>
           <div id="supabaseNotConfiguredNote" class="hidden p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 leading-relaxed">
             <strong>Supabase ainda não configurado:</strong> preencha <code>supabase-config.js</code> conforme o guia <code>SUPABASE_SETUP.md</code>, ou use o <strong>Modo Demo</strong> / <strong>Arquivo Local</strong> abaixo.
@@ -104,7 +111,7 @@
 
           <button type="submit" id="btnLoginSubmit" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
             <i data-lucide="log-in" class="w-4 h-4"></i>
-            <span>Entrar com Login</span>
+            <span id="btnLoginSubmitText">Entrar com Login</span>
           </button>
         </form>
 
@@ -151,8 +158,9 @@
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-extrabold text-base sm:text-xl tracking-tight text-white flex items-center gap-1.5 flex-wrap">
               <span>IME Analytics</span>
-              <span class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold">Turma 2026</span>
-              <span class="hidden xs:inline-block sm:inline-block text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">18/11</span>
+              <span id="headerTurmaBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold">Turma 28</span>
+              <select id="selectTurmaHeader" class="hidden text-[11px] bg-slate-900/90 border border-purple-500/40 rounded-full px-2.5 py-0.5 text-purple-300 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500" title="Super Admin: alternar turma"></select>
+              <span id="headerSemestreBadge" class="hidden xs:inline-block sm:inline-block text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">Sem. 3.2</span>
             </h1>
           </div>
           <p class="hidden sm:block text-xs text-slate-400 font-medium truncate">Painel Estratégico de Desempenho Acadêmico • Foco em Graduação</p>
@@ -244,7 +252,7 @@
         </button>
         <button data-tab="vf" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
-          <span>VF 3.2 (Risco &amp; Metas)</span>
+          <span id="tabVfLabel">VF 3.2 (Risco &amp; Metas)</span>
         </button>
         <button data-tab="disciplinas" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i>
@@ -257,6 +265,10 @@
         <button data-tab="estagio" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="briefcase" class="w-4 h-4 text-cyan-400"></i>
           <span>Estágio</span>
+        </button>
+        <button id="navTabGestaoBtn" data-tab="gestao" class="hidden tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-emerald-400 hover:text-emerald-200 hover:bg-emerald-500/10">
+          <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+          <span>Gestão &amp; Notas</span>
         </button>
       </nav>
     </div>
@@ -1306,6 +1318,292 @@
 
     </section>
 
+    <!-- TAB: GESTÃO DE NOTAS & MULTI-TURMA (GESTOR / SUPER ADMIN) -->
+    <section id="tab-gestao" class="tab-content hidden space-y-6 animate-fade-in">
+
+      <!-- Top Governance Banner -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2 flex-wrap">
+              <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
+              <span>Gestão de Notas &amp; Importação</span>
+              <span id="gestaoRolePill" class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">Gestor</span>
+              <span id="gestaoSemestreLockPill" class="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold">Semestre Editável: 3.2</span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-1">
+              Importe notas de planilhas (<strong class="text-slate-200">.xlsx, .xls, .csv, .json, data.js</strong>) ou edite diretamente na grade estilo Excel.
+              <span class="text-amber-300 font-semibold">Semestres anteriores permanecem bloqueados (🔒) para preservar o histórico consolidado.</span>
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <span id="gestaoDirtyBadge" class="hidden text-[11px] px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold">Alterações não salvas</span>
+            <button id="btnGestaoDownloadModel" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5" title="Baixar planilha Excel pronta com os alunos e disciplinas do semestre atual">
+              <i data-lucide="file-down" class="w-3.5 h-3.5 text-emerald-400"></i>
+              <span>Modelo .xlsx</span>
+            </button>
+            <button id="btnGestaoExportJson" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5" title="Baixar JSON atualizado desta turma">
+              <i data-lucide="download" class="w-3.5 h-3.5 text-sky-400"></i>
+              <span>Baixar data.json</span>
+            </button>
+            <button id="btnGestaoPublish" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>
+              <span id="btnGestaoPublishLabel">Salvar no Supabase</span>
+            </button>
+          </div>
+        </div>
+        <div id="gestaoStatusBanner" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+      </div>
+
+      <!-- Super Admin Controls (Multi-Turma + Semestre Atual + Usuários) -->
+      <div id="superAdminPanel" class="hidden glass-panel p-5 rounded-2xl border border-purple-500/30 space-y-5">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="text-sm font-bold text-purple-300 flex items-center gap-2">
+              <i data-lucide="crown" class="w-4 h-4 text-purple-400"></i>
+              <span>Administração Geral (Super Admin)</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">Gerencie múltiplas turmas, defina o semestre aberto para edição em cada turma e controle quem é Visualizador, Gestor ou Super Admin.</p>
+          </div>
+          <span id="saDemoNotice" class="hidden text-[11px] px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">Prévia em Modo Demo (somente simulação local)</span>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <!-- Turmas & Semestre Atual -->
+          <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3.5">
+            <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="layers" class="w-3.5 h-3.5 text-purple-400"></i>
+              <span>Turmas &amp; Semestre Atual Editável</span>
+            </h4>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] text-slate-400 mb-1">Semestre editável da turma atual</label>
+                <input type="text" id="saSemestreAtualInput" placeholder="Ex: 3.2" class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500">
+              </div>
+              <button id="btnSaSaveSemestre" class="py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition">
+                Definir Semestre
+              </button>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800/80 space-y-2">
+              <div class="text-[11px] font-semibold text-slate-300">Criar Nova Turma</div>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <input type="text" id="saNewTurmaId" placeholder="ID (ex: turma_29)" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <input type="text" id="saNewTurmaNome" placeholder="Nome (ex: Turma 29)" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <input type="text" id="saNewTurmaSem" value="1.1" placeholder="Sem. atual (1.1)" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-purple-500">
+              </div>
+              <button id="btnSaCreateTurma" class="w-full sm:w-auto px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-purple-300 text-xs font-bold transition">
+                + Criar Turma &amp; Inicializar JSON
+              </button>
+            </div>
+          </div>
+
+          <!-- Permissões & Whitelist -->
+          <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
+                <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Usuários &amp; Pré-Autorizações (Whitelist)</span>
+              </h4>
+              <button id="btnSaRefreshUsers" class="text-[11px] text-purple-300 hover:text-purple-200 font-semibold">Atualizar lista</button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
+              <input type="email" id="saWlEmail" placeholder="email@ime.eb.br" class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <select id="saWlRole" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="viewer">Visualizador</option>
+                <option value="gestor">Gestor Turma</option>
+                <option value="super_admin">Super Admin</option>
+              </select>
+              <select id="saWlTurma" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="btnSaAddWhitelist" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+                Autorizar E-mail (Primeiro Acesso)
+              </button>
+              <button id="btnSaBatchWhitelist" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition">
+                Colar Vários E-mails...
+              </button>
+            </div>
+            <div id="saBatchBox" class="hidden space-y-2 pt-1">
+              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 e-mail por linha (todos receberão o papel e turma selecionados acima)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+              <button id="btnSaSubmitBatch" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Adicionar em Lote</button>
+            </div>
+
+            <div id="saUsersList" class="max-h-40 overflow-y-auto divide-y divide-slate-800/70 rounded-xl border border-slate-800 bg-slate-950/60 text-xs">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Multi-Format Grade Importer -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="upload-cloud" class="w-4 h-4 text-sky-400"></i>
+              <span>1. Importar Arquivo de Notas (.xlsx, .xls, .csv, .ods, .json, data.js)</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Planilhas podem ter qualquer ordem de colunas — mapeie os campos abaixo e importe apenas para o semestre editável atual (<strong id="impSemAtualLabel" class="text-amber-300">3.2</strong>).
+            </p>
+          </div>
+          <label class="px-3.5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-sm">
+            <i data-lucide="folder-up" class="w-3.5 h-3.5"></i>
+            <span>Selecionar Arquivo</span>
+            <input type="file" id="gestaoImportFileInput" accept=".xlsx,.xls,.csv,.tsv,.ods,.json,.js" class="hidden">
+          </label>
+        </div>
+
+        <!-- Mapper & Preview (Hidden until file loaded) -->
+        <div id="gestaoImportWorkspace" class="hidden space-y-4 pt-3 border-t border-slate-800">
+          <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+            <div id="impFileSummary" class="text-slate-300 font-semibold"></div>
+            <div class="flex items-center gap-2">
+              <label for="impSheetSelect" class="text-slate-400 hidden" id="impSheetSelectLabel">Aba:</label>
+              <select id="impSheetSelect" class="hidden text-xs bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1 text-slate-200"></select>
+              <button id="btnImpCancel" class="text-xs text-slate-400 hover:text-white px-2 py-1">Fechar arquivo</button>
+            </div>
+          </div>
+
+          <div id="impSpreadsheetMapper" class="space-y-3">
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2.5 text-xs">
+              <div><label class="block text-[10px] text-slate-400 mb-1">Matrícula / Nº</label><select data-map="numero" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">Nome do Aluno</label><select data-map="nome" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">Cód. Disciplina</label><select data-map="codigo" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">Nome Disciplina</label><select data-map="disciplina" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">Semestre (opcional)</label><select data-map="semestre" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">Curso (se aluno novo)</label><select data-map="curso" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">VE</label><select data-map="ve" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">VC</label><select data-map="vc" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">VF</label><select data-map="vf" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">NF (Final)</label><select data-map="nf" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">MVE (Prática)</label><select data-map="mve" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+              <div><label class="block text-[10px] text-slate-400 mb-1">Vínculo</label><select data-map="vinculo" class="imp-col-map w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 text-xs"></select></div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-4 text-xs text-slate-300">
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="impCreateMissingSubjects" checked class="rounded border-slate-600 bg-slate-900 text-sky-500">
+                <span>Cadastrar matrícula/disciplina no semestre atual se ainda não existir para o aluno</span>
+              </label>
+              <label class="inline-flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" id="impCreateMissingStudents" class="rounded border-slate-600 bg-slate-900 text-sky-500">
+                <span>Cadastrar aluno novo caso não exista</span>
+              </label>
+            </div>
+          </div>
+
+          <div id="impJsonOptions" class="hidden p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2 text-xs text-slate-300">
+            <div id="impJsonInfo"></div>
+            <label id="impSaFullReplaceWrap" class="hidden inline-flex items-center gap-2 cursor-pointer text-purple-300 font-semibold">
+              <input type="checkbox" id="impSaFullReplace" class="rounded border-purple-500 bg-slate-900 text-purple-500">
+              <span>Super Admin: substituir dataset histórico completo (todos os semestres deste JSON)</span>
+            </label>
+          </div>
+
+          <div id="impPreviewTableWrap" class="overflow-x-auto max-h-48 rounded-xl border border-slate-800 text-[11px]"></div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <div id="impMatchReport" class="text-xs text-slate-400"></div>
+            <button id="btnImpApply" class="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition flex items-center gap-1.5">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>Aplicar Importação</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Excel-like Live Grade Editor (Locked to CURRENT_SEM) -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="table-2" class="w-4 h-4 text-emerald-400"></i>
+              <span>2. Planilha Interativa de Notas</span>
+            </h3>
+            <p class="text-[11px] text-slate-400 mt-0.5">
+              Navegue com <kbd class="px-1 py-0.5 bg-slate-800 rounded text-[10px]">Tab</kbd> ou <kbd class="px-1 py-0.5 bg-slate-800 rounded text-[10px]">↑ ↓</kbd>. Semestres fechados ficam em modo somente leitura (🔒).
+            </p>
+          </div>
+
+          <!-- Semester Lock Selector Pills -->
+          <div id="gestaoSemestrePills" class="flex flex-wrap items-center gap-1.5 text-xs"></div>
+        </div>
+
+        <!-- View Mode & Filters -->
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-800">
+          <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
+            <div class="flex items-center gap-1 p-1 bg-slate-900 border border-slate-700 rounded-xl text-xs font-bold">
+              <button type="button" data-gmode="disciplina" class="gestao-mode-btn active px-2.5 py-1 rounded-lg bg-blue-600 text-white transition">Por Disciplina</button>
+              <button type="button" data-gmode="aluno" class="gestao-mode-btn px-2.5 py-1 rounded-lg text-slate-400 hover:text-white transition">Por Aluno</button>
+            </div>
+
+            <select id="gestaoDisciplinaSelect" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-semibold max-w-xs truncate focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+            <select id="gestaoAlunoSelect" class="hidden text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-semibold max-w-xs truncate focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+
+            <input type="text" id="gestaoSearchInput" placeholder="Filtrar linha..." class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 w-44 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnGestaoAddSubjectToggle" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-300 text-xs font-bold transition">
+              + Disciplina (<span id="lblGestaoCurSemBtn">3.2</span>)
+            </button>
+            <button id="btnGestaoAddStudentToggle" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-sky-300 text-xs font-bold transition">
+              + Aluno
+            </button>
+          </div>
+        </div>
+
+        <!-- Inline Add Subject Drawer -->
+        <form id="gestaoAddSubjectForm" class="hidden p-4 rounded-xl bg-slate-900/80 border border-emerald-500/30 grid grid-cols-1 sm:grid-cols-6 gap-2.5 text-xs items-end">
+          <div><label class="block text-[10px] text-slate-400 mb-1">Código</label><input type="text" id="newSubjCodigo" required placeholder="09399" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-100"></div>
+          <div class="sm:col-span-2"><label class="block text-[10px] text-slate-400 mb-1">Nome da Disciplina</label><input type="text" id="newSubjNome" required placeholder="SISTEMAS DIGITAIS" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-100"></div>
+          <div><label class="block text-[10px] text-slate-400 mb-1">Curso Alvo</label><select id="newSubjCurso" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-100"></select></div>
+          <div><label class="block text-[10px] text-slate-400 mb-1">Tipo</label><select id="newSubjTipo" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-100"><option value="Profissional">Profissional</option><option value="Básico">Básico</option><option value="Militar">Militar</option><option value="Prática">Prática (MVE)</option></select></div>
+          <button type="submit" class="py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold">Matricular</button>
+        </form>
+
+        <!-- Inline Add Student Drawer -->
+        <form id="gestaoAddStudentForm" class="hidden p-4 rounded-xl bg-slate-900/80 border border-sky-500/30 grid grid-cols-1 sm:grid-cols-5 gap-2.5 text-xs items-end">
+          <div><label class="block text-[10px] text-slate-400 mb-1">Matrícula / Nº</label><input type="number" id="newStudNumero" required placeholder="30999" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-100"></div>
+          <div class="sm:col-span-2"><label class="block text-[10px] text-slate-400 mb-1">Nome de Guerra / Completo</label><input type="text" id="newStudNome" required placeholder="SOBRENOME" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-100"></div>
+          <div><label class="block text-[10px] text-slate-400 mb-1">Especialidade</label><select id="newStudCurso" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-2.5 py-1.5 text-slate-100"></select></div>
+          <div class="flex gap-2">
+            <select id="newStudVinculo" class="flex-1 bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-100"><option value="Ativa">Ativa</option><option value="Reserva">Reserva</option><option value="CG">CG</option></select>
+            <button type="submit" class="py-1.5 px-3 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-bold">Adicionar</button>
+          </div>
+        </form>
+
+        <!-- Spreadsheet Grid -->
+        <div id="gestaoLockAlert" class="hidden p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-300 font-semibold flex items-center gap-2">
+          <i data-lucide="lock" class="w-4 h-4 shrink-0"></i>
+          <span>Visualizando semestre histórico fechado — edição desabilitada. Selecione o semestre atual (<strong id="gestaoLockSemSpan">3.2</strong>) para editar.</span>
+        </div>
+
+        <div class="overflow-x-auto max-h-[520px] rounded-xl border border-slate-800 bg-slate-950/50">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="sticky top-0 z-10 bg-slate-900 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+              <tr>
+                <th class="py-2.5 px-3" id="thGestaoMainCol">Aluno / Curso</th>
+                <th class="py-2.5 px-2 text-center w-20">VE</th>
+                <th class="py-2.5 px-2 text-center w-20">VC</th>
+                <th class="py-2.5 px-2 text-center w-20">VF</th>
+                <th class="py-2.5 px-2 text-center w-20">MVE</th>
+                <th class="py-2.5 px-2 text-center w-20">NF</th>
+                <th class="py-2.5 px-3 text-center">Situação / VF Nec.</th>
+              </tr>
+            </thead>
+            <tbody id="gestaoGridBody" class="divide-y divide-slate-800/60 font-medium">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
   </main>
 
   <!-- MODAL: FICHA COMPLETA DO ALUNO -->
@@ -1532,15 +1830,20 @@
       <i data-lucide="briefcase" class="w-4 h-4"></i>
       <span class="text-[9.5px] leading-tight">Estágio</span>
     </button>
+    <button id="mobileNavGestaoBtn" data-tab="gestao" class="hidden mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-emerald-400 font-semibold transition">
+      <i data-lucide="file-spreadsheet" class="w-4 h-4"></i>
+      <span class="text-[9.5px] leading-tight">Notas</span>
+    </button>
   </nav>
   </div> <!-- /#appShell -->
 
-  <!-- 1. Supabase SDK & Public Config -->
+  <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase-config.js?v=20261118t"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="supabase-config.js?v=20261118u"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261118t"></script>
+  <script src="demo-data.js?v=20261118u"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261118t"></script>
+  <script src="app.js?v=20261118u"></script>
 </body>
 </html>

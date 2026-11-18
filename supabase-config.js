@@ -9,5 +9,5 @@ window.SUPABASE_CONFIG = {
   url: '',
   anonKey: '',
   bucket: 'ime-private',
-  objectPath: 'data.json'
+  objectPath: 'turma_28/data.json'
 };
