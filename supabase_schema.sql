@@ -197,7 +197,10 @@ create trigger on_auth_user_created_whitelist
 after insert on auth.users
 for each row execute function public.handle_allowed_signup();
 
--- 10. Dados iniciais de exemplo (Turma 28)
-insert into public.turmas (id, nome, semestre_atual, storage_path)
-values ('turma_28', 'Turma 28', '3.2', 'turma_28/data.json')
+-- 10. Turmas iniciais (Turma 28 atual até Turma 31 que entra ano que vem)
+insert into public.turmas (id, nome, semestre_atual, storage_path) values
+  ('turma_28', 'Turma 28', '3.2', 'turma_28/data.json'),
+  ('turma_29', 'Turma 29', '2.2', 'turma_29/data.json'),
+  ('turma_30', 'Turma 30', '1.2', 'turma_30/data.json'),
+  ('turma_31', 'Turma 31', '1.1', 'turma_31/data.json')
 on conflict (id) do nothing;

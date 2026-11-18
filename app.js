@@ -99,6 +99,49 @@ document.addEventListener('DOMContentLoaded', () => {
   );
   const sbClient = isSupabaseConfigured ? window.supabase.createClient(sbCfg.url, sbCfg.anonKey) : null;
 
+  const DEFAULT_CURSOS_IME = [
+    'Computação', 'Mecânica de Automóveis', 'Química', 'Elétrica', 'Materiais',
+    'Cartografia', 'Mecânica de Armamento', 'Fortificação e Construção', 'Eletrônica', 'Comunicações'
+  ];
+
+  function buildSemesterOrder(sem) {
+    const parts = String(sem || '').split('.');
+    const ano = parseInt(parts[0], 10);
+    const per = parseInt(parts[1], 10);
+    if (isNaN(ano)) return 99;
+    return ano * 2 - (per === 1 ? 1 : 0);
+  }
+
+  function createEmptyTurmaDataset(turmaObj, baseCursos = DEFAULT_CURSOS_IME) {
+    const nome = turmaObj?.nome || 'Nova Turma';
+    const curSem = turmaObj?.semestre_atual || '1.1';
+    const maxOrd = buildSemesterOrder(curSem);
+    const sems = ['1.1', '1.2', '2.1', '2.2', '3.1', '3.2'].filter(s => buildSemesterOrder(s) <= maxOrd);
+    if (!sems.includes(curSem)) sems.push(curSem);
+    const sNomes = {};
+    sems.forEach(s => { sNomes[s] = `${buildSemesterOrder(s)}º Semestre (${s})`; });
+    return {
+      metadata: {
+        titulo: `Dashboard de Desempenho Acadêmico e Militar • ${nome}`,
+        turma: nome,
+        semestreAtual: curSem,
+        totalAlunos: 0,
+        totalDisciplinas: 0,
+        mediaGraduacaoTurma: 0,
+        mediaGeralTurma: 0,
+        mediaMilitarTurma: 0,
+        cursos: [...baseCursos],
+        semestres: sems,
+        semestresNomes: sNomes,
+        vinculos: { Ativa: 0, Reserva: 0, CG: 0 }
+      },
+      cursosComparativo: [],
+      semestresBenchmark: [],
+      disciplinas: [],
+      alunos: []
+    };
+  }
+
   async function resolveSupabaseSessionAndLoad(sb, user) {
     const bucket = sbCfg.bucket || 'ime-private';
     let role = 'viewer';
@@ -157,24 +200,32 @@ document.addEventListener('DOMContentLoaded', () => {
       turmas = [activeTurma];
     }
 
-    // 3. Baixar JSON do bucket privado (com fallback para data.json raiz se bucket legado)
+    // 3. Baixar JSON do bucket privado (fallback 'data.json' legado apenas para turma_28)
     const objectPath = activeTurma.storage_path || `${activeTurma.id}/data.json`;
     let { data, error } = await sb.storage.from(bucket).download(objectPath);
-    if (error && objectPath !== 'data.json') {
+    if (error && activeTurma.id === 'turma_28' && objectPath !== 'data.json') {
       const fb = await sb.storage.from(bucket).download('data.json');
       if (!fb.error && fb.data) {
         data = fb.data;
         error = null;
       }
     }
-    if (error) {
-      throw new Error(error.message || `Não foi possível baixar ${objectPath} no bucket privado.`);
-    }
 
-    const text = await data.text();
-    const parsed = JSON.parse(text);
-    if (!parsed || !Array.isArray(parsed.alunos)) {
-      throw new Error('Arquivo JSON inválido no bucket privado.');
+    let parsed = null;
+    let isStarterEmpty = false;
+    if (error) {
+      if (role === 'gestor' || role === 'super_admin') {
+        parsed = createEmptyTurmaDataset(activeTurma);
+        isStarterEmpty = true;
+      } else {
+        throw new Error(`A turma "${activeTurma.nome}" ainda não possui notas publicadas.`);
+      }
+    } else {
+      const text = await data.text();
+      parsed = JSON.parse(text);
+      if (!parsed || !Array.isArray(parsed.alunos)) {
+        throw new Error('Arquivo JSON inválido no bucket privado.');
+      }
     }
 
     return {
@@ -189,7 +240,8 @@ document.addEventListener('DOMContentLoaded', () => {
         semestreAtual: activeTurma.semestre_atual || parsed.metadata?.semestreAtual || '3.2',
         storagePath: objectPath,
         bucket,
-        sb
+        sb,
+        isStarterEmpty
       }
     };
   }
@@ -279,18 +331,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  function launchDemoMode(requestedId = null) {
+    const demoMap = window.IME_DEMO_TURMAS || {
+      turma_28: window.IME_DEMO_DATA
+    };
+    const turmasMeta = [
+      { id: 'turma_28', nome: 'Turma 28', semestre_atual: '3.2' },
+      { id: 'turma_29', nome: 'Turma 29', semestre_atual: '2.2' },
+      { id: 'turma_30', nome: 'Turma 30', semestre_atual: '1.2' },
+      { id: 'turma_31', nome: 'Turma 31', semestre_atual: '1.1' }
+    ].filter(t => Boolean(demoMap[t.id]));
+
+    let activeId = requestedId;
+    if (!activeId || !demoMap[activeId]) activeId = turmasMeta[0]?.id || 'turma_28';
+    try { sessionStorage.setItem('ime_demo_turma', activeId); } catch {}
+    const activeTurma = turmasMeta.find(t => t.id === activeId) || { id: 'turma_28', nome: 'Turma 28', semestre_atual: '3.2' };
+    const ds = structuredClone(demoMap[activeId] || window.IME_DEMO_DATA);
+    startDashboard(ds, {
+      mode: 'demo',
+      role: 'demo',
+      turma: activeTurma,
+      turmas: turmasMeta,
+      semestreAtual: activeTurma.semestre_atual
+    });
+  }
+
+  // Se o usuário trocou de turma dentro do Modo Demo, recarrega direto no Demo da turma escolhida
+  try {
+    const savedDemoTurma = sessionStorage.getItem('ime_demo_turma');
+    if (savedDemoTurma && window.IME_DEMO_DATA) {
+      launchDemoMode(savedDemoTurma);
+    }
+  } catch {}
+
   document.getElementById('btnEnterDemo')?.addEventListener('click', () => {
     if (!window.IME_DEMO_DATA) {
       showLoginError('Dataset Demo não encontrado.');
       return;
     }
-    startDashboard(structuredClone(window.IME_DEMO_DATA), {
-      mode: 'demo',
-      role: 'demo',
-      turma: { id: 'demo', nome: 'Demo Fictícia', semestre_atual: '3.2' },
-      turmas: [{ id: 'demo', nome: 'Demo Fictícia', semestre_atual: '3.2' }],
-      semestreAtual: '3.2'
-    });
+    launchDemoMode('turma_28');
   });
 
   const localFileInput = document.getElementById('localDataFileInput');
@@ -360,18 +439,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Header Turma Switcher (Super Admin com múltiplas turmas)
+    // Header Turma Switcher (Super Admin ou prévia Multi-Turma em Modo Demo)
     const selectTurmaHeader = document.getElementById('selectTurmaHeader');
     const headerTurmaBadge = document.getElementById('headerTurmaBadge');
     const headerSemestreBadge = document.getElementById('headerSemestreBadge');
-    if (IS_SUPER_ADMIN && VISIBLE_TURMAS.length > 0 && selectTurmaHeader) {
+    if ((IS_SUPER_ADMIN || sessionMeta.mode === 'demo') && VISIBLE_TURMAS.length > 0 && selectTurmaHeader) {
       selectTurmaHeader.innerHTML = VISIBLE_TURMAS.map(t =>
         `<option value="${t.id}" ${t.id === ACTIVE_TURMA.id ? 'selected' : ''}>${t.nome} (${t.semestre_atual})</option>`
       ).join('');
       selectTurmaHeader.classList.remove('hidden');
       headerTurmaBadge?.classList.add('hidden');
       selectTurmaHeader.addEventListener('change', (e) => {
-        try { sessionStorage.setItem('ime_super_turma', e.target.value); } catch {}
+        try {
+          if (sessionMeta.mode === 'demo') sessionStorage.setItem('ime_demo_turma', e.target.value);
+          else sessionStorage.setItem('ime_super_turma', e.target.value);
+        } catch {}
         window.location.reload();
       });
     } else if (headerTurmaBadge) {
@@ -413,7 +495,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
     btnAuthAction?.addEventListener('click', async () => {
-      try { sessionStorage.removeItem('ime_super_turma'); } catch {}
+      try {
+        sessionStorage.removeItem('ime_super_turma');
+        sessionStorage.removeItem('ime_demo_turma');
+      } catch {}
       if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
         try { await sessionMeta.sb.auth.signOut(); } catch {}
       }
@@ -1041,8 +1126,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
         </span>
         <div>
-          <div class="text-xs font-bold text-slate-100">Situação na VF do 3.2 (mín. 4,00 e média ≥ 5,00)</div>
-          <div class="text-[11px] text-slate-400">Clique em uma faixa para abrir os cartões direto na aba VF 3.2</div>
+          <div class="text-xs font-bold text-slate-100">Situação na VF do ${CURRENT_SEM} (mín. 4,00 e média ≥ 5,00)</div>
+          <div class="text-[11px] text-slate-400">Clique em uma faixa para abrir os cartões direto na aba VF ${CURRENT_SEM}</div>
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2 text-xs font-bold font-mono-numbers">
@@ -1068,7 +1153,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const top3 = [...filteredAlunos].sort((a, b) => a.rankGraduacao - b.rankGraduacao).slice(0, 3);
     
     if (top3.length === 0) {
-      container.innerHTML = `<div class="col-span-3 text-center py-6 text-slate-500">Nenhum aluno encontrado para os filtros selecionados.</div>`;
+      if (DATA.alunos.length === 0) {
+        container.innerHTML = `<div class="col-span-3 glass-panel p-6 rounded-2xl border border-amber-500/30 text-center space-y-2">
+          <div class="text-sm font-bold text-amber-300">${escapeHtml(ACTIVE_TURMA.nome)} (Semestre ${escapeHtml(CURRENT_SEM)}) ainda sem notas lançadas</div>
+          <p class="text-xs text-slate-400">${CAN_MANAGE_GRADES ? 'Acesse a aba <strong>Gestão &amp; Notas</strong> para importar uma planilha (.xlsx/.csv) ou cadastrar os alunos.' : 'Aguardando o gestor publicar os primeiros dados desta turma.'}</p>
+        </div>`;
+      } else {
+        container.innerHTML = `<div class="col-span-3 text-center py-6 text-slate-500">Nenhum aluno encontrado para os filtros selecionados.</div>`;
+      }
       return;
     }
 
@@ -2726,12 +2818,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const a1 = DATA.alunos.find(a => a.numero === state.comparatorA) || DATA.alunos[0];
     const a2 = DATA.alunos.find(a => a.numero === state.comparatorB) || DATA.alunos[1];
 
+    const cardsContainer = document.getElementById('comparatorComparisonCards');
+    if (!a1 || !a2) {
+      if (cardsContainer) {
+        cardsContainer.innerHTML = `<div class="col-span-2 p-6 text-center text-xs text-slate-400">É necessário ter pelo menos 2 alunos cadastrados nesta turma para comparar 1x1.</div>`;
+      }
+      if (chartComparatorInstance) {
+        chartComparatorInstance.destroy();
+        chartComparatorInstance = null;
+      }
+      return;
+    }
+
     const inp1 = document.getElementById('searchAluno1');
     const inp2 = document.getElementById('searchAluno2');
     if (inp1 && document.activeElement !== inp1) inp1.value = formatAlunoLabel(a1);
     if (inp2 && document.activeElement !== inp2) inp2.value = formatAlunoLabel(a2);
 
-    const cardsContainer = document.getElementById('comparatorComparisonCards');
     if (cardsContainer) {
       cardsContainer.innerHTML = [a1, a2].map((aluno, idx) => {
         const color = idx === 0 ? 'text-blue-400' : 'text-emerald-400';
@@ -5101,26 +5204,10 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       const storagePath = `${id}/data.json`;
-      const starterData = {
-        metadata: {
-          titulo: `Dashboard de Desempenho Acadêmico e Militar • ${nome}`,
-          turma: nome,
-          semestreAtual: sem,
-          totalAlunos: 0,
-          totalDisciplinas: 0,
-          mediaGraduacaoTurma: 0,
-          mediaGeralTurma: 0,
-          mediaMilitarTurma: 0,
-          cursos: [...(DATA.metadata?.cursos || [])],
-          semestres: [sem],
-          semestresNomes: { [sem]: `${semOrder(sem)}º Semestre (${sem})` },
-          vinculos: { Ativa: 0, Reserva: 0, CG: 0 }
-        },
-        cursosComparativo: [],
-        semestresBenchmark: [],
-        disciplinas: [],
-        alunos: []
-      };
+      const starterData = createEmptyTurmaDataset(
+        { id, nome, semestre_atual: sem },
+        DATA.metadata?.cursos || DEFAULT_CURSOS_IME
+      );
       const { error: tErr } = await sessionMeta.sb.from('turmas').insert({
         id, nome, semestre_atual: sem, storage_path: storagePath
       });
