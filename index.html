@@ -123,8 +123,12 @@
           <span>Comparador de Cursos (Evolução)</span>
         </button>
         <button data-tab="rankings" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
-          <i data-lucide="trophy" class="w-4 h-4 text-amber-400"></i>
-          <span>Ranking dos Alunos (86)</span>
+          <i data-lucide="users" class="w-4 h-4 text-sky-400"></i>
+          <span>Fichas dos Alunos (86)</span>
+        </button>
+        <button data-tab="vf" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+          <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
+          <span>VF 3.2 (Risco &amp; Metas)</span>
         </button>
         <button data-tab="disciplinas" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="book-open" class="w-4 h-4 text-purple-400"></i>
@@ -537,7 +541,7 @@
             <input 
               type="text" 
               id="tableSearchInput" 
-              placeholder="Buscar aluno na tabela..." 
+              placeholder="Buscar aluno para abrir a ficha..." 
               class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
           </div>
@@ -568,11 +572,6 @@
           </div>
         </div>
 
-      </div>
-
-      <!-- Radar de Risco de Recuperação (VF 3.2) -->
-      <div id="vfRiskRadarPanel" class="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-3">
-        <!-- Populated by JS -->
       </div>
 
       <!-- Mobile-Optimized Ranking Cards View -->
@@ -663,6 +662,30 @@
           <div class="flex items-center gap-1" id="paginationButtons"></div>
         </div>
 
+      </div>
+
+    </section>
+
+    <!-- TAB: VF 3.2 (RISCO & METAS) -->
+    <section id="tab-vf" class="tab-content hidden space-y-6 animate-fade-in">
+      
+      <!-- Radar de Risco de Recuperação (VF 3.2) -->
+      <div id="vfRiskRadarPanel" class="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-4">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Disciplinas 3.2 por Pressão na VF -->
+      <div class="glass-panel p-4 sm:p-5 rounded-2xl border border-slate-800 space-y-3">
+        <div>
+          <h3 class="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-2">
+            <i data-lucide="flame" class="w-4 h-4 text-rose-400"></i>
+            Disciplinas do 3.2 por Pressão na VF
+          </h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Ordenadas pela maior média de nota necessária na VF entre as matérias ainda sem VF lançada</p>
+        </div>
+        <div id="vfDisciplinesPanel" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <!-- Populated by JS -->
+        </div>
       </div>
 
     </section>
@@ -1110,23 +1133,27 @@
       <i data-lucide="line-chart" class="w-5 h-5"></i>
       <span class="text-[11px]">Cursos</span>
     </button>
-    <button data-tab="rankings" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-xl text-slate-400 font-semibold transition">
-      <i data-lucide="trophy" class="w-5 h-5"></i>
-      <span class="text-[11px]">Ranking</span>
+    <button data-tab="rankings" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl text-slate-400 font-semibold transition">
+      <i data-lucide="users" class="w-5 h-5"></i>
+      <span class="text-[10px]">Fichas</span>
     </button>
-    <button data-tab="disciplinas" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-xl text-slate-400 font-semibold transition">
+    <button data-tab="vf" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl text-slate-400 font-semibold transition">
+      <i data-lucide="target" class="w-5 h-5"></i>
+      <span class="text-[10px]">VF 3.2</span>
+    </button>
+    <button data-tab="disciplinas" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="book-open" class="w-5 h-5"></i>
-      <span class="text-[11px]">Matérias</span>
+      <span class="text-[10px]">Matérias</span>
     </button>
-    <button data-tab="comparator" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2.5 rounded-xl text-slate-400 font-semibold transition">
+    <button data-tab="comparator" class="mobile-nav-btn flex flex-col items-center gap-1 py-1.5 px-2 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="git-compare" class="w-5 h-5"></i>
-      <span class="text-[11px]">1 x 1</span>
+      <span class="text-[10px]">1 x 1</span>
     </button>
   </nav>
 
   <!-- 1. Embedded Processed Dataset -->
-  <script src="data.js?v=20261118f"></script>
+  <script src="data.js?v=20261118g"></script>
   <!-- 2. Application Logic -->
-  <script src="app.js?v=20261118f"></script>
+  <script src="app.js?v=20261118g"></script>
 </body>
 </html>

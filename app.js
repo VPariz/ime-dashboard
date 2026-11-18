@@ -19,6 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
     filterCurso: 'ALL',
     filterVinculo: 'ALL',
     vfRiskFilter: 'ALL',
+    vfSearch: '',
     tableSearch: '',
     sortColumn: 'rankGraduacao',
     sortAsc: true,
@@ -380,6 +381,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderPodium();
     updateOverviewCharts();
     renderRankingsTable();
+    if (state.currentTab === 'vf') {
+      renderVfTab();
+    }
     updateFilterResetButton();
   }
 
@@ -1364,14 +1368,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }).join('');
   }
 
-  function renderVfRiskRadar() {
+  function renderVfTab() {
     const panel = document.getElementById('vfRiskRadarPanel');
+    const discPanel = document.getElementById('vfDisciplinesPanel');
     if (!panel) return;
 
-    const riskList = filteredAlunos.filter(a => a.vfRiskLevel === 'risk').sort((a, b) => b.maxVf32 - a.maxVf32);
-    const warnList = filteredAlunos.filter(a => a.vfRiskLevel === 'warn').sort((a, b) => b.maxVf32 - a.maxVf32);
-    const midList = filteredAlunos.filter(a => a.vfRiskLevel === 'mid').sort((a, b) => b.maxVf32 - a.maxVf32);
-    const safeList = filteredAlunos.filter(a => a.vfRiskLevel === 'safe');
+    const q = (state.vfSearch || '').trim().toLowerCase();
+    const baseAlumnos = q
+      ? filteredAlunos.filter(a => a.nome.toLowerCase().includes(q) || a.curso.toLowerCase().includes(q) || String(a.numero).includes(q))
+      : filteredAlunos;
+
+    const riskList = baseAlumnos.filter(a => a.vfRiskLevel === 'risk').sort((a, b) => b.maxVf32 - a.maxVf32);
+    const warnList = baseAlumnos.filter(a => a.vfRiskLevel === 'warn').sort((a, b) => b.maxVf32 - a.maxVf32);
+    const midList = baseAlumnos.filter(a => a.vfRiskLevel === 'mid').sort((a, b) => b.maxVf32 - a.maxVf32);
+    const safeList = baseAlumnos.filter(a => a.vfRiskLevel === 'safe').sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
     const pillCls = (key, activeBorder, activeBg, baseText) => {
       const active = state.vfRiskFilter === key;
@@ -1380,57 +1390,97 @@ document.addEventListener('DOMContentLoaded', () => {
         : `border-slate-800 bg-slate-900/60 hover:bg-slate-800/80 ${baseText}`;
     };
 
-    const highlightList = [...riskList, ...warnList].slice(0, 8);
+    const visibleList = (
+      state.vfRiskFilter === 'risk' ? riskList :
+      state.vfRiskFilter === 'warn' ? warnList :
+      state.vfRiskFilter === 'mid' ? midList :
+      state.vfRiskFilter === 'safe' ? safeList :
+      [...baseAlumnos].sort((a, b) => (b.maxVf32 ?? -1) - (a.maxVf32 ?? -1) || a.nome.localeCompare(b.nome, 'pt-BR'))
+    );
+
+    const cardStyleFor = (lvl) => {
+      if (lvl === 'risk') return { border: 'border-rose-500/35 bg-rose-500/5', badge: 'text-rose-400', tag: 'bg-rose-500/15 text-rose-300 border-rose-500/30' };
+      if (lvl === 'warn') return { border: 'border-amber-500/30 bg-amber-500/5', badge: 'text-amber-300', tag: 'bg-amber-500/15 text-amber-300 border-amber-500/30' };
+      if (lvl === 'mid') return { border: 'border-sky-500/25 bg-sky-500/5', badge: 'text-sky-300', tag: 'bg-sky-500/15 text-sky-300 border-sky-500/30' };
+      return { border: 'border-emerald-500/20 bg-emerald-500/5', badge: 'text-emerald-400', tag: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30' };
+    };
 
     panel.innerHTML = `
       <div class="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 class="text-xs sm:text-sm font-bold text-slate-100 flex items-center gap-2">
-            <i data-lucide="alert-triangle" class="w-4 h-4 text-amber-400"></i>
-            Radar de Risco de Recuperação (VF 3.2)
+          <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+            <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
+            Radar de VF Necessária — Semestre 3.2
           </h3>
-          <p class="text-[11px] text-slate-400 mt-0.5">Clique em uma faixa para filtrar a lista abaixo (mín. 4,00 na VF e média ≥ 5,00)</p>
+          <p class="text-[11px] text-slate-400 mt-0.5">Mínimo 4,00 na VF e média ≥ 5,00 (VE×1 + VC×1 + VF×2). Clique em um grupo para exibir todos os alunos da faixa, ou clique no cartão para abrir a ficha.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
-          <button data-vfrisk="ALL" class="px-2.5 py-1 rounded-xl border transition ${state.vfRiskFilter === 'ALL' ? 'border-blue-500 bg-blue-500/20 text-blue-300' : 'border-slate-700 bg-slate-900 text-slate-400 hover:text-white'}">
-            Todos (${filteredAlunos.length})
-          </button>
-          <button data-vfrisk="safe" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('safe', 'border-emerald-500', 'bg-emerald-500/20', 'text-emerald-300')}">
-            Tranquilos ≤ 4.00 (${safeList.length})
-          </button>
-          <button data-vfrisk="mid" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('mid', 'border-sky-500', 'bg-sky-500/20', 'text-sky-300')}">
-            4.01–5.00 (${midList.length})
-          </button>
-          <button data-vfrisk="warn" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('warn', 'border-amber-500', 'bg-amber-500/20', 'text-amber-300')}">
-            Atenção 5.01–6.00 (${warnList.length})
-          </button>
-          <button data-vfrisk="risk" class="px-2.5 py-1 rounded-xl border transition font-mono-numbers ${pillCls('risk', 'border-rose-500', 'bg-rose-500/20', 'text-rose-300')}">
-            Risco &gt; 6.00 (${riskList.length})
-          </button>
+        <div class="relative w-full sm:w-56">
+          <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400"></i>
+          <input type="text" id="vfSearchInput" value="${state.vfSearch || ''}" placeholder="Buscar aluno na aba VF..." class="w-full pl-8 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500" />
         </div>
       </div>
-      ${highlightList.length > 0 ? `
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 pt-2 border-t border-slate-800/80">
-          ${highlightList.map(a => {
-            const crit = a.vfRiskSubjects.filter(s => s.valor > 5.0);
-            const isHigh = a.vfRiskLevel === 'risk';
-            const cardBorder = isHigh ? 'border-rose-500/30 bg-rose-500/5' : 'border-amber-500/25 bg-amber-500/5';
-            const badgeColor = isHigh ? 'text-rose-400' : 'text-amber-300';
+
+      <div class="flex flex-wrap items-center gap-2 text-xs font-bold pt-2 border-t border-slate-800/80">
+        <button data-vfrisk="ALL" class="px-3 py-1.5 rounded-xl border transition ${state.vfRiskFilter === 'ALL' ? 'border-blue-500 bg-blue-500/20 text-blue-300 ring-2 ring-offset-1 ring-offset-slate-900' : 'border-slate-700 bg-slate-900 text-slate-400 hover:text-white'}">
+          Todos (${baseAlumnos.length})
+        </button>
+        <button data-vfrisk="safe" class="px-3 py-1.5 rounded-xl border transition font-mono-numbers ${pillCls('safe', 'border-emerald-500', 'bg-emerald-500/20', 'text-emerald-300')}">
+          Tranquilos ≤ 4.00 (${safeList.length})
+        </button>
+        <button data-vfrisk="mid" class="px-3 py-1.5 rounded-xl border transition font-mono-numbers ${pillCls('mid', 'border-sky-500', 'bg-sky-500/20', 'text-sky-300')}">
+          4.01–5.00 (${midList.length})
+        </button>
+        <button data-vfrisk="warn" class="px-3 py-1.5 rounded-xl border transition font-mono-numbers ${pillCls('warn', 'border-amber-500', 'bg-amber-500/20', 'text-amber-300')}">
+          Atenção 5.01–6.00 (${warnList.length})
+        </button>
+        <button data-vfrisk="risk" class="px-3 py-1.5 rounded-xl border transition font-mono-numbers ${pillCls('risk', 'border-rose-500', 'bg-rose-500/20', 'text-rose-300')}">
+          Risco &gt; 6.00 (${riskList.length})
+        </button>
+        <span class="ml-auto text-[11px] text-slate-400 font-normal">Exibindo ${visibleList.length} aluno(s)</span>
+      </div>
+
+      ${visibleList.length > 0 ? `
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pt-2">
+          ${visibleList.map(a => {
+            const st = cardStyleFor(a.vfRiskLevel);
+            const subs = a.vfRiskSubjects || [];
+            const above4 = subs.filter(s => s.valor > 4.0);
+            const preview = (above4.length > 0 ? above4 : subs).slice(0, 4);
+            const extraCount = subs.length - preview.length;
             return `
-              <button onclick="window.app.openStudentModal(${a.numero})" class="text-left p-2.5 rounded-xl border ${cardBorder} hover:border-blue-500/50 transition space-y-1">
-                <div class="flex items-center justify-between gap-2">
-                  <span class="text-xs font-bold text-slate-100 truncate">${a.nome}</span>
-                  <span class="text-xs font-extrabold font-mono-numbers shrink-0 ${badgeColor}">VF ${fmtNum(a.maxVf32)}</span>
+              <button onclick="window.app.openStudentModal(${a.numero})" class="text-left p-3.5 rounded-2xl border ${st.border} hover:border-blue-500/60 transition space-y-2 flex flex-col justify-between">
+                <div class="space-y-1.5 w-full">
+                  <div class="flex items-start justify-between gap-2">
+                    <div class="min-w-0">
+                      <div class="text-xs font-extrabold text-slate-100 truncate">${a.nome}</div>
+                      <div class="text-[10px] text-slate-400 truncate mt-0.5">${a.curso} · #${a.rankGraduacao}</div>
+                    </div>
+                    <div class="text-right shrink-0">
+                      <span class="text-xs font-extrabold font-mono-numbers block ${st.badge}">${a.maxVf32 !== null ? `Máx ${fmtNum(a.maxVf32)}` : '-'}</span>
+                      <span class="text-[10px] text-slate-400 font-mono-numbers">${a.avgVf32 !== null ? `Méd ${fmtNum(a.avgVf32)}` : ''}</span>
+                    </div>
+                  </div>
+                  <div class="space-y-1 pt-1.5 border-t border-slate-800/70">
+                    ${preview.map(s => {
+                      const sCls = s.valor > 6.0 ? 'text-rose-400' : (s.valor > 5.0 ? 'text-amber-300' : (s.valor > 4.0 ? 'text-sky-300' : 'text-emerald-400'));
+                      return `
+                        <div class="flex items-center justify-between gap-2 text-[11px]">
+                          <span class="text-slate-300 truncate">${s.nome}</span>
+                          <span class="font-mono-numbers font-bold shrink-0 ${sCls}">${fmtNum(s.valor)}</span>
+                        </div>
+                      `;
+                    }).join('')}
+                    ${extraCount > 0 ? `<div class="text-[10px] text-slate-500">+ ${extraCount} matéria(s) · clique para ver ficha</div>` : ''}
+                    ${subs.length === 0 ? `<div class="text-[11px] text-slate-500">Sem matérias pendentes com VE+VC</div>` : ''}
+                  </div>
                 </div>
-                <div class="text-[10px] text-slate-400 truncate">${a.curso} · ${crit.length} mat. &gt; 5.00</div>
-                <div class="text-[10px] text-slate-300 truncate">${crit.slice(0, 2).map(s => `${s.nome.split(' ')[0]} (${fmtNum(s.valor)})`).join(', ')}</div>
               </button>
             `;
           }).join('')}
         </div>
       ` : `
-        <div class="text-xs text-emerald-400 font-semibold pt-2 border-t border-slate-800/80">
-          Todos os alunos filtrados precisam de no máximo 5,00 na VF para fechar o 3.2 sem exame.
+        <div class="py-8 text-center text-xs text-slate-400 border-t border-slate-800/80">
+          Nenhum aluno encontrado nesta faixa de VF para os filtros atuais.
         </div>
       `}
     `;
@@ -1438,23 +1488,54 @@ document.addEventListener('DOMContentLoaded', () => {
     panel.querySelectorAll('button[data-vfrisk]').forEach(btn => {
       btn.addEventListener('click', () => {
         state.vfRiskFilter = btn.getAttribute('data-vfrisk');
-        state.currentPage = 1;
-        renderRankingsTable();
+        renderVfTab();
       });
     });
+
+    const vfInput = document.getElementById('vfSearchInput');
+    if (vfInput) {
+      vfInput.addEventListener('input', (e) => {
+        state.vfSearch = e.target.value;
+        const pos = e.target.selectionStart;
+        renderVfTab();
+        const fresh = document.getElementById('vfSearchInput');
+        if (fresh) {
+          fresh.focus();
+          fresh.setSelectionRange(pos, pos);
+        }
+      });
+    }
+
+    if (discPanel) {
+      const discs32 = DATA.disciplinas
+        .filter(d => d.semestre === '3.2' && d.vfMediaNec !== null)
+        .sort((a, b) => b.vfMediaNec - a.vfMediaNec || b.vfEmRisco - a.vfEmRisco);
+
+      discPanel.innerHTML = discs32.map(d => {
+        const high = d.vfEmRisco > 0;
+        return `
+          <div class="p-3 rounded-xl bg-slate-900/70 border ${high ? 'border-amber-500/30' : 'border-slate-800'} flex items-center justify-between gap-3">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-slate-100 truncate" title="${d.nome}">${d.nome}</div>
+              <div class="text-[10px] text-slate-400 mt-0.5">${d.codigo} · ${d.qtdAlunos} alunos · média atual ${fmtNum(d.media)}</div>
+            </div>
+            <div class="text-right shrink-0 font-mono-numbers">
+              <div class="text-xs font-extrabold ${d.vfMediaNec > 5.0 ? 'text-rose-400' : (d.vfMediaNec > 4.2 ? 'text-amber-300' : 'text-emerald-400')}">VF ${fmtNum(d.vfMediaNec)}</div>
+              <div class="text-[10px] ${high ? 'text-amber-300 font-bold' : 'text-slate-500'}">${d.vfEmRisco} &gt; 5.00${d.vfRiscoAlto > 0 ? ` · ${d.vfRiscoAlto} &gt; 6.00` : ''}</div>
+            </div>
+          </div>
+        `;
+      }).join('') || `<div class="col-span-full text-xs text-slate-400">Nenhuma disciplina do 3.2 com VE+VC pendente de VF.</div>`;
+    }
+
+    refreshIcons();
   }
 
   function renderRankingsTable() {
     const tbody = document.getElementById('rankingTableBody');
     if (!tbody) return;
 
-    renderVfRiskRadar();
-
-    const baseList = state.vfRiskFilter === 'ALL'
-      ? filteredAlunos
-      : filteredAlunos.filter(a => a.vfRiskLevel === state.vfRiskFilter);
-
-    const sorted = [...baseList].sort((a, b) => {
+    const sorted = [...filteredAlunos].sort((a, b) => {
       let valA = a[state.sortColumn];
       let valB = b[state.sortColumn];
 
@@ -2577,6 +2658,8 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else if (targetTab === 'rankings') {
       renderRankingsTable();
+    } else if (targetTab === 'vf') {
+      renderVfTab();
     } else if (targetTab === 'disciplinas') {
       renderDisciplinasTab();
     } else if (targetTab === 'comparator') {
