@@ -137,7 +137,11 @@
         </button>
         <button data-tab="comparator" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
           <i data-lucide="git-compare" class="w-4 h-4 text-indigo-400"></i>
-          <span>Comparador 1x1 Alunos</span>
+          <span>Comparador 1x1</span>
+        </button>
+        <button data-tab="estagio" class="tab-btn flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold transition border border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/50">
+          <i data-lucide="briefcase" class="w-4 h-4 text-cyan-400"></i>
+          <span>Estágio</span>
         </button>
       </nav>
     </div>
@@ -980,6 +984,143 @@
 
     </section>
 
+    <!-- TAB: ESTÁGIO (VAGAS, PREFERÊNCIAS E ALOCAÇÃO POR CLASSIFICAÇÃO) -->
+    <section id="tab-estagio" class="tab-content hidden space-y-6 animate-fade-in">
+      
+      <!-- Top Controls Bar -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="briefcase" class="w-4 h-4 text-cyan-400"></i>
+              Escolha de Vagas de Estágio por Engenharia
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">
+              Cadastre as vagas disponíveis, defina até 10 opções de preferência por aluno e calcule a alocação automática respeitando a classificação do curso.
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="btnEstagioSalvar" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="save" class="w-3.5 h-3.5"></i>
+              <span>Salvar</span>
+            </button>
+            <button id="btnEstagioExport" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5" title="Exportar vagas e escolhas em JSON">
+              <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Exportar JSON</span>
+            </button>
+            <label class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer" title="Importar vagas e escolhas de um arquivo JSON">
+              <i data-lucide="upload" class="w-3.5 h-3.5 text-amber-400"></i>
+              <span>Importar JSON</span>
+              <input type="file" id="inputEstagioImport" accept=".json" class="hidden" />
+            </label>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800">
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="flex items-center gap-2">
+              <label for="selectEstagioCurso" class="text-xs font-semibold text-slate-400">Engenharia:</label>
+              <select id="selectEstagioCurso" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-bold focus:outline-none focus:ring-2 focus:ring-cyan-500"></select>
+            </div>
+            <div class="flex items-center gap-2">
+              <label for="selectEstagioCriterio" class="text-xs font-semibold text-slate-400">Ordem:</label>
+              <select id="selectEstagioCriterio" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-cyan-500">
+                <option value="grad">CR Graduação</option>
+                <option value="geral">CR Geral (80/20)</option>
+              </select>
+            </div>
+          </div>
+          <div id="estagioStatusMsg" class="text-xs text-slate-400 font-medium"></div>
+        </div>
+      </div>
+
+      <!-- Parte 1 (Vagas) + Parte 2 (Classificação e Preferências) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Vagas Panel -->
+        <div class="lg:col-span-5 glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex items-center justify-between gap-2">
+            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="building-2" class="w-4 h-4 text-cyan-400"></i>
+              1. Vagas Disponíveis
+            </h3>
+            <span id="estagioVagasResumo" class="text-xs font-mono-numbers text-cyan-300 font-bold">0 vagas</span>
+          </div>
+
+          <form id="formAddEstagioVaga" class="flex items-center gap-2">
+            <input type="text" id="inputNovaVagaNome" placeholder="Ex: IMBEL, CTEx, IPqM..." class="flex-1 min-w-0 text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500" />
+            <input type="number" id="inputNovaVagaQtd" min="1" max="50" value="1" class="w-16 text-xs text-center font-mono-numbers bg-slate-900 border border-slate-700 rounded-xl px-2 py-2 text-slate-200 focus:outline-none focus:ring-2 focus:ring-cyan-500" title="Quantidade de vagas" />
+            <button type="submit" class="px-3 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition shrink-0">
+              + Vaga
+            </button>
+          </form>
+
+          <div id="estagioVagasList" class="space-y-2 max-h-[420px] overflow-y-auto pr-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+        <!-- Classificação & Ordem de Preferência (até 10 opções) -->
+        <div class="lg:col-span-7 glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <i data-lucide="list-ordered" class="w-4 h-4 text-amber-400"></i>
+                2. Classificação &amp; Preferências (até 10 opções)
+              </h3>
+              <p class="text-[11px] text-slate-400 mt-0.5">Clique em um aluno para definir sua ordem de escolha (1ª a 10ª opção).</p>
+            </div>
+            <button id="btnEstagioSimular" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-1.5">
+              <i data-lucide="play" class="w-3.5 h-3.5"></i>
+              <span>Calcular Alocação</span>
+            </button>
+          </div>
+
+          <div id="estagioAlunosList" class="space-y-2.5 max-h-[480px] overflow-y-auto pr-1">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Parte 3: Resultado da Alocação -->
+      <div class="glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
+              <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></i>
+              3. Resultado da Escolha (Prioridade por Classificação)
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">O 1º colocado escolhe primeiro; quando uma vaga esgota, os seguintes vão para a próxima opção disponível da sua lista.</p>
+          </div>
+          <div id="estagioResultadoKPIs" class="flex flex-wrap items-center gap-2 text-xs font-bold"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div class="lg:col-span-8 overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-900 border-b border-slate-800 text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                <tr>
+                  <th class="py-3 px-3">Pos.</th>
+                  <th class="py-3 px-4">Aluno</th>
+                  <th class="py-3 px-3 text-right">CR</th>
+                  <th class="py-3 px-4">Local Alocado</th>
+                  <th class="py-3 px-3 text-center">Preferência</th>
+                </tr>
+              </thead>
+              <tbody id="estagioResultadoBody" class="divide-y divide-slate-800/60 font-medium">
+                <!-- Populated by JS -->
+              </tbody>
+            </table>
+          </div>
+          <div class="lg:col-span-4 space-y-2" id="estagioOcupacaoVagas">
+            <!-- Populated by JS -->
+          </div>
+        </div>
+      </div>
+
+    </section>
+
   </main>
 
   <!-- MODAL: FICHA COMPLETA DO ALUNO -->
@@ -1168,36 +1309,40 @@
   </footer>
 
   <!-- Mobile Bottom Navigation Bar (App Experience) -->
-  <nav id="mobileBottomNav" class="hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 px-1 py-1.5 grid-cols-6 gap-0.5 shadow-2xl safe-area-pb bg-slate-950/95 backdrop-blur">
-    <button data-tab="overview" class="mobile-nav-btn active flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-blue-400 font-bold transition">
+  <nav id="mobileBottomNav" class="hidden fixed bottom-0 left-0 right-0 z-40 glass-panel border-t border-slate-800/90 px-1 py-1.5 grid-cols-7 gap-0.5 shadow-2xl safe-area-pb bg-slate-950/95 backdrop-blur">
+    <button data-tab="overview" class="mobile-nav-btn active flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-blue-400 font-bold transition">
       <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-      <span class="text-[10px] leading-tight">Início</span>
+      <span class="text-[9.5px] leading-tight">Início</span>
     </button>
-    <button data-tab="cursos" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+    <button data-tab="cursos" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="line-chart" class="w-4 h-4"></i>
-      <span class="text-[10px] leading-tight">Cursos</span>
+      <span class="text-[9.5px] leading-tight">Cursos</span>
     </button>
-    <button data-tab="rankings" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+    <button data-tab="rankings" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="users" class="w-4 h-4"></i>
-      <span class="text-[10px] leading-tight">Fichas</span>
+      <span class="text-[9.5px] leading-tight">Fichas</span>
     </button>
-    <button data-tab="vf" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+    <button data-tab="vf" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="target" class="w-4 h-4"></i>
-      <span class="text-[10px] leading-tight">VF 3.2</span>
+      <span class="text-[9.5px] leading-tight">VF</span>
     </button>
-    <button data-tab="disciplinas" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+    <button data-tab="disciplinas" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="book-open" class="w-4 h-4"></i>
-      <span class="text-[10px] leading-tight">Matérias</span>
+      <span class="text-[9.5px] leading-tight">Matérias</span>
     </button>
-    <button data-tab="comparator" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-1 rounded-xl text-slate-400 font-semibold transition">
+    <button data-tab="comparator" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
       <i data-lucide="git-compare" class="w-4 h-4"></i>
-      <span class="text-[10px] leading-tight">1 x 1</span>
+      <span class="text-[9.5px] leading-tight">1 x 1</span>
+    </button>
+    <button data-tab="estagio" class="mobile-nav-btn flex flex-col items-center justify-center gap-0.5 py-1.5 px-0.5 rounded-xl text-slate-400 font-semibold transition">
+      <i data-lucide="briefcase" class="w-4 h-4"></i>
+      <span class="text-[9.5px] leading-tight">Estágio</span>
     </button>
   </nav>
 
   <!-- 1. Embedded Processed Dataset -->
-  <script src="data.js?v=20261118h"></script>
+  <script src="data.js?v=20261118i"></script>
   <!-- 2. Application Logic -->
-  <script src="app.js?v=20261118h"></script>
+  <script src="app.js?v=20261118i"></script>
 </body>
 </html>

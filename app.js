@@ -51,7 +51,20 @@ document.addEventListener('DOMContentLoaded', () => {
     deviceMode: 'auto',
     rankingView: 'cards',
     courseView: 'table',
-    modalDisciplineView: 'cards'
+    modalDisciplineView: 'cards',
+
+    // Estágio
+    estagioCurso: DATA.metadata.cursos[0] || 'Computação',
+    estagioCriterio: 'grad',
+    estagioExpandedAluno: null,
+    estagioInitialized: false,
+    estagioData: (() => {
+      try {
+        return JSON.parse(localStorage.getItem('ime_estagio_v1') || '{}');
+      } catch {
+        return {};
+      }
+    })()
   };
 
   // Chart instances
@@ -2845,9 +2858,378 @@ document.addEventListener('DOMContentLoaded', () => {
       renderDisciplinasTab();
     } else if (targetTab === 'comparator') {
       initStudentComparator();
+    } else if (targetTab === 'estagio') {
+      initEstagioTab();
     }
 
     refreshIcons();
+  }
+
+  // --- TAB: ESTÁGIO (VAGAS, PREFERÊNCIAS & ALOCAÇÃO) ---
+  function getEstagioCursoStore(curso) {
+    if (!state.estagioData[curso]) {
+      state.estagioData[curso] = { vagas: [], prefs: {} };
+    }
+    return state.estagioData[curso];
+  }
+
+  function getEstagioRankedAlunos(curso) {
+    const field = state.estagioCriterio === 'geral' ? 'mediaGeral' : 'mediaGraduacao';
+    return DATA.alunos
+      .filter(a => a.curso === curso)
+      .sort((a, b) => (b[field] ?? 0) - (a[field] ?? 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
+  }
+
+  function setEstagioStatus(msg, isSaved = false) {
+    const el = document.getElementById('estagioStatusMsg');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = isSaved
+      ? 'text-xs text-emerald-400 font-bold'
+      : 'text-xs text-amber-300 font-medium';
+  }
+
+  function saveEstagioData() {
+    try {
+      localStorage.setItem('ime_estagio_v1', JSON.stringify(state.estagioData));
+      const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      setEstagioStatus(`Salvo no navegador às ${now}`, true);
+    } catch {
+      setEstagioStatus('Erro ao salvar no navegador.', false);
+    }
+  }
+
+  function initEstagioTab() {
+    const selCurso = document.getElementById('selectEstagioCurso');
+    const selCrit = document.getElementById('selectEstagioCriterio');
+    if (!selCurso) return;
+
+    if (!state.estagioInitialized) {
+      state.estagioInitialized = true;
+      selCurso.innerHTML = DATA.metadata.cursos.map(c => `<option value="${c}">${c}</option>`).join('');
+      selCurso.value = state.estagioCurso;
+      if (selCrit) selCrit.value = state.estagioCriterio;
+
+      selCurso.addEventListener('change', (e) => {
+        state.estagioCurso = e.target.value;
+        state.estagioExpandedAluno = null;
+        renderEstagioTab();
+      });
+
+      selCrit?.addEventListener('change', (e) => {
+        state.estagioCriterio = e.target.value;
+        renderEstagioTab();
+      });
+
+      document.getElementById('formAddEstagioVaga')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const inpNome = document.getElementById('inputNovaVagaNome');
+        const inpQtd = document.getElementById('inputNovaVagaQtd');
+        const nome = (inpNome?.value || '').trim();
+        const qtd = Math.max(1, parseInt(inpQtd?.value || '1', 10) || 1);
+        if (!nome) return;
+
+        const store = getEstagioCursoStore(state.estagioCurso);
+        const existing = store.vagas.find(v => v.nome.toLowerCase() === nome.toLowerCase());
+        if (existing) {
+          existing.qtd += qtd;
+        } else {
+          store.vagas.push({
+            id: `v_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            nome,
+            qtd
+          });
+        }
+        if (inpNome) inpNome.value = '';
+        if (inpQtd) inpQtd.value = '1';
+        setEstagioStatus('Alterações não salvas — clique em Salvar');
+        renderEstagioTab();
+      });
+
+      document.getElementById('btnEstagioSalvar')?.addEventListener('click', saveEstagioData);
+
+      document.getElementById('btnEstagioSimular')?.addEventListener('click', () => {
+        renderEstagioResult();
+        document.getElementById('estagioResultadoBody')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+
+      document.getElementById('btnEstagioExport')?.addEventListener('click', () => {
+        const blob = new Blob([JSON.stringify(state.estagioData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `estagio_ime_${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById('inputEstagioImport')?.addEventListener('change', (e) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const parsed = JSON.parse(ev.target.result);
+            if (parsed && typeof parsed === 'object') {
+              state.estagioData = parsed;
+              saveEstagioData();
+              renderEstagioTab();
+            }
+          } catch {
+            setEstagioStatus('Arquivo JSON inválido.');
+          }
+        };
+        reader.readAsText(file);
+        e.target.value = '';
+      });
+    }
+
+    renderEstagioTab();
+  }
+
+  function renderEstagioTab() {
+    const curso = state.estagioCurso;
+    const store = getEstagioCursoStore(curso);
+    const ranked = getEstagioRankedAlunos(curso);
+    const vagasEl = document.getElementById('estagioVagasList');
+    const resumoEl = document.getElementById('estagioVagasResumo');
+    const alunosEl = document.getElementById('estagioAlunosList');
+
+    const totalVagas = store.vagas.reduce((s, v) => s + (v.qtd || 0), 0);
+    if (resumoEl) {
+      resumoEl.textContent = `${totalVagas} vaga(s) em ${store.vagas.length} local(is) · ${ranked.length} alunos`;
+    }
+
+    if (vagasEl) {
+      if (store.vagas.length === 0) {
+        vagasEl.innerHTML = `<div class="py-8 text-center text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">Nenhuma vaga cadastrada para ${curso}. Adicione acima (ex: IMBEL, CTEx...).</div>`;
+      } else {
+        vagasEl.innerHTML = store.vagas.map((v, idx) => `
+          <div class="p-2.5 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-2 text-xs">
+            <span class="font-bold text-slate-100 truncate">${v.nome}</span>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <button data-vaga-dec="${idx}" class="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">-</button>
+              <span class="w-7 text-center font-mono-numbers font-bold text-cyan-300">${v.qtd}</span>
+              <button data-vaga-inc="${idx}" class="w-6 h-6 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold">+</button>
+              <button data-vaga-del="${idx}" class="ml-1 p-1 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition" title="Remover vaga">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `).join('');
+
+        vagasEl.querySelectorAll('button[data-vaga-dec]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const i = parseInt(btn.getAttribute('data-vaga-dec'), 10);
+            if (store.vagas[i] && store.vagas[i].qtd > 1) {
+              store.vagas[i].qtd--;
+              setEstagioStatus('Alterações não salvas — clique em Salvar');
+              renderEstagioTab();
+            }
+          });
+        });
+        vagasEl.querySelectorAll('button[data-vaga-inc]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const i = parseInt(btn.getAttribute('data-vaga-inc'), 10);
+            if (store.vagas[i]) {
+              store.vagas[i].qtd++;
+              setEstagioStatus('Alterações não salvas — clique em Salvar');
+              renderEstagioTab();
+            }
+          });
+        });
+        vagasEl.querySelectorAll('button[data-vaga-del]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const i = parseInt(btn.getAttribute('data-vaga-del'), 10);
+            const removed = store.vagas.splice(i, 1)[0];
+            if (removed) {
+              Object.keys(store.prefs).forEach(num => {
+                store.prefs[num] = (store.prefs[num] || []).filter(name => name !== removed.nome);
+              });
+            }
+            setEstagioStatus('Alterações não salvas — clique em Salvar');
+            renderEstagioTab();
+          });
+        });
+      }
+    }
+
+    if (alunosEl) {
+      const field = state.estagioCriterio === 'geral' ? 'mediaGeral' : 'mediaGraduacao';
+      const vagaNames = store.vagas.map(v => v.nome);
+
+      alunosEl.innerHTML = ranked.map((a, idx) => {
+        const prefs = store.prefs[a.numero] || [];
+        const filled = prefs.filter(Boolean);
+        const isExpanded = (state.estagioExpandedAluno === a.numero);
+
+        const summaryText = filled.length > 0
+          ? filled.slice(0, 3).map((p, i) => `${i + 1}ª ${p}`).join(' · ') + (filled.length > 3 ? ` (+${filled.length - 3})` : '')
+          : 'Sem preferências definidas';
+
+        return `
+          <div class="rounded-xl bg-slate-900/70 border ${isExpanded ? 'border-cyan-500/50' : 'border-slate-800'} overflow-hidden">
+            <button data-estagio-toggle="${a.numero}" class="w-full p-3 text-left flex items-center justify-between gap-3 hover:bg-slate-800/40 transition">
+              <div class="flex items-center gap-3 min-w-0">
+                <span class="w-7 h-7 rounded-lg bg-slate-800 text-cyan-300 font-extrabold text-xs flex items-center justify-center font-mono-numbers shrink-0">
+                  ${idx + 1}º
+                </span>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-slate-100 truncate">${a.nome}</span>
+                    <span class="text-[10px] font-mono-numbers text-blue-400 font-bold">${fmtNum(a[field])}</span>
+                  </div>
+                  <div class="text-[11px] text-slate-400 truncate mt-0.5">${summaryText}</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono-numbers ${filled.length ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'}">
+                  ${filled.length}/10
+                </span>
+                <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-400"></i>
+              </div>
+            </button>
+
+            ${isExpanded ? `
+              <div class="p-3 pt-2 border-t border-slate-800/80 bg-slate-950/50 space-y-2">
+                ${vagaNames.length === 0 ? `
+                  <div class="text-xs text-amber-300">Cadastre primeiro as vagas disponíveis na coluna ao lado (1. Vagas Disponíveis).</div>
+                ` : `
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    ${Array.from({ length: 10 }, (_, optIdx) => {
+                      const curVal = prefs[optIdx] || '';
+                      return `
+                        <div class="flex items-center gap-2">
+                          <span class="w-8 text-[11px] font-mono-numbers font-bold text-slate-400 shrink-0">${optIdx + 1}ª op.</span>
+                          <select data-pref-aluno="${a.numero}" data-pref-idx="${optIdx}" class="flex-1 min-w-0 text-xs bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+                            <option value="">— Nenhuma —</option>
+                            ${vagaNames.map(vn => `<option value="${vn}" ${curVal === vn ? 'selected' : ''}>${vn}</option>`).join('')}
+                          </select>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                  <div class="flex justify-end pt-1">
+                    <button data-pref-clear="${a.numero}" class="text-[11px] text-rose-400 hover:text-rose-300 font-semibold">Limpar opções deste aluno</button>
+                  </div>
+                `}
+              </div>
+            ` : ''}
+          </div>
+        `;
+      }).join('');
+
+      alunosEl.querySelectorAll('button[data-estagio-toggle]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const num = parseInt(btn.getAttribute('data-estagio-toggle'), 10);
+          state.estagioExpandedAluno = (state.estagioExpandedAluno === num) ? null : num;
+          renderEstagioTab();
+        });
+      });
+
+      alunosEl.querySelectorAll('select[data-pref-aluno]').forEach(sel => {
+        sel.addEventListener('change', (e) => {
+          const num = parseInt(sel.getAttribute('data-pref-aluno'), 10);
+          const optIdx = parseInt(sel.getAttribute('data-pref-idx'), 10);
+          const arr = [...(store.prefs[num] || [])];
+          while (arr.length <= optIdx) arr.push('');
+          arr[optIdx] = e.target.value;
+          store.prefs[num] = arr;
+          setEstagioStatus('Alterações não salvas — clique em Salvar');
+          renderEstagioTab();
+        });
+      });
+
+      alunosEl.querySelectorAll('button[data-pref-clear]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const num = parseInt(btn.getAttribute('data-pref-clear'), 10);
+          store.prefs[num] = [];
+          setEstagioStatus('Alterações não salvas — clique em Salvar');
+          renderEstagioTab();
+        });
+      });
+    }
+
+    renderEstagioResult();
+    refreshIcons();
+  }
+
+  function renderEstagioResult() {
+    const curso = state.estagioCurso;
+    const store = getEstagioCursoStore(curso);
+    const ranked = getEstagioRankedAlunos(curso);
+    const field = state.estagioCriterio === 'geral' ? 'mediaGeral' : 'mediaGraduacao';
+
+    const tbody = document.getElementById('estagioResultadoBody');
+    const ocupacaoEl = document.getElementById('estagioOcupacaoVagas');
+    const kpisEl = document.getElementById('estagioResultadoKPIs');
+    if (!tbody) return;
+
+    const remaining = new Map(store.vagas.map(v => [v.nome, v.qtd]));
+    const assignedByVaga = new Map(store.vagas.map(v => [v.nome, []]));
+
+    let alocados = 0;
+    let primeiraOpcao = 0;
+
+    const rows = ranked.map((a, idx) => {
+      const prefs = (store.prefs[a.numero] || []).filter(Boolean);
+      let chosen = null;
+      let chosenRank = null;
+
+      for (let i = 0; i < prefs.length; i++) {
+        const loc = prefs[i];
+        if ((remaining.get(loc) || 0) > 0) {
+          remaining.set(loc, remaining.get(loc) - 1);
+          assignedByVaga.get(loc)?.push(`${idx + 1}º ${a.nome}`);
+          chosen = loc;
+          chosenRank = i + 1;
+          alocados++;
+          if (chosenRank === 1) primeiraOpcao++;
+          break;
+        }
+      }
+
+      const prefBadge = chosen
+        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${chosenRank === 1 ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-blue-500/15 text-blue-300 border border-blue-500/30'}">${chosenRank}ª opção</span>`
+        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-800 text-slate-400">${prefs.length ? 'Vagas esgotadas' : 'Sem escolha'}</span>`;
+
+      return `
+        <tr class="table-hover-row border-b border-slate-800/40">
+          <td class="py-2.5 px-3 font-mono-numbers font-bold text-slate-300">${idx + 1}º</td>
+          <td class="py-2.5 px-4 font-bold text-slate-100">${a.nome}</td>
+          <td class="py-2.5 px-3 text-right font-mono-numbers text-blue-400 font-bold">${fmtNum(a[field])}</td>
+          <td class="py-2.5 px-4 font-bold ${chosen ? 'text-cyan-300' : 'text-slate-500'}">${chosen || 'Não alocado'}</td>
+          <td class="py-2.5 px-3 text-center">${prefBadge}</td>
+        </tr>
+      `;
+    }).join('');
+
+    tbody.innerHTML = rows || `<tr><td colspan="5" class="py-6 text-center text-slate-500">Nenhum aluno encontrado para este curso.</td></tr>`;
+
+    if (kpisEl) {
+      kpisEl.innerHTML = `
+        <span class="px-2.5 py-1 rounded-xl bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-mono-numbers">Alocados: ${alocados}/${ranked.length}</span>
+        <span class="px-2.5 py-1 rounded-xl bg-blue-500/15 text-blue-300 border border-blue-500/30 font-mono-numbers">1ª opção: ${primeiraOpcao}</span>
+      `;
+    }
+
+    if (ocupacaoEl) {
+      ocupacaoEl.innerHTML = store.vagas.map(v => {
+        const ocupados = assignedByVaga.get(v.nome) || [];
+        const rest = remaining.get(v.nome) || 0;
+        return `
+          <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1.5">
+            <div class="flex items-center justify-between gap-2 text-xs">
+              <span class="font-bold text-slate-100 truncate">${v.nome}</span>
+              <span class="font-mono-numbers font-bold ${rest === 0 ? 'text-amber-300' : 'text-emerald-400'}">${ocupados.length}/${v.qtd} ocupadas</span>
+            </div>
+            <div class="text-[11px] text-slate-400">${ocupados.length ? ocupados.join(' · ') : 'Ninguém alocado ainda'}</div>
+          </div>
+        `;
+      }).join('') || `<div class="p-4 rounded-xl border border-dashed border-slate-800 text-xs text-slate-500 text-center">Cadastre vagas para ver a ocupação.</div>`;
+    }
   }
 
   // Attach tab click events to both desktop top nav and mobile bottom nav
