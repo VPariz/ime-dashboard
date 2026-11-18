@@ -142,25 +142,193 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  async function resolveSupabaseSessionAndLoad(sb, user) {
+  function stripAccentsStr(str) {
+    return String(str || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  }
+
+  function titleCaseWord(word) {
+    return word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : '';
+  }
+
+  function normalizeUsernameToEmail(rawInput) {
+    const trimmed = String(rawInput || '').trim();
+    if (!trimmed) return '';
+    if (trimmed.includes('@')) return trimmed.toLowerCase();
+    const cleaned = stripAccentsStr(trimmed)
+      .replace(/[^a-zA-Z0-9\s_]/g, '')
+      .trim()
+      .replace(/\s+/g, '_')
+      .toLowerCase();
+    return cleaned ? `${cleaned}@ime.local` : '';
+  }
+
+  function buildDefaultCredentials(nome, turmaIdOrNum) {
+    const numMatch = String(turmaIdOrNum || '').match(/\d+/);
+    const turmaNum = numMatch ? numMatch[0] : '28';
+    const words = stripAccentsStr(String(nome || ''))
+      .replace(/[^a-zA-Z0-9\s]/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+    const selected = words.length >= 2
+      ? [titleCaseWord(words[0]), titleCaseWord(words[words.length - 1])]
+      : [titleCaseWord(words[0] || 'Aluno')];
+    const loginDisplay = [...selected, turmaNum].join(' ');
+    const underscorePart = [...selected, turmaNum].join('_');
+    return {
+      loginDisplay,
+      internalEmail: `${underscorePart.toLowerCase()}@ime.local`,
+      defaultPassword: `senha_${underscorePart}`
+    };
+  }
+
+  function validateStrongPassword(newPw, confirmPw, currentPw = '') {
+    const p = String(newPw || '');
+    const checks = {
+      length: p.length >= 8,
+      upper: /[A-Z]/.test(p),
+      lower: /[a-z]/.test(p),
+      digit: /[0-9]/.test(p),
+      symbol: /[^A-Za-z0-9]/.test(p),
+      notDefault: !currentPw || p !== String(currentPw),
+      matches: p.length > 0 && p === String(confirmPw || '')
+    };
+    const ok = Object.values(checks).every(Boolean);
+    return { ok, checks };
+  }
+
+  // Expose pure auth helpers for deterministic testing
+  window.__IME_AUTH_HELPERS = {
+    normalizeUsernameToEmail,
+    buildDefaultCredentials,
+    validateStrongPassword
+  };
+
+  function promptMandatoryPasswordChange(sb, sessionInfo, currentPassword = '') {
+    return new Promise((resolve, reject) => {
+      const modal = document.getElementById('forcePasswordModal');
+      const form = document.getElementById('forcePasswordForm');
+      const inpNew = document.getElementById('newStrongPassword');
+      const inpConf = document.getElementById('confirmStrongPassword');
+      const errEl = document.getElementById('forcePasswordError');
+      const subEl = document.getElementById('forcePasswordUserSubtitle');
+      const btnSubmit = document.getElementById('btnForcePasswordSubmit');
+      const btnCancel = document.getElementById('btnForcePasswordCancel');
+      const checklist = document.getElementById('strongPwChecklist');
+
+      if (!modal || !form) {
+        resolve();
+        return;
+      }
+
+      if (subEl) {
+        subEl.textContent = `Olá, ${sessionInfo.username || sessionInfo.email}! Por segurança, defina uma senha forte antes de acessar os dados da turma.`;
+      }
+      if (inpNew) inpNew.value = '';
+      if (inpConf) inpConf.value = '';
+      if (errEl) {
+        errEl.textContent = '';
+        errEl.classList.add('hidden');
+      }
+
+      const updateChecklistUI = () => {
+        const res = validateStrongPassword(inpNew?.value || '', inpConf?.value || '', currentPassword);
+        if (checklist) {
+          Object.entries(res.checks).forEach(([rule, passed]) => {
+            const li = checklist.querySelector(`[data-pw-rule="${rule}"]`);
+            if (!li) return;
+            li.className = passed ? 'text-emerald-400 font-bold' : 'text-slate-400';
+            li.textContent = (passed ? '✓ ' : '• ') + li.textContent.replace(/^[✓•]\s*/, '');
+          });
+        }
+        return res;
+      };
+      updateChecklistUI();
+
+      const onInput = () => updateChecklistUI();
+      inpNew?.addEventListener('input', onInput);
+      inpConf?.addEventListener('input', onInput);
+
+      const cleanup = () => {
+        inpNew?.removeEventListener('input', onInput);
+        inpConf?.removeEventListener('input', onInput);
+        form.removeEventListener('submit', onSubmit);
+        btnCancel?.removeEventListener('click', onCancel);
+        modal.classList.add('hidden');
+      };
+
+      const onCancel = async () => {
+        cleanup();
+        try { await sb.auth.signOut(); } catch {}
+        reject(new Error('Troca de senha cancelada pelo usuário.'));
+      };
+
+      const onSubmit = async (e) => {
+        e.preventDefault();
+        const res = updateChecklistUI();
+        if (!res.ok) {
+          if (errEl) {
+            errEl.textContent = !res.checks.notDefault
+              ? 'A nova senha precisa ser diferente da senha padrão.'
+              : 'Atenda a todos os requisitos de senha forte acima.';
+            errEl.classList.remove('hidden');
+          }
+          return;
+        }
+        if (btnSubmit) {
+          btnSubmit.disabled = true;
+          btnSubmit.textContent = 'Salvando nova senha...';
+        }
+        try {
+          const { error: updErr } = await sb.auth.updateUser({ password: inpNew.value });
+          if (updErr) throw new Error(updErr.message);
+          const { error: rpcErr } = await sb.rpc('complete_password_change');
+          if (rpcErr) throw new Error(rpcErr.message);
+          cleanup();
+          resolve();
+        } catch (err) {
+          if (errEl) {
+            errEl.textContent = err.message || 'Erro ao salvar nova senha.';
+            errEl.classList.remove('hidden');
+          }
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Salvar Nova Senha e Entrar';
+          }
+        }
+      };
+
+      form.addEventListener('submit', onSubmit);
+      btnCancel?.addEventListener('click', onCancel);
+      modal.classList.remove('hidden');
+      inpNew?.focus();
+    });
+  }
+
+  async function resolveSupabaseSessionAndLoad(sb, user, rawEnteredPassword = '') {
     const bucket = sbCfg.bucket || 'ime-private';
     let role = 'viewer';
     let userTurmaId = null;
+    let alunoNumero = null;
+    let username = null;
+    let mustChangePassword = false;
     let turmas = [];
 
-    // 1. Buscar papel na tabela user_roles (se existir)
+    // 1. Buscar papel, matrícula e flag de troca obrigatória em user_roles
     try {
       const { data: roleRow, error: roleErr } = await sb
         .from('user_roles')
-        .select('role, turma_id')
+        .select('role, turma_id, aluno_numero, username, must_change_password')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!roleErr && roleRow) {
         role = roleRow.role || 'viewer';
         userTurmaId = roleRow.turma_id || null;
+        alunoNumero = roleRow.aluno_numero ?? null;
+        username = roleRow.username || null;
+        mustChangePassword = Boolean(roleRow.must_change_password);
       } else if (!roleErr && !roleRow) {
-        // Caso schema multi-turma esteja ativo mas conta não tenha entrada em user_roles
         const { error: probeErr } = await sb.from('turmas').select('id').limit(1);
         if (!probeErr) {
           throw new Error('Sua conta ainda não possui papel atribuído em user_roles. Peça ao Super Admin.');
@@ -168,6 +336,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       if (err.message?.includes('user_roles')) throw err;
+    }
+
+    // 1b. Troca obrigatória de senha forte no 1º acesso (ou após reset pelo Super Admin)
+    if (mustChangePassword) {
+      await promptMandatoryPasswordChange(sb, { username, email: user.email }, rawEnteredPassword);
+      mustChangePassword = false;
     }
 
     // 2. Buscar turmas visíveis pelo usuário (RLS filtra automaticamente)
@@ -233,8 +407,10 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionMeta: {
         mode: 'supabase',
         email: user.email || 'Autenticado',
+        username: username || user.user_metadata?.username || user.email || 'Autenticado',
         role,
         userId: user.id,
+        alunoNumero,
         turma: activeTurma,
         turmas,
         semestreAtual: activeTurma.semestre_atual || parsed.metadata?.semestreAtual || '3.2',
@@ -290,7 +466,8 @@ document.addEventListener('DOMContentLoaded', () => {
       showLoginError('Configure url e anonKey em supabase-config.js antes de usar o login.');
       return;
     }
-    const email = (loginEmail?.value || '').trim();
+    const rawIdentifier = (loginEmail?.value || '').trim();
+    const email = normalizeUsernameToEmail(rawIdentifier);
     const password = loginPassword?.value || '';
     if (!email || !password) return;
 
@@ -305,7 +482,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await sbClient.auth.signUp({ email, password });
         if (error) throw new Error(error.message);
         if (data?.session?.user) {
-          const res = await resolveSupabaseSessionAndLoad(sbClient, data.session.user);
+          const res = await resolveSupabaseSessionAndLoad(sbClient, data.session.user, password);
           startDashboard(res.dataset, res.sessionMeta);
           return;
         }
@@ -315,10 +492,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
         if (error) {
           throw new Error(error.message === 'Invalid login credentials'
-            ? 'E-mail ou senha inválidos.'
+            ? 'Login ou senha inválidos. Verifique o formato (ex: Pedro Silva 29) e a senha.'
             : error.message);
         }
-        const res = await resolveSupabaseSessionAndLoad(sbClient, data.user);
+        const res = await resolveSupabaseSessionAndLoad(sbClient, data.user, password);
         startDashboard(res.dataset, res.sessionMeta);
       }
     } catch (err) {
@@ -408,6 +585,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const USER_ROLE = sessionMeta.role || (sessionMeta.mode === 'demo' ? 'demo' : 'viewer');
     const IS_SUPER_ADMIN = USER_ROLE === 'super_admin';
     const CAN_MANAGE_GRADES = USER_ROLE === 'gestor' || USER_ROLE === 'super_admin' || sessionMeta.mode === 'demo';
+    const MY_ALUNO_NUM = sessionMeta.alunoNumero ?? null;
+    let demoCareerViewAs = 'gestor'; // 'gestor' | 'viewer' (apenas Modo Demo)
+    let careerRealtimeChannel = null;
+    let careerLoadedStageKey = null;
     let CURRENT_SEM = sessionMeta.semestreAtual
       || DATA.metadata?.semestreAtual
       || DATA.metadata?.semestres?.[DATA.metadata.semestres.length - 1]
@@ -580,7 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (badgeEl) {
       badgeEl.classList.remove('hidden');
       if (sessionMeta.mode === 'supabase') {
-        badgeEl.textContent = `${roleLabelMap[USER_ROLE] || USER_ROLE} • ${sessionMeta.email || ''}`;
+        badgeEl.textContent = `${roleLabelMap[USER_ROLE] || USER_ROLE} • ${sessionMeta.username || sessionMeta.email || ''}`;
         const colorCls = USER_ROLE === 'super_admin'
           ? 'border-purple-500/40 bg-purple-500/15 text-purple-300'
           : (USER_ROLE === 'gestor'
@@ -3831,6 +4012,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mobLbl) mobLbl.textContent = ACTIVE_CAREER_STAGE.mobileLabel;
 
     if (reloadStore || prevKey !== ACTIVE_CAREER_STAGE.key) {
+      careerLoadedStageKey = null;
       state.estagioData = loadCareerStoreForStage(ACTIVE_CAREER_STAGE);
       state.estagioCriterio = ACTIVE_CAREER_STAGE.defaultCriterio || 'cumulativo';
       state.estagioExpandedAluno = null;
@@ -3902,6 +4084,25 @@ document.addEventListener('DOMContentLoaded', () => {
       .sort((a, b) => (getEstagioScore(b) ?? 0) - (getEstagioScore(a) ?? 0) || a.nome.localeCompare(b.nome, 'pt-BR'));
   }
 
+  function getEffectiveAlunoNumero() {
+    if (sessionMeta.mode === 'demo' && demoCareerViewAs === 'viewer') {
+      const ranked = getEstagioRankedAlunos(getActiveCareerScope());
+      return ranked[0]?.numero ?? DATA.alunos[0]?.numero ?? null;
+    }
+    return MY_ALUNO_NUM;
+  }
+
+  function canManageCareerSlots() {
+    if (sessionMeta.mode === 'demo') return demoCareerViewAs !== 'viewer';
+    return IS_SUPER_ADMIN || USER_ROLE === 'gestor';
+  }
+
+  function canEditAlunoPrefs(alunoNumero) {
+    if (canManageCareerSlots()) return true;
+    const myNum = getEffectiveAlunoNumero();
+    return myNum !== null && String(myNum) === String(alunoNumero);
+  }
+
   function setEstagioStatus(msg, isSaved = false) {
     const el = document.getElementById('estagioStatusMsg');
     if (!el) return;
@@ -3911,14 +4112,173 @@ document.addEventListener('DOMContentLoaded', () => {
       : 'text-xs text-amber-300 font-medium';
   }
 
-  function saveEstagioData() {
+  async function loadCareerFromSupabase({ silent = false } = {}) {
+    if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb || !ACTIVE_CAREER_STAGE.enabled) return;
+    const sb = sessionMeta.sb;
+    const stageKey = ACTIVE_CAREER_STAGE.key;
+    try {
+      const [{ data: vagaRows, error: vErr }, { data: prefRows, error: pErr }] = await Promise.all([
+        sb.from('career_vagas')
+          .select('*')
+          .eq('turma_id', ACTIVE_TURMA.id)
+          .eq('stage_key', stageKey)
+          .order('sort_order', { ascending: true }),
+        sb.from('career_preferences')
+          .select('*')
+          .eq('turma_id', ACTIVE_TURMA.id)
+          .eq('stage_key', stageKey)
+      ]);
+      if (vErr) throw new Error(vErr.message);
+      if (pErr) throw new Error(pErr.message);
+
+      const nextData = {};
+      (vagaRows || []).forEach(v => {
+        if (!nextData[v.scope_key]) nextData[v.scope_key] = { vagas: [], prefs: {}, _fromDb: true };
+        nextData[v.scope_key].vagas.push({ id: v.id, nome: v.nome, qtd: Number(v.qtd) || 1 });
+      });
+      (prefRows || []).forEach(p => {
+        if (!nextData[p.scope_key]) {
+          nextData[p.scope_key] = {
+            vagas: ACTIVE_CAREER_STAGE.buildDefaultVagas(p.scope_key),
+            prefs: {},
+            _fromDb: false
+          };
+        }
+        nextData[p.scope_key].prefs[p.aluno_numero] = Array.isArray(p.prefs) ? p.prefs : [];
+      });
+
+      state.estagioData = nextData;
+      careerLoadedStageKey = stageKey;
+      if (!silent) {
+        const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        setEstagioStatus(`Sincronizado ao vivo (${now})`, true);
+      }
+      renderEstagioTab();
+    } catch (err) {
+      if (!silent) {
+        setEstagioStatus(`Aviso ao carregar carreira do Supabase: ${err.message}`);
+      }
+    }
+  }
+
+  function subscribeCareerRealtime() {
+    if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb || !ACTIVE_CAREER_STAGE.enabled) return;
+    if (careerRealtimeChannel) {
+      try { sessionMeta.sb.removeChannel(careerRealtimeChannel); } catch {}
+      careerRealtimeChannel = null;
+    }
+    const chName = `career_live_${ACTIVE_TURMA.id}_${ACTIVE_CAREER_STAGE.key}`;
+    careerRealtimeChannel = sessionMeta.sb
+      .channel(chName)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'career_vagas',
+        filter: `turma_id=eq.${ACTIVE_TURMA.id}`
+      }, () => {
+        if (state.currentTab === 'estagio') loadCareerFromSupabase({ silent: false });
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'career_preferences',
+        filter: `turma_id=eq.${ACTIVE_TURMA.id}`
+      }, () => {
+        if (state.currentTab === 'estagio') loadCareerFromSupabase({ silent: false });
+      })
+      .subscribe();
+  }
+
+  async function saveEstagioData() {
+    const scopeKey = getActiveCareerScope();
+    const store = getEstagioCursoStore(scopeKey);
+    const canSlots = canManageCareerSlots();
+
+    if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+      const sb = sessionMeta.sb;
+      const stageKey = ACTIVE_CAREER_STAGE.key;
+      setEstagioStatus('Salvando no Supabase...');
+      try {
+        if (canSlots) {
+          // 1. Sincronizar vagas deste scopeKey (substitui somente este turma/stage/scope)
+          const { error: delErr } = await sb
+            .from('career_vagas')
+            .delete()
+            .eq('turma_id', ACTIVE_TURMA.id)
+            .eq('stage_key', stageKey)
+            .eq('scope_key', scopeKey);
+          if (delErr) throw new Error(delErr.message);
+
+          if (store.vagas.length > 0) {
+            const vagaRows = store.vagas.map((v, idx) => ({
+              id: v.id || `v_${idx + 1}`,
+              turma_id: ACTIVE_TURMA.id,
+              stage_key: stageKey,
+              scope_key: scopeKey,
+              nome: v.nome,
+              qtd: Math.max(1, Number(v.qtd) || 1),
+              sort_order: idx,
+              updated_by: sessionMeta.userId || null,
+              updated_at: new Date().toISOString()
+            }));
+            const { error: insErr } = await sb.from('career_vagas').insert(vagaRows);
+            if (insErr) throw new Error(insErr.message);
+          }
+
+          // 2. Upsert de preferências preenchidas neste scopeKey
+          const prefEntries = Object.entries(store.prefs || {}).map(([num, prefs]) => ({
+            turma_id: ACTIVE_TURMA.id,
+            stage_key: stageKey,
+            scope_key: scopeKey,
+            aluno_numero: Number(num),
+            prefs: (prefs || []).filter(Boolean),
+            updated_by: sessionMeta.userId || null,
+            updated_at: new Date().toISOString()
+          }));
+          if (prefEntries.length > 0) {
+            const { error: prefErr } = await sb
+              .from('career_preferences')
+              .upsert(prefEntries, { onConflict: 'turma_id,stage_key,scope_key,aluno_numero' });
+            if (prefErr) throw new Error(prefErr.message);
+          }
+          store._fromDb = true;
+        } else {
+          // Viewer: salva EXCLUSIVAMENTE as preferências do próprio aluno_numero
+          const myNum = getEffectiveAlunoNumero();
+          if (!myNum) {
+            setEstagioStatus('Sua conta não tem matrícula vinculada. Peça ao Super Admin.');
+            return;
+          }
+          const myPrefs = (store.prefs[myNum] || []).filter(Boolean);
+          const { error: prefErr } = await sb
+            .from('career_preferences')
+            .upsert({
+              turma_id: ACTIVE_TURMA.id,
+              stage_key: stageKey,
+              scope_key: scopeKey,
+              aluno_numero: Number(myNum),
+              prefs: myPrefs,
+              updated_by: sessionMeta.userId || null,
+              updated_at: new Date().toISOString()
+            }, { onConflict: 'turma_id,stage_key,scope_key,aluno_numero' });
+          if (prefErr) throw new Error(prefErr.message);
+        }
+
+        const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        setEstagioStatus(canSlots ? `Vagas e escolhas salvas ao vivo às ${now}` : `Suas preferências foram salvas às ${now}`, true);
+      } catch (err) {
+        setEstagioStatus(`Erro ao salvar no Supabase: ${err.message}`);
+      }
+      return;
+    }
+
     try {
       const key = getCareerStoreKey(ACTIVE_CAREER_STAGE.key);
       localStorage.setItem(key, JSON.stringify(state.estagioData));
       const now = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      setEstagioStatus(`Salvo no navegador às ${now}`, true);
+      setEstagioStatus(`Salvo localmente às ${now}`, true);
     } catch {
-      setEstagioStatus('Erro ao salvar no navegador.', false);
+      setEstagioStatus('Erro ao salvar no navegador.');
     }
   }
 
@@ -3933,11 +4293,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     syncCareerStageTab();
 
+    // Seletor de simulação Demo (Gestor vs Aluno)
+    const demoWrap = document.getElementById('demoCareerRoleWrap');
+    const demoSel = document.getElementById('selectDemoCareerRole');
+    if (demoWrap) demoWrap.classList.toggle('hidden', sessionMeta.mode !== 'demo');
+
     if (!state.estagioInitialized) {
       state.estagioInitialized = true;
       selCurso.innerHTML = DATA.metadata.cursos.map(c => `<option value="${c}">${c}</option>`).join('');
       selCurso.value = state.estagioCurso;
       if (selCrit) selCrit.value = state.estagioCriterio;
+
+      demoSel?.addEventListener('change', (e) => {
+        demoCareerViewAs = e.target.value || 'gestor';
+        state.estagioExpandedAluno = demoCareerViewAs === 'viewer' ? getEffectiveAlunoNumero() : null;
+        // Em Modo Demo simulando Aluno, também oculta temporariamente Gestão & Notas para demonstrar o RBAC
+        const hideGestao = (demoCareerViewAs === 'viewer');
+        document.getElementById('navTabGestaoBtn')?.classList.toggle('hidden', hideGestao);
+        document.getElementById('mobileNavGestaoBtn')?.classList.toggle('hidden', hideGestao);
+        updateMobileNavColumns();
+        renderEstagioTab();
+      });
 
       selCurso.addEventListener('change', (e) => {
         state.estagioCurso = e.target.value;
@@ -3979,6 +4355,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       document.getElementById('formAddEstagioVaga')?.addEventListener('submit', (e) => {
         e.preventDefault();
+        if (!canManageCareerSlots()) return;
         const inpNome = document.getElementById('inputNovaVagaNome');
         const inpQtd = document.getElementById('inputNovaVagaQtd');
         const nome = (inpNome?.value || '').trim();
@@ -4022,6 +4399,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       document.getElementById('inputEstagioImport')?.addEventListener('change', (e) => {
+        if (!canManageCareerSlots()) return;
         const file = e.target.files?.[0];
         if (!file) return;
         const reader = new FileReader();
@@ -4042,7 +4420,12 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    renderEstagioTab();
+    if (sessionMeta.mode === 'supabase' && careerLoadedStageKey !== ACTIVE_CAREER_STAGE.key) {
+      loadCareerFromSupabase();
+      subscribeCareerRealtime();
+    } else {
+      renderEstagioTab();
+    }
   }
 
   function renderEstagioTab() {
@@ -4050,6 +4433,42 @@ document.addEventListener('DOMContentLoaded', () => {
     const scopeKey = getActiveCareerScope();
     const store = getEstagioCursoStore(scopeKey);
     const ranked = getEstagioRankedAlunos(scopeKey);
+    const canSlots = canManageCareerSlots();
+    const myNum = getEffectiveAlunoNumero();
+    const myAluno = myNum !== null ? DATA.alunos.find(a => String(a.numero) === String(myNum)) : null;
+
+    // Auto-expand own card for viewer on first view
+    if (!canSlots && myNum !== null && state.estagioExpandedAluno === null) {
+      state.estagioExpandedAluno = Number(myNum);
+    }
+
+    // Atualizar faixa de identidade / permissões e botões
+    const rtPill = document.getElementById('careerRealtimePill');
+    const idNotice = document.getElementById('careerIdentityNotice');
+    const saveLbl = document.getElementById('btnEstagioSalvarLabel');
+    const roNotice = document.getElementById('careerVagasReadOnlyNotice');
+    const addForm = document.getElementById('formAddEstagioVaga');
+    const importLbl = document.getElementById('lblEstagioImportBtn');
+    const exportBtn = document.getElementById('btnEstagioExport');
+
+    if (rtPill) {
+      rtPill.textContent = sessionMeta.mode === 'supabase' ? '🟢 Ao Vivo (Supabase Realtime)' : '🧪 Simulação Local (Demo)';
+    }
+    if (idNotice) {
+      if (canSlots) {
+        idNotice.innerHTML = `<strong class="text-emerald-300">Modo Gestor:</strong> você pode editar os locais, quantidades de vagas e preferências desta turma.`;
+      } else if (myAluno) {
+        idNotice.innerHTML = `Logado como <strong class="text-cyan-300">${escapeHtml(myAluno.nome)}</strong> (Nº ${myAluno.numero}) — edite abaixo <strong>apenas as suas preferências</strong> e salve ao vivo.`;
+      } else {
+        idNotice.innerHTML = `<span class="text-amber-300">Sua conta ainda não está vinculada a uma matrícula — visualização somente leitura. Peça ao Super Admin.</span>`;
+      }
+    }
+    if (saveLbl) saveLbl.textContent = canSlots ? 'Salvar Vagas & Escolhas' : 'Salvar Minhas Preferências';
+    roNotice?.classList.toggle('hidden', canSlots);
+    addForm?.classList.toggle('hidden', !canSlots);
+    importLbl?.classList.toggle('hidden', !canSlots);
+    exportBtn?.classList.toggle('hidden', !canSlots);
+
     const vagasEl = document.getElementById('estagioVagasList');
     const resumoEl = document.getElementById('estagioVagasResumo');
     const alunosEl = document.getElementById('estagioAlunosList');
@@ -4062,11 +4481,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (vagasEl) {
       if (store.vagas.length === 0) {
-        vagasEl.innerHTML = `<div class="py-8 text-center text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">Nenhuma vaga cadastrada para ${curso}. Adicione acima (ex: IMBEL, CTEx...).</div>`;
+        vagasEl.innerHTML = `<div class="py-8 text-center text-xs text-slate-500 border border-dashed border-slate-800 rounded-xl">Nenhuma vaga cadastrada para ${escapeHtml(scopeKey)}.${canSlots ? ' Adicione acima.' : ' Aguardando cadastro pelo Gestor.'}</div>`;
+      } else if (!canSlots) {
+        vagasEl.innerHTML = store.vagas.map(v => `
+          <div class="p-2.5 rounded-xl bg-slate-900/75 border border-slate-800 flex items-center justify-between gap-2 text-xs">
+            <span class="font-bold text-slate-100 truncate">${escapeHtml(v.nome)}</span>
+            <span class="px-2.5 py-0.5 rounded-lg bg-cyan-500/15 border border-cyan-500/30 font-mono-numbers font-bold text-cyan-300 shrink-0">${v.qtd} vaga${v.qtd > 1 ? 's' : ''}</span>
+          </div>
+        `).join('');
       } else {
         vagasEl.innerHTML = store.vagas.map((v, idx) => `
           <div class="p-2 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between gap-2 text-xs">
-            <input type="text" data-vaga-name="${idx}" value="${v.nome.replace(/"/g, '&quot;')}" class="flex-1 min-w-0 bg-slate-950/80 border border-slate-700/70 rounded-lg px-2.5 py-1.5 font-bold text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" title="Editar nome do local" />
+            <input type="text" data-vaga-name="${idx}" value="${escapeHtml(v.nome)}" class="flex-1 min-w-0 bg-slate-950/80 border border-slate-700/70 rounded-lg px-2.5 py-1.5 font-bold text-slate-100 text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" title="Editar nome do local" />
             <div class="flex items-center gap-1 shrink-0">
               <button data-vaga-dec="${idx}" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center">-</button>
               <input type="number" min="1" max="99" data-vaga-qtd="${idx}" value="${v.qtd}" class="w-11 h-7 text-center font-mono-numbers font-bold text-cyan-300 bg-slate-950/80 border border-slate-700/70 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-cyan-500" title="Quantidade de vagas" />
@@ -4159,40 +4585,49 @@ document.addEventListener('DOMContentLoaded', () => {
         const score = getEstagioScore(a);
         const prefs = store.prefs[a.numero] || [];
         const filled = prefs.filter(Boolean);
-        const isExpanded = (state.estagioExpandedAluno === a.numero);
+        const isSelf = myNum !== null && String(myNum) === String(a.numero);
+        const canEditThis = canEditAlunoPrefs(a.numero);
+        const isExpanded = canEditThis && (state.estagioExpandedAluno === a.numero);
 
         const summaryText = filled.length > 0
           ? filled.slice(0, 3).map((p, i) => `${i + 1}ª ${p}`).join(' · ') + (filled.length > 3 ? ` (+${filled.length - 3})` : '')
           : 'Sem preferências definidas';
 
+        const cardBorder = isSelf
+          ? 'border-emerald-500/60 ring-1 ring-emerald-500/20'
+          : (isExpanded ? 'border-cyan-500/50' : 'border-slate-800');
+
         return `
-          <div class="rounded-xl bg-slate-900/70 border ${isExpanded ? 'border-cyan-500/50' : 'border-slate-800'} overflow-hidden">
-            <button data-estagio-toggle="${a.numero}" class="w-full p-3 text-left flex items-center justify-between gap-3 hover:bg-slate-800/40 transition">
+          <div class="rounded-xl bg-slate-900/70 border ${cardBorder} overflow-hidden" data-career-aluno-card="${a.numero}">
+            <button data-estagio-toggle="${a.numero}" ${canEditThis ? '' : 'disabled'} class="w-full p-3 text-left flex items-center justify-between gap-3 ${canEditThis ? 'hover:bg-slate-800/40 cursor-pointer' : 'cursor-default'} transition">
               <div class="flex items-center gap-3 min-w-0">
                 <span class="w-7 h-7 rounded-lg bg-slate-800 text-cyan-300 font-extrabold text-xs flex items-center justify-center font-mono-numbers shrink-0">
                   ${idx + 1}º
                 </span>
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-bold text-slate-100 truncate">${a.nome}</span>
+                    <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(a.nome)}</span>
+                    ${isSelf ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-extrabold">Você</span>' : ''}
                     <span class="text-[10px] font-mono-numbers text-blue-400 font-bold">${fmtNum(score)}</span>
                     ${getVinculoBadge(a.vinculo)}
                   </div>
-                  <div class="text-[11px] text-slate-400 truncate mt-0.5">${summaryText}</div>
+                  <div class="text-[11px] text-slate-400 truncate mt-0.5">${escapeHtml(summaryText)}</div>
                 </div>
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono-numbers ${filled.length ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'}">
                   ${filled.length}/10
                 </span>
-                <i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-400"></i>
+                ${canEditThis
+                  ? `<i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-400"></i>`
+                  : `<i data-lucide="lock" class="w-3.5 h-3.5 text-slate-600" title="Somente o próprio aluno ou gestor pode editar"></i>`}
               </div>
             </button>
 
             ${isExpanded ? `
               <div class="p-3 pt-2 border-t border-slate-800/80 bg-slate-950/50 space-y-2">
                 ${vagaNames.length === 0 ? `
-                  <div class="text-xs text-amber-300">Cadastre primeiro as vagas disponíveis na coluna ao lado (1. Vagas Disponíveis).</div>
+                  <div class="text-xs text-amber-300">Nenhuma vaga cadastrada ainda na coluna ao lado (1. Vagas Disponíveis).</div>
                 ` : `
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     ${Array.from({ length: 10 }, (_, optIdx) => {
@@ -4203,14 +4638,15 @@ document.addEventListener('DOMContentLoaded', () => {
                           <span class="w-8 text-[11px] font-mono-numbers font-bold text-slate-400 shrink-0">${optIdx + 1}ª op.</span>
                           <select data-pref-aluno="${a.numero}" data-pref-idx="${optIdx}" class="flex-1 min-w-0 text-xs bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-cyan-500">
                             <option value="">— Nenhuma —</option>
-                            ${vagaNames.map(vn => `<option value="${vn}" ${curVal === vn ? 'selected' : ''} ${usedElsewhere.has(vn) ? 'disabled' : ''}>${vn}${usedElsewhere.has(vn) ? ' (já escolhida)' : ''}</option>`).join('')}
+                            ${vagaNames.map(vn => `<option value="${escapeHtml(vn)}" ${curVal === vn ? 'selected' : ''} ${usedElsewhere.has(vn) ? 'disabled' : ''}>${escapeHtml(vn)}${usedElsewhere.has(vn) ? ' (já escolhida)' : ''}</option>`).join('')}
                           </select>
                         </div>
                       `;
                     }).join('')}
                   </div>
-                  <div class="flex justify-end pt-1">
-                    <button data-pref-clear="${a.numero}" class="text-[11px] text-rose-400 hover:text-rose-300 font-semibold">Limpar opções deste aluno</button>
+                  <div class="flex items-center justify-between gap-2 pt-1">
+                    <button data-pref-clear="${a.numero}" class="text-[11px] text-rose-400 hover:text-rose-300 font-semibold">Limpar opções</button>
+                    ${isSelf ? `<button data-pref-save-self="${a.numero}" class="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold transition">Salvar Minhas Preferências</button>` : ''}
                   </div>
                 `}
               </div>
@@ -4219,7 +4655,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
       }).join('');
 
-      alunosEl.querySelectorAll('button[data-estagio-toggle]').forEach(btn => {
+      alunosEl.querySelectorAll('button[data-estagio-toggle]:not([disabled])').forEach(btn => {
         btn.addEventListener('click', () => {
           const num = parseInt(btn.getAttribute('data-estagio-toggle'), 10);
           state.estagioExpandedAluno = (state.estagioExpandedAluno === num) ? null : num;
@@ -4230,6 +4666,7 @@ document.addEventListener('DOMContentLoaded', () => {
       alunosEl.querySelectorAll('select[data-pref-aluno]').forEach(sel => {
         sel.addEventListener('change', (e) => {
           const num = parseInt(sel.getAttribute('data-pref-aluno'), 10);
+          if (!canEditAlunoPrefs(num)) return;
           const optIdx = parseInt(sel.getAttribute('data-pref-idx'), 10);
           const arr = [...(store.prefs[num] || [])];
           while (arr.length <= optIdx) arr.push('');
@@ -4243,10 +4680,15 @@ document.addEventListener('DOMContentLoaded', () => {
       alunosEl.querySelectorAll('button[data-pref-clear]').forEach(btn => {
         btn.addEventListener('click', () => {
           const num = parseInt(btn.getAttribute('data-pref-clear'), 10);
+          if (!canEditAlunoPrefs(num)) return;
           store.prefs[num] = [];
           setEstagioStatus('Alterações não salvas — clique em Salvar');
           renderEstagioTab();
         });
+      });
+
+      alunosEl.querySelectorAll('button[data-pref-save-self]').forEach(btn => {
+        btn.addEventListener('click', () => saveEstagioData());
       });
     }
 
@@ -5298,38 +5740,100 @@ document.addEventListener('DOMContentLoaded', () => {
       const box = document.getElementById('saUsersList');
       if (!box) return;
       if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb) {
-        box.innerHTML = `<div class="p-3 text-slate-400">Modo Demo: conecte ao Supabase para listar e editar contas reais de <code>user_roles</code> e <code>allowed_emails</code>.</div>`;
+        box.innerHTML = `<div class="p-3 text-slate-400">Modo Demo: conecte ao Supabase para listar, promover <strong>Gestor</strong>, vincular matrículas e <strong>Resetar Senha</strong> das contas reais. Você pode testar <strong>Prévia Logins (.csv)</strong> acima.</div>`;
         return;
       }
       box.innerHTML = `<div class="p-3 text-slate-400">Carregando usuários e whitelist...</div>`;
       try {
         const [{ data: roles }, { data: wl }] = await Promise.all([
-          sessionMeta.sb.from('user_roles').select('*').order('email'),
+          sessionMeta.sb.from('user_roles').select('*').order('turma_id', { ascending: true }).order('username', { ascending: true }),
           sessionMeta.sb.from('allowed_emails').select('*').order('email')
         ]);
+        const turmaOptions = (selected) =>
+          `<option value="" ${!selected ? 'selected' : ''}>Todas</option>` +
+          VISIBLE_TURMAS.map(t => `<option value="${escapeHtml(t.id)}" ${t.id === selected ? 'selected' : ''}>${escapeHtml(t.nome)}</option>`).join('');
+
         const activeRows = (roles || []).map(u => `
-          <div class="p-2 flex items-center justify-between gap-2">
-            <div class="min-w-0">
-              <div class="font-semibold text-slate-100 truncate">${escapeHtml(u.email)}</div>
-              <div class="text-[10px] text-emerald-400">Ativo • ${escapeHtml(u.role)} • ${escapeHtml(u.turma_id || 'Todas')}</div>
+          <div class="p-2.5 space-y-1.5" data-sa-user-row="${escapeHtml(u.user_id)}">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="font-bold text-slate-100 truncate">${escapeHtml(u.username || u.email)}${u.must_change_password ? ' <span class="text-[9.5px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300">1º Acesso</span>' : ''}</div>
+                <div class="text-[10px] text-slate-400 truncate">${escapeHtml(u.email)}</div>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <button type="button" data-reset-pw="${escapeHtml(u.user_id)}" class="text-[10px] text-amber-300 hover:text-amber-200 px-2 py-1 rounded bg-amber-500/15 border border-amber-500/30 font-semibold" title="Redefinir senha para padrão e exigir troca">Resetar Senha</button>
+                <button type="button" data-del-role="${escapeHtml(u.user_id)}" class="text-[10px] text-rose-400 hover:text-rose-300 px-2 py-1 rounded bg-rose-500/10">Remover</button>
+              </div>
             </div>
-            <button type="button" data-del-role="${escapeHtml(u.user_id)}" class="text-[10px] text-rose-400 hover:text-rose-300 px-2 py-0.5 rounded bg-rose-500/10">Remover</button>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <select data-edit-role="${escapeHtml(u.user_id)}" class="text-[11px] bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-semibold">
+                <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Aluno (Viewer)</option>
+                <option value="gestor" ${u.role === 'gestor' ? 'selected' : ''}>Gestor Turma</option>
+                <option value="super_admin" ${u.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
+              </select>
+              <select data-edit-turma="${escapeHtml(u.user_id)}" class="text-[11px] bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-semibold">
+                ${turmaOptions(u.turma_id)}
+              </select>
+              <input type="number" data-edit-num="${escapeHtml(u.user_id)}" value="${u.aluno_numero ?? ''}" placeholder="Nº Matr." class="w-20 text-[11px] font-mono-numbers bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200">
+              <button type="button" data-save-role="${escapeHtml(u.user_id)}" class="text-[10.5px] px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold">Salvar</button>
+            </div>
           </div>
         `).join('');
+
         const wlRows = (wl || []).map(w => `
           <div class="p-2 flex items-center justify-between gap-2 bg-slate-900/40">
             <div class="min-w-0">
-              <div class="font-semibold text-slate-200 truncate">${escapeHtml(w.email)}</div>
-              <div class="text-[10px] text-amber-300">Whitelist • ${escapeHtml(w.role)} • ${escapeHtml(w.turma_id || 'Todas')}</div>
+              <div class="font-semibold text-slate-200 truncate">${escapeHtml(w.username || w.email)}</div>
+              <div class="text-[10px] text-amber-300">Whitelist • ${escapeHtml(w.role)} • ${escapeHtml(w.turma_id || 'Todas')}${w.aluno_numero ? ` • Nº ${w.aluno_numero}` : ''}</div>
             </div>
             <button type="button" data-del-wl="${escapeHtml(w.email)}" class="text-[10px] text-rose-400 hover:text-rose-300 px-2 py-0.5 rounded bg-rose-500/10">Remover</button>
           </div>
         `).join('');
         box.innerHTML = (activeRows + wlRows) || `<div class="p-3 text-slate-500">Nenhum usuário listado em user_roles ou allowed_emails.</div>`;
 
+        box.querySelectorAll('button[data-save-role]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const uid = btn.getAttribute('data-save-role');
+            const nextRole = box.querySelector(`select[data-edit-role="${uid}"]`)?.value || 'viewer';
+            const rawTurma = box.querySelector(`select[data-edit-turma="${uid}"]`)?.value || '';
+            const rawNum = box.querySelector(`input[data-edit-num="${uid}"]`)?.value || '';
+            const turma_id = nextRole === 'super_admin' ? null : (rawTurma || null);
+            const aluno_numero = rawNum ? parseInt(rawNum, 10) : null;
+            const { error } = await sessionMeta.sb
+              .from('user_roles')
+              .update({ role: nextRole, turma_id, aluno_numero })
+              .eq('user_id', uid);
+            if (error) {
+              setGestaoStatus(`Erro ao atualizar usuário: ${error.message}`, 'err');
+            } else {
+              setGestaoStatus(`Permissões atualizadas (${nextRole}${turma_id ? ` · ${turma_id}` : ''}).`, 'ok');
+              loadUsersList();
+            }
+          });
+        });
+
+        box.querySelectorAll('button[data-reset-pw]').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            const uid = btn.getAttribute('data-reset-pw');
+            const customPw = window.prompt('Digite uma senha temporária ou deixe EM BRANCO para restaurar a senha padrão (senha_Nome_Turma):', '');
+            if (customPw === null) return;
+            try {
+              const { data, error } = await sessionMeta.sb.functions.invoke('admin-users', {
+                body: { action: 'reset_password', user_id: uid, new_password: customPw.trim(), force_change: true }
+              });
+              if (error || data?.error) throw new Error(data?.error || error?.message);
+              setGestaoStatus(`Senha de ${data.username} redefinida para "${data.temp_password}" (troca obrigatória no próximo login).`, 'ok');
+              loadUsersList();
+            } catch (err) {
+              setGestaoStatus(`Erro ao resetar senha via Edge Function: ${err.message}. Alternativa: rode "python manage_supabase_users.py reset --login ..." no terminal.`, 'warn');
+            }
+          });
+        });
+
         box.querySelectorAll('button[data-del-role]').forEach(btn => {
           btn.addEventListener('click', async () => {
-            await sessionMeta.sb.from('user_roles').delete().eq('user_id', btn.getAttribute('data-del-role'));
+            const uid = btn.getAttribute('data-del-role');
+            await sessionMeta.sb.from('user_roles').delete().eq('user_id', uid);
             loadUsersList();
           });
         });
@@ -5346,6 +5850,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadUsersList();
     document.getElementById('btnSaRefreshUsers')?.addEventListener('click', loadUsersList);
+
+    // Prévia CSV de logins e senhas padrão da turma atual
+    document.getElementById('btnSaExportCredentialsPreview')?.addEventListener('click', () => {
+      if (!DATA.alunos.length) {
+        setGestaoStatus('Nenhum aluno nesta turma para gerar prévia de logins.', 'warn');
+        return;
+      }
+      const seen = new Set();
+      const lines = ['Matricula,Nome,Login,SenhaPadrao,EmailInterno'];
+      DATA.alunos.forEach(a => {
+        let creds = buildDefaultCredentials(a.nome, ACTIVE_TURMA.id);
+        if (seen.has(creds.internalEmail)) {
+          const base = creds.loginDisplay.replace(/\s+(\d+)$/, ` ${a.numero} $1`);
+          const under = base.replace(/\s+/g, '_');
+          creds = { loginDisplay: base, internalEmail: `${under.toLowerCase()}@ime.local`, defaultPassword: `senha_${under}` };
+        }
+        seen.add(creds.internalEmail);
+        lines.push(`${a.numero},"${String(a.nome).replace(/"/g, '""')}","${creds.loginDisplay}","${creds.defaultPassword}","${creds.internalEmail}"`);
+      });
+      const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `logins_padrao_${ACTIVE_TURMA.id}.csv`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      setGestaoStatus(`CSV gerado com ${DATA.alunos.length} logins padrão (${ACTIVE_TURMA.nome}). Guarde em local seguro!`, 'ok');
+    });
+
+    // Gerar contas dos alunos da turma atual via Edge Function admin-users
+    document.getElementById('btnSaProvisionTurma')?.addEventListener('click', async () => {
+      if (!DATA.alunos.length) {
+        setGestaoStatus('Esta turma ainda não possui alunos cadastrados.', 'warn');
+        return;
+      }
+      if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb || !IS_SUPER_ADMIN) {
+        const sample = buildDefaultCredentials(DATA.alunos[0].nome, ACTIVE_TURMA.id);
+        setGestaoStatus(`Simulação Demo: seriam gerados ${DATA.alunos.length} logins (ex.: "${sample.loginDisplay}" / "${sample.defaultPassword}") com troca obrigatória no 1º acesso.`, 'info');
+        return;
+      }
+      setGestaoStatus(`Criando contas para ${DATA.alunos.length} alunos em ${ACTIVE_TURMA.nome}...`, 'info');
+      try {
+        const { data, error } = await sessionMeta.sb.functions.invoke('admin-users', {
+          body: {
+            action: 'provision_turma_users',
+            turma_id: ACTIVE_TURMA.id,
+            alunos: DATA.alunos.map(a => ({ numero: a.numero, nome: a.nome }))
+          }
+        });
+        if (error || data?.error) throw new Error(data?.error || error?.message);
+        setGestaoStatus(`Provisionamento concluído: ${data.created_count} conta(s) criada(s), ${data.skipped_count} já existente(s)/ignorada(s).`, 'ok');
+        loadUsersList();
+      } catch (err) {
+        setGestaoStatus(`Edge Function admin-users indisponível (${err.message}). Use o script local: python manage_supabase_users.py provision --turma ${ACTIVE_TURMA.id} --file data.json`, 'warn');
+      }
+    });
 
     document.getElementById('btnSaSaveSemestre')?.addEventListener('click', async () => {
       const nextSem = (document.getElementById('saSemestreAtualInput')?.value || '').trim();
@@ -5406,28 +5968,39 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => window.location.reload(), 900);
     });
 
-    const addWhitelistEmails = async (emails) => {
+    const addWhitelistEntries = async (entries) => {
       const role = document.getElementById('saWlRole')?.value || 'viewer';
       const turma_id = role === 'super_admin' ? null : (document.getElementById('saWlTurma')?.value || null);
       if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb || !IS_SUPER_ADMIN) {
-        setGestaoStatus(`Simulação Demo: ${emails.length} e-mail(s) autorizados como "${role}" (${turma_id || 'Todas'}).`, 'info');
+        setGestaoStatus(`Simulação Demo: ${entries.length} entrada(s) autorizada(s) como "${role}" (${turma_id || 'Todas'}).`, 'info');
         return;
       }
-      const rows = emails.map(em => ({ email: em.trim().toLowerCase(), role, turma_id }));
+      const rows = entries.map(item => {
+        const raw = String(item.raw || '').trim();
+        return {
+          email: normalizeUsernameToEmail(raw),
+          username: raw.includes('@') ? null : raw,
+          role,
+          turma_id,
+          aluno_numero: item.aluno_numero || null
+        };
+      }).filter(r => r.email);
       const { error } = await sessionMeta.sb.from('allowed_emails').upsert(rows, { onConflict: 'email' });
       if (error) {
         setGestaoStatus(`Erro ao salvar whitelist: ${error.message}`, 'err');
         return;
       }
-      setGestaoStatus(`${rows.length} e-mail(s) pré-autorizado(s) com sucesso!`, 'ok');
+      setGestaoStatus(`${rows.length} acesso(s) pré-autorizado(s) com sucesso!`, 'ok');
       loadUsersList();
     };
 
     document.getElementById('btnSaAddWhitelist')?.addEventListener('click', () => {
-      const em = (document.getElementById('saWlEmail')?.value || '').trim();
-      if (!em || !em.includes('@')) return;
-      addWhitelistEmails([em]);
+      const raw = (document.getElementById('saWlEmail')?.value || '').trim();
+      const numRaw = (document.getElementById('saWlAlunoNum')?.value || '').trim();
+      if (!raw) return;
+      addWhitelistEntries([{ raw, aluno_numero: numRaw ? parseInt(numRaw, 10) : null }]);
       document.getElementById('saWlEmail').value = '';
+      if (document.getElementById('saWlAlunoNum')) document.getElementById('saWlAlunoNum').value = '';
     });
 
     document.getElementById('btnSaBatchWhitelist')?.addEventListener('click', () => {
@@ -5436,9 +6009,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('btnSaSubmitBatch')?.addEventListener('click', () => {
       const raw = document.getElementById('saBatchEmailsText')?.value || '';
-      const emails = raw.split(/[\n,;]+/).map(s => s.trim()).filter(s => s.includes('@'));
-      if (!emails.length) return;
-      addWhitelistEmails(emails);
+      const entries = raw.split(/\r?\n/).map(line => {
+        const parts = line.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+        if (!parts.length) return null;
+        return { raw: parts[0], aluno_numero: parts[1] ? parseInt(parts[1], 10) : null };
+      }).filter(Boolean);
+      if (!entries.length) return;
+      addWhitelistEntries(entries);
       document.getElementById('saBatchEmailsText').value = '';
       document.getElementById('saBatchBox')?.classList.add('hidden');
     });

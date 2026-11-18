@@ -1,0 +1,29 @@
+name: Prevent Supabase Auto-Pause (Keep-Alive)
+
+on:
+  schedule:
+    # Executa a cada 3 dias (plano grátis do Supabase pausa após 7 dias de inatividade)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch:
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "Secrets SUPABASE_URL ou SUPABASE_ANON_KEY ainda não configurados — pulando ping."
+            exit 0
+          fi
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${SUPABASE_URL%/}/rest/v1/turmas?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+          echo "Supabase keep-alive HTTP status: ${HTTP_CODE}"
+          if [ "$HTTP_CODE" -ge 500 ]; then
+            exit 1
+          fi

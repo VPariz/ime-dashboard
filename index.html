@@ -95,8 +95,9 @@
         <!-- Login Form -->
         <form id="loginForm" class="space-y-3">
           <div>
-            <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">E-mail autorizado</label>
-            <input type="email" id="loginEmail" required autocomplete="email" placeholder="seuemail@exemplo.com" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">Login (Nome + Turma) ou E-mail</label>
+            <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Pedro Silva 29 ou Papaleo 28" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <p class="text-[10.5px] text-slate-500 mt-1">1º acesso: senha padrão <code>senha_Nome_Turma</code> (ex.: <code>senha_Pedro_Silva_29</code>). Será solicitada troca por senha forte.</p>
           </div>
           <div>
             <label for="loginPassword" class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
@@ -140,6 +141,53 @@
       </p>
     </div>
   </section>
+
+  <!-- Mandatory First-Login Strong Password Change Modal -->
+  <div id="forcePasswordModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+    <div class="w-full max-w-md glass-panel rounded-2xl border border-amber-500/40 p-6 shadow-2xl space-y-4 animate-fade-in">
+      <div class="space-y-1">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-[11px] font-bold text-amber-300">
+          <i data-lucide="key-round" class="w-3.5 h-3.5"></i>
+          <span>Troca Obrigatória no Primeiro Acesso</span>
+        </div>
+        <h2 class="text-base sm:text-lg font-extrabold text-white pt-1">Defina sua Senha Forte</h2>
+        <p id="forcePasswordUserSubtitle" class="text-xs text-slate-400">
+          Por segurança, substitua sua senha inicial padrão por uma senha forte antes de acessar os dados da turma.
+        </p>
+      </div>
+
+      <form id="forcePasswordForm" class="space-y-3">
+        <div>
+          <label for="newStrongPassword" class="block text-xs font-semibold text-slate-300 mb-1">Nova Senha Forte</label>
+          <input type="password" id="newStrongPassword" required autocomplete="new-password" placeholder="Crie uma senha forte" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+        <div>
+          <label for="confirmStrongPassword" class="block text-xs font-semibold text-slate-300 mb-1">Confirmar Nova Senha</label>
+          <input type="password" id="confirmStrongPassword" required autocomplete="new-password" placeholder="Repita a nova senha" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+        </div>
+
+        <ul id="strongPwChecklist" class="grid grid-cols-2 gap-1.5 text-[11px] p-3 rounded-xl bg-slate-950/70 border border-slate-800 text-slate-400">
+          <li data-pw-rule="length">• Mín. 8 caracteres</li>
+          <li data-pw-rule="upper">• 1 letra maiúscula</li>
+          <li data-pw-rule="lower">• 1 letra minúscula</li>
+          <li data-pw-rule="digit">• 1 número</li>
+          <li data-pw-rule="symbol">• 1 símbolo (!@#$...)</li>
+          <li data-pw-rule="matches">• Senhas iguais</li>
+        </ul>
+
+        <div id="forcePasswordError" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-medium"></div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button type="button" id="btnForcePasswordCancel" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+            Sair
+          </button>
+          <button type="submit" id="btnForcePasswordSubmit" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition shadow-lg shadow-emerald-600/20">
+            Salvar Nova Senha e Entrar
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Main Authenticated Shell -->
   <div id="appShell" class="hidden">
@@ -1192,17 +1240,32 @@
           <div class="flex flex-wrap items-center gap-2">
             <button id="btnEstagioSalvar" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
               <i data-lucide="save" class="w-3.5 h-3.5"></i>
-              <span>Salvar</span>
+              <span id="btnEstagioSalvarLabel">Salvar</span>
             </button>
             <button id="btnEstagioExport" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5" title="Exportar vagas e escolhas em JSON">
               <i data-lucide="download" class="w-3.5 h-3.5 text-cyan-400"></i>
               <span>Exportar JSON</span>
             </button>
-            <label class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer" title="Importar vagas e escolhas de um arquivo JSON">
+            <label id="lblEstagioImportBtn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer" title="Importar vagas e escolhas de um arquivo JSON">
               <i data-lucide="upload" class="w-3.5 h-3.5 text-amber-400"></i>
               <span>Importar JSON</span>
               <input type="file" id="inputEstagioImport" accept=".json" class="hidden" />
             </label>
+          </div>
+        </div>
+
+        <!-- Live Identity & Demo Role Simulation Strip -->
+        <div id="careerLiveBanner" class="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-slate-900/75 border border-slate-800 text-xs">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="careerRealtimePill" class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10.5px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">🟢 Ao Vivo</span>
+            <span id="careerIdentityNotice" class="text-slate-300"></span>
+          </div>
+          <div id="demoCareerRoleWrap" class="hidden flex items-center gap-2">
+            <label for="selectDemoCareerRole" class="text-[11px] font-semibold text-amber-300">Simular perfil (Demo):</label>
+            <select id="selectDemoCareerRole" class="text-[11px] bg-slate-950 border border-amber-500/40 rounded-lg px-2 py-1 text-amber-200 font-bold focus:outline-none">
+              <option value="gestor">✏️ Gestor (edita vagas e tudo)</option>
+              <option value="viewer">👁️ Aluno individual (só suas opções)</option>
+            </select>
           </div>
         </div>
 
@@ -1236,6 +1299,11 @@
               1. Vagas Disponíveis
             </h3>
             <span id="estagioVagasResumo" class="text-xs font-mono-numbers text-cyan-300 font-bold">0 vagas</span>
+          </div>
+
+          <div id="careerVagasReadOnlyNotice" class="hidden p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/70 text-[11px] text-slate-400 flex items-center gap-2">
+            <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
+            <span>Vagas e locais oficiais são gerenciados pelo Gestor da turma (somente leitura).</span>
           </div>
 
           <form id="formAddEstagioVaga" class="flex items-center gap-2">
@@ -1398,39 +1466,50 @@
             </div>
           </div>
 
-          <!-- Permissões & Whitelist -->
+          <!-- Permissões, Logins & Reset de Senha (Somente Super Admin) -->
           <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
-            <div class="flex items-center justify-between gap-2">
+            <div class="flex flex-wrap items-center justify-between gap-2">
               <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
                 <i data-lucide="user-check" class="w-3.5 h-3.5 text-emerald-400"></i>
-                <span>Usuários &amp; Pré-Autorizações (Whitelist)</span>
+                <span>Usuários, Admins de Turma &amp; Senhas</span>
               </h4>
-              <button id="btnSaRefreshUsers" class="text-[11px] text-purple-300 hover:text-purple-200 font-semibold">Atualizar lista</button>
+              <div class="flex items-center gap-2">
+                <button id="btnSaExportCredentialsPreview" type="button" class="text-[11px] text-sky-300 hover:text-sky-200 font-semibold" title="Baixar CSV com logins e senhas padrão da turma">Prévia Logins (.csv)</button>
+                <button id="btnSaRefreshUsers" type="button" class="text-[11px] text-purple-300 hover:text-purple-200 font-semibold">Atualizar</button>
+              </div>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2">
-              <input type="email" id="saWlEmail" placeholder="email@ime.eb.br" class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-              <select id="saWlRole" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="viewer">Visualizador</option>
+            <div class="flex flex-wrap items-center gap-2">
+              <button id="btnSaProvisionTurma" type="button" class="px-3 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition flex items-center gap-1.5" title="Criar logins padrão Nome_Turma / senha_Nome_Turma via Edge Function">
+                <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                <span>Gerar Logins da Turma Atual</span>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
+              <input type="text" id="saWlEmail" placeholder="Pedro Silva 29 ou email@..." class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <input type="number" id="saWlAlunoNum" placeholder="Nº Matrícula" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" title="Matrícula do aluno na turma (opcional)">
+              <select id="saWlRole" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                <option value="viewer">Aluno (Viewer)</option>
                 <option value="gestor">Gestor Turma</option>
                 <option value="super_admin">Super Admin</option>
               </select>
-              <select id="saWlTurma" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
+              <select id="saWlTurma" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-              <button id="btnSaAddWhitelist" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
-                Autorizar E-mail (Primeiro Acesso)
+              <button id="btnSaAddWhitelist" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">
+                Pré-Autorizar (Whitelist)
               </button>
-              <button id="btnSaBatchWhitelist" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition">
-                Colar Vários E-mails...
+              <button id="btnSaBatchWhitelist" type="button" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold transition">
+                Colar em Lote...
               </button>
             </div>
             <div id="saBatchBox" class="hidden space-y-2 pt-1">
-              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 e-mail por linha (todos receberão o papel e turma selecionados acima)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
-              <button id="btnSaSubmitBatch" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Adicionar em Lote</button>
+              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 por linha: email_ou_login, matricula (ex: Pedro Silva 29, 30142)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+              <button id="btnSaSubmitBatch" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Adicionar em Lote</button>
             </div>
 
-            <div id="saUsersList" class="max-h-40 overflow-y-auto divide-y divide-slate-800/70 rounded-xl border border-slate-800 bg-slate-950/60 text-xs">
+            <div id="saUsersList" class="max-h-60 overflow-y-auto divide-y divide-slate-800/70 rounded-xl border border-slate-800 bg-slate-950/60 text-xs">
               <!-- Populated by JS -->
             </div>
           </div>
@@ -1840,10 +1919,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261118y"></script>
+  <script src="supabase-config.js?v=20261118z"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261118y"></script>
+  <script src="demo-data.js?v=20261118z"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261118y"></script>
+  <script src="app.js?v=20261118z"></script>
 </body>
 </html>
