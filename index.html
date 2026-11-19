@@ -39,7 +39,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=20261119s">
 </head>
 <body class="bg-[#0b0f19] text-slate-100 min-h-screen antialiased selection:bg-indigo-600 selection:text-white">
 
@@ -278,30 +278,30 @@
   <div id="appShell" class="hidden">
   <!-- Top Navigation Bar -->
   <header class="sticky top-0 z-40 glass-panel border-b border-slate-800/80">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 sm:h-20 flex items-center justify-between gap-2 sm:gap-4">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-[3.5rem] py-2 sm:py-0 sm:h-20 flex flex-wrap md:flex-nowrap items-center justify-between gap-2 sm:gap-4">
       
       <!-- Brand & Title -->
-      <div class="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
-        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-600 p-[1px] shadow-lg shadow-indigo-500/20 flex items-center justify-center shrink-0">
-          <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center font-extrabold text-indigo-400 text-base sm:text-lg">
+      <div class="flex items-center gap-2 sm:gap-3.5 min-w-0">
+        <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-600 p-[1px] shadow-lg shadow-indigo-500/20 flex items-center justify-center shrink-0">
+          <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center font-extrabold text-indigo-400 text-sm sm:text-lg">
             IME
           </div>
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-1.5 flex-wrap">
-            <h1 class="font-extrabold text-base sm:text-xl tracking-tight text-white flex items-center gap-1.5 flex-wrap">
-              <span>IME Analytics</span>
-              <span id="headerTurmaBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold">Turma 28</span>
-              <select id="selectTurmaHeader" class="hidden text-[11px] bg-slate-900/90 border border-purple-500/40 rounded-full px-2.5 py-0.5 text-purple-300 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500" title="Super Admin: alternar turma"></select>
-              <span id="headerSemestreBadge" class="hidden xs:inline-block sm:inline-block text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold">Sem. 3.2</span>
+            <h1 class="font-extrabold text-sm sm:text-xl tracking-tight text-white flex items-center gap-1.5 flex-wrap">
+              <span class="whitespace-nowrap">IME Analytics</span>
+              <span id="headerTurmaBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold whitespace-nowrap">Turma 28</span>
+              <select id="selectTurmaHeader" class="hidden text-[11px] bg-slate-900/90 border border-purple-500/40 rounded-full px-2 py-0.5 text-purple-300 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500 max-w-[140px] sm:max-w-none" title="Super Admin: alternar turma"></select>
+              <span id="headerSemestreBadge" class="inline-block text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold whitespace-nowrap">Sem. 3.2</span>
             </h1>
           </div>
-          <p class="hidden sm:block text-xs text-slate-400 font-medium truncate">Painel Estratégico de Desempenho Acadêmico • Foco em Graduação</p>
+          <p class="hidden md:block text-xs text-slate-400 font-medium truncate">Painel Estratégico de Desempenho Acadêmico • Foco em Graduação</p>
         </div>
       </div>
 
       <!-- Device Mode Switcher, Theme Selector, Quick Search & Actions -->
-      <div class="flex items-center gap-1.5 sm:gap-2.5">
+      <div class="flex items-center justify-between md:justify-end gap-1.5 sm:gap-2.5 w-full md:w-auto flex-wrap">
 
         <!-- Theme Switcher -->
         <select id="selectTheme" class="text-xs bg-slate-900/90 border border-slate-700/80 rounded-xl px-2 sm:px-2.5 py-1.5 text-slate-200 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500" title="Escolher tema de cores">
@@ -1041,8 +1041,8 @@
       <!-- Table Controls Bar -->
       <div class="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-4">
         
-        <div class="flex items-center gap-3 flex-1 min-w-[240px]">
-          <div class="relative w-full max-w-xs">
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <div class="relative w-full sm:max-w-xs">
             <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
             <input 
               type="text" 
@@ -1051,7 +1051,7 @@
               class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-900 border border-slate-700 rounded-xl text-slate-200 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
           </div>
-          <span id="tableResultsCount" class="text-xs text-slate-400 font-medium whitespace-nowrap">86 alunos listados</span>
+          <span id="tableResultsCount" class="text-xs text-slate-400 font-medium">86 alunos listados</span>
         </div>
 
         <div class="flex items-center gap-2.5 flex-wrap">
@@ -2324,10 +2324,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119r"></script>
+  <script src="supabase-config.js?v=20261119s"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119r"></script>
+  <script src="demo-data.js?v=20261119s"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119r"></script>
+  <script src="app.js?v=20261119s"></script>
 </body>
 </html>

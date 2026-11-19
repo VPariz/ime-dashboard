@@ -1620,9 +1620,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateMobileNavColumns() {
       const mobileNav = document.getElementById('mobileBottomNav');
       if (!mobileNav) return;
-      const visibleBtns = mobileNav.querySelectorAll('.mobile-nav-btn:not(.hidden)').length;
       mobileNav.classList.remove('grid-cols-5', 'grid-cols-6', 'grid-cols-7', 'grid-cols-8');
-      mobileNav.style.gridTemplateColumns = `repeat(${Math.max(4, visibleBtns)}, minmax(0, 1fr))`;
+      mobileNav.style.gridTemplateColumns = '';
     }
 
     // --- AVATAR STORE (INICIAL DO 1º NOME + UPLOAD COMPRIMIDO WEBP) ---

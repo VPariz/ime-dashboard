@@ -11,6 +11,12 @@
   --accent-indigo: #6366f1;
 }
 
+html,
+body {
+  overflow-x: clip;
+  max-width: 100%;
+}
+
 body {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   background-color: var(--bg-primary);
@@ -154,17 +160,32 @@ body.is-mobile #navTabs {
 }
 
 body.is-mobile #mobileBottomNav {
-  display: grid !important;
+  display: flex !important;
+  flex-wrap: nowrap;
+  align-items: center;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  gap: 0.25rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+}
+
+#mobileBottomNav::-webkit-scrollbar {
+  display: none;
 }
 
 body.is-mobile #mobileBottomNav button {
-  min-height: 44px !important;
+  flex: 1 0 64px;
+  min-width: 64px;
+  min-height: 48px !important;
+  padding: 0.375rem 0.25rem !important;
   overflow: hidden;
 }
 
 body.is-mobile #mobileBottomNav span {
-  font-size: 10px !important;
-  line-height: 1.1 !important;
+  font-size: 10.5px !important;
+  line-height: 1.15 !important;
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -173,23 +194,7 @@ body.is-mobile #mobileBottomNav span {
 
 body.is-mobile main {
   padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
-  padding-top: 1rem !important;
-}
-
-body.is-mobile select,
-body.is-mobile input,
-body.is-mobile button {
-  min-height: 38px;
-}
-
-body.is-mobile .text-xs {
-  font-size: 13px !important;
-  line-height: 1.25rem !important;
-}
-
-body.is-mobile .text-\[11px\],
-body.is-mobile .text-\[10px\] {
-  font-size: 12px !important;
+  padding-top: 0.85rem !important;
 }
 
 body.is-mobile .glass-card {
@@ -197,13 +202,15 @@ body.is-mobile .glass-card {
   border-radius: 1rem !important;
 }
 
-/* Student Modal Mobile Bottom Sheet */
-body.is-mobile #studentModal {
+/* Student & Subject Modal Mobile Bottom Sheet */
+body.is-mobile #studentModal,
+body.is-mobile #subjectModal {
   padding: 0 !important;
   align-items: flex-end !important;
 }
 
-body.is-mobile #studentModal > div {
+body.is-mobile #studentModal > div,
+body.is-mobile #subjectModal > div {
   max-height: 94vh !important;
   height: 94vh !important;
   border-bottom-left-radius: 0 !important;
@@ -212,17 +219,20 @@ body.is-mobile #studentModal > div {
   width: 100% !important;
 }
 
-body.is-mobile #studentModal .overflow-y-auto {
+body.is-mobile #studentModal .overflow-y-auto,
+body.is-mobile #subjectModal .overflow-y-auto {
   padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
 }
 
 @media (max-width: 768px) {
-  #studentModal {
+  #studentModal,
+  #subjectModal {
     padding: 0 !important;
     align-items: flex-end !important;
   }
 
-  #studentModal > div {
+  #studentModal > div,
+  #subjectModal > div {
     max-height: 94vh !important;
     height: 94vh !important;
     border-bottom-left-radius: 0 !important;
@@ -231,8 +241,16 @@ body.is-mobile #studentModal .overflow-y-auto {
     width: 100% !important;
   }
 
-  #studentModal .overflow-y-auto {
+  #studentModal .overflow-y-auto,
+  #subjectModal .overflow-y-auto {
     padding-bottom: calc(2.5rem + env(safe-area-inset-bottom, 0px)) !important;
+  }
+
+  /* Evita auto-zoom no iOS Safari ao digitar em inputs no celular */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea {
+    font-size: 16px !important;
   }
 }
 
@@ -246,17 +264,28 @@ body.is-mobile #studentModal .overflow-y-auto {
   }
 
   body:not(.is-desktop) #mobileBottomNav {
-    display: grid !important;
+    display: flex !important;
+    flex-wrap: nowrap;
+    align-items: center;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0.25rem;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
   }
 
   body:not(.is-desktop) #mobileBottomNav button {
-    min-height: 44px !important;
+    flex: 1 0 64px;
+    min-width: 64px;
+    min-height: 48px !important;
+    padding: 0.375rem 0.25rem !important;
     overflow: hidden;
   }
 
   body:not(.is-desktop) #mobileBottomNav span {
-    font-size: 10px !important;
-    line-height: 1.1 !important;
+    font-size: 10.5px !important;
+    line-height: 1.15 !important;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -265,22 +294,7 @@ body.is-mobile #studentModal .overflow-y-auto {
 
   body:not(.is-desktop) main {
     padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)) !important;
-  }
-
-  body:not(.is-desktop) select,
-  body:not(.is-desktop) input,
-  body:not(.is-desktop) button {
-    min-height: 38px;
-  }
-
-  body:not(.is-desktop) .text-xs {
-    font-size: 13px !important;
-    line-height: 1.25rem !important;
-  }
-
-  body:not(.is-desktop) .text-\[11px\],
-  body:not(.is-desktop) .text-\[10px\] {
-    font-size: 12px !important;
+    padding-top: 0.85rem !important;
   }
 }
 
