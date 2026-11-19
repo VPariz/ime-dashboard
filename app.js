@@ -7621,12 +7621,12 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { data: rows } = await sessionMeta.sb
           .from('student_current_grades')
-          .select('disciplina_codigo, ve_items, vc, vf')
+          .select('codigo, ve_items, vc, vf')
           .eq('turma_id', ACTIVE_TURMA.id)
           .eq('semestre', CURRENT_SEM)
           .eq('aluno_numero', aluno.numero);
         (rows || []).forEach(r => {
-          nextGrades[r.disciplina_codigo] = {
+          nextGrades[r.codigo] = {
             ve_items: normalizeVeItems(r.ve_items, null),
             vc: r.vc !== null && r.vc !== undefined ? Number(r.vc) : null,
             vf: r.vf !== null && r.vf !== undefined ? Number(r.vf) : null
@@ -7666,7 +7666,7 @@ document.addEventListener('DOMContentLoaded', () => {
           .eq('turma_id', ACTIVE_TURMA.id)
           .eq('semestre', CURRENT_SEM)
           .eq('grupo_academico', grupo)
-          .order('data_evento', { ascending: true });
+          .order('event_date', { ascending: true });
         if (!error && Array.isArray(rows)) {
           mpState.calendarEvents = rows;
         }
@@ -7702,12 +7702,12 @@ document.addEventListener('DOMContentLoaded', () => {
           grupo_academico: grupo,
           titulo: `Prova VE1 de ${disc1}`,
           tipo: 'VE',
-          disciplina: disc1,
-          data_evento: plusDays(5),
+          disciplina_nome: disc1,
+          event_date: plusDays(5),
           anotacao: 'Estudar capítulos 3 e 4 do livro-texto e refazer provas antigas.',
           is_private: false,
-          created_by: 'demo-user',
-          created_by_name: aluno?.nome || 'Aluno Demo'
+          owner_aluno_numero: aluno?.numero || null,
+          created_by: 'demo-user'
         },
         {
           id: `demo_ev_2_${grupo}`,
@@ -7716,12 +7716,12 @@ document.addEventListener('DOMContentLoaded', () => {
           grupo_academico: grupo,
           titulo: `Lista de exercícios — ${disc2}`,
           tipo: 'Lista',
-          disciplina: disc2,
-          data_evento: plusDays(9),
+          disciplina_nome: disc2,
+          event_date: plusDays(9),
           anotacao: 'Fazer questões 2, 5, 8 e 11 antes da monitoria.',
           is_private: true,
-          created_by: 'demo-user',
-          created_by_name: aluno?.nome || 'Aluno Demo'
+          owner_aluno_numero: aluno?.numero || null,
+          created_by: 'demo-user'
         }
       ];
       mpState.calendarEvents = seed;
@@ -7763,7 +7763,6 @@ document.addEventListener('DOMContentLoaded', () => {
             semestre: CURRENT_SEM,
             aluno_numero: aluno.numero,
             subturma: chosen,
-            updated_by: sessionMeta.userId || null,
             updated_at: new Date().toISOString()
           }, { onConflict: 'turma_id,semestre,aluno_numero' });
         if (error) throw new Error(error.message);
@@ -7791,18 +7790,17 @@ document.addEventListener('DOMContentLoaded', () => {
             turma_id: ACTIVE_TURMA.id,
             semestre: CURRENT_SEM,
             aluno_numero: aluno.numero,
-            disciplina_codigo: d.codigo,
+            codigo: d.codigo,
             ve_items: normalizeVeItems(rec.ve_items, null),
             vc: rec.vc !== null && rec.vc !== undefined && rec.vc !== '' ? Number(rec.vc) : null,
             vf: rec.vf !== null && rec.vf !== undefined && rec.vf !== '' ? Number(rec.vf) : null,
-            updated_by: sessionMeta.userId || null,
             updated_at: new Date().toISOString()
           };
         });
         if (rows.length > 0) {
           const { error } = await sessionMeta.sb
             .from('student_current_grades')
-            .upsert(rows, { onConflict: 'turma_id,semestre,aluno_numero,disciplina_codigo' });
+            .upsert(rows, { onConflict: 'turma_id,semestre,aluno_numero,codigo' });
           if (error) throw new Error(error.message);
         }
       } else {
@@ -7998,7 +7996,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (mpState.calendarFilter === 'SHARED') return !ev.is_private;
       if (mpState.calendarFilter === 'PRIVATE') return Boolean(ev.is_private);
       return true;
-    }).sort((a, b) => String(a.data_evento || '').localeCompare(String(b.data_evento || '')));
+    }).sort((a, b) => String(a.event_date || a.data_evento || '').localeCompare(String(b.event_date || b.data_evento || '')));
 
     if (!filtered.length) {
       listEl.innerHTML = `
@@ -8022,7 +8020,9 @@ document.addEventListener('DOMContentLoaded', () => {
         || (ev.created_by && ev.created_by === sessionMeta.userId)
         || IS_GESTOR
         || IS_SUPER_ADMIN;
-      const dtFmt = ev.data_evento ? String(ev.data_evento).split('-').reverse().join('/') : '--/--';
+      const rawDt = ev.event_date || ev.data_evento;
+      const dtFmt = rawDt ? String(rawDt).split('-').reverse().join('/') : '--/--';
+      const discLabel = ev.disciplina_nome || ev.disciplina;
       const tCls = typeColors[ev.tipo] || typeColors.Outro;
       return `
         <div class="p-3 rounded-xl bg-slate-900/75 border border-slate-800 space-y-1.5">
@@ -8030,14 +8030,13 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="flex items-center gap-1.5 flex-wrap min-w-0">
               <span class="text-[11px] font-extrabold font-mono-numbers px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-700 text-slate-200">${escapeHtml(dtFmt)}</span>
               <span class="text-[10px] font-bold px-2 py-0.5 rounded-full border ${tCls}">${escapeHtml(ev.tipo || 'Outro')}</span>
-              ${ev.disciplina ? `<span class="text-[11px] font-semibold text-cyan-300">${escapeHtml(ev.disciplina)}</span>` : ''}
+              ${discLabel ? `<span class="text-[11px] font-semibold text-cyan-300">${escapeHtml(discLabel)}</span>` : ''}
               ${ev.is_private ? '<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">Privado</span>' : ''}
             </div>
             ${canDelete ? `<button type="button" data-mp-del-ev="${escapeHtml(ev.id)}" class="text-slate-500 hover:text-rose-400 text-xs font-bold px-1.5 py-0.5 rounded hover:bg-rose-500/10 transition shrink-0" title="Excluir evento">Excluir</button>` : ''}
           </div>
           <div class="text-xs font-bold text-slate-100">${escapeHtml(ev.titulo)}</div>
           ${ev.anotacao ? `<p class="text-[11.5px] text-slate-300 whitespace-pre-wrap leading-relaxed">${escapeHtml(ev.anotacao)}</p>` : ''}
-          ${ev.created_by_name ? `<div class="text-[10px] text-slate-500">Por ${escapeHtml(ev.created_by_name)}</div>` : ''}
         </div>
       `;
     }).join('');
@@ -8320,12 +8319,13 @@ document.addEventListener('DOMContentLoaded', () => {
           grupo_academico: grupo,
           titulo,
           tipo,
-          disciplina: disciplina || null,
-          data_evento: dataEvento,
+          disciplina_nome: disciplina || null,
+          event_date: dataEvento,
           anotacao: anotacao || null,
           is_private: isPrivate,
-          created_by: sessionMeta.userId || 'demo-user',
-          created_by_name: curAluno.nome
+          owner_aluno_numero: Number(curAluno.numero) || null,
+          created_by: sessionMeta.userId || null,
+          updated_at: new Date().toISOString()
         };
 
         if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
