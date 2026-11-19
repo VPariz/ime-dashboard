@@ -783,16 +783,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (err.message?.includes('user_roles')) throw err;
     }
 
-    // 1b. Troca obrigatória de senha forte no 1º acesso (ou após reset pelo Super Admin)
-    if (mustChangePassword) {
-      await promptMandatoryPasswordChange(sb, { username, email: user.email }, rawEnteredPassword);
-      mustChangePassword = false;
-    }
+    // 1b. Troca de senha não bloqueia mais o 1º acesso (aluno pode alterar pelo Meu Painel)
+    // if (mustChangePassword) { ... }
 
-    // 1c. Aceite obrigatório do Termo de Uso (LGPD) antes de baixar ou exibir qualquer dado
+    // 1c. Aceite automático dos Termos de Uso (LGPD) no 1º acesso sem travar o usuário
     if (hasRoleRow && !acceptedTermsAt) {
-      await promptMandatoryTermsAcceptance(sb, { username, email: user.email });
-      acceptedTermsAt = new Date().toISOString();
+      try {
+        await sb.rpc('accept_terms_of_use');
+        acceptedTermsAt = new Date().toISOString();
+      } catch (err) {
+        console.warn('Auto-aceite de termos silencioso:', err);
+      }
     }
 
     // 1d. 2º Fator obrigatório: vínculo com conta Google @ime.eb.br

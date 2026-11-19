@@ -10,7 +10,7 @@ window.SUPABASE_CONFIG = {
   // false = Ambiente normal com login da turma + botão de Modo Demo
   demoOnly: false,
   requireInstitutionalGoogle: false,
-  requireImeGoogleLink: true,
+  requireImeGoogleLink: false,
   url: 'https://mjquvlhxvwowhdwoykgq.supabase.co',
   anonKey: 'sb_publishable_-KVsy5FQ7x7ef6B7GKXhqg_wLZe45ia',
   bucket: 'ime-private',

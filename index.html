@@ -86,11 +86,11 @@
         </div>
 
         <!-- Login Form -->
-        <form id="loginForm" class="space-y-3">
+        <form id="loginForm" class="space-y-3.5">
           <div>
             <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">Login (Nome + Turma)</label>
-            <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Aluno 28 ou Discente 29" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <p class="text-[10.5px] text-slate-500 mt-1">1º acesso: senha padrão <code>senha_Nome_Turma</code> (ex.: <code>senha_Aluno_28</code>). Será solicitada troca por senha forte.</p>
+            <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Pedro Igor 28 ou Papaleo 28" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <p class="text-[10.5px] text-slate-500 mt-1">Sua senha padrão é <code>senha_Nome_Turma</code> (ex: <code>senha_Pedro_Igor_28</code>).</p>
           </div>
           <div>
             <label for="loginPassword" class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
@@ -105,17 +105,11 @@
 
           <button type="submit" id="btnLoginSubmit" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
             <i data-lucide="log-in" class="w-4 h-4"></i>
-            <span id="btnLoginSubmitText">Entrar</span>
+            <span id="btnLoginSubmitText">Entrar no Painel</span>
           </button>
 
-          <button type="button" id="btnGoogleImeLogin" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-100 text-sm font-bold transition flex items-center justify-center gap-2" title="Entrar com conta Google institucional @ime.eb.br">
-            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-              <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.2-1.5 3.6-5.4 3.6-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.1 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12S6.6 21.8 12 21.8c6.9 0 9.5-4.8 9.5-7.3 0-.5-.1-.9-.1-1.3H12z"/>
-            </svg>
-            <span>Entrar com Google (@ime.eb.br)</span>
-          </button>
           <p class="text-[10.5px] text-slate-500 text-center leading-relaxed">
-            <strong>1º acesso:</strong> entre primeiro com seu Login + Senha para vincular seu <code>@ime.eb.br</code>. Depois disso, o botão do Google entra direto.
+            🔒 Ao entrar, você concorda com os termos de privacidade. Seu perfil inicia protegido em modo anônimo.
           </p>
         </form>
 
@@ -2324,10 +2318,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119s"></script>
+  <script src="supabase-config.js?v=20261119t"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119s"></script>
+  <script src="demo-data.js?v=20261119t"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119s"></script>
+  <script src="app.js?v=20261119t"></script>
 </body>
 </html>
