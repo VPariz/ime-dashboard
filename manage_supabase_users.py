@@ -67,12 +67,18 @@ def normalize_login_to_email(raw_login: str) -> str:
     return f"{under.lower()}@ime.local"
 
 
-def load_alunos(file_path: Path, full_names_csv: Path | None = None) -> list[dict]:
-    raw = file_path.read_text(encoding="utf-8")
-    start = raw.find("{")
-    end = raw.rfind("}")
-    data = json.loads(raw[start : end + 1])
-    alunos = data.get("alunos", [])
+def load_alunos(file_path: Path, full_names_csv: Path | None = None, turma_id: str = "turma_28") -> list[dict]:
+    if file_path.suffix.lower() == ".txt":
+        m = re.search(r"\d+", str(turma_id or ""))
+        base_num = (int(m.group(0)) * 1000) if m else 28000
+        lines = [ln.strip() for ln in file_path.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        alunos = [{"numero": base_num + i, "nome": nm} for i, nm in enumerate(lines, start=1)]
+    else:
+        raw = file_path.read_text(encoding="utf-8")
+        start = raw.find("{")
+        end = raw.rfind("}")
+        data = json.loads(raw[start : end + 1])
+        alunos = data.get("alunos", [])
 
     name_override = {}
     if full_names_csv and full_names_csv.exists():
@@ -120,11 +126,70 @@ def require_env() -> tuple[str, str]:
     return url, key
 
 
+def anonymize_dataset_dict(parsed: dict) -> dict:
+    """Garante que o JSON enviado ao Storage tenha apenas 'Aluno #<numero>'."""
+    name_to_anon: dict[str, str] = {}
+    for al in parsed.get("alunos") or []:
+        num = int(al["numero"])
+        anon_label = f"Aluno #{num}"
+        raw_nome = str(al.get("nome") or "").strip()
+        raw_guerra = str(al.get("nomeGuerra") or "").strip()
+        if raw_nome:
+            name_to_anon[raw_nome.upper()] = anon_label
+        if raw_guerra:
+            name_to_anon[raw_guerra.upper()] = anon_label
+        al["nome"] = anon_label
+        if "nomeGuerra" in al:
+            al["nomeGuerra"] = anon_label
+
+    for comp in parsed.get("cursosComparativo") or []:
+        best = str(comp.get("melhorAluno") or "").strip()
+        if best and best != "-":
+            comp["melhorAluno"] = name_to_anon.get(best.upper(), "Aluno Anônimo")
+
+    return parsed
+
+
+def sync_student_profiles(base_url: str, service_key: str, turma_id: str, alunos: list[dict]) -> None:
+    """Popula/atualiza nome_exibicao em student_profiles preservando perfil_publico existente."""
+    if not alunos:
+        return
+    existing = sb_request(
+        base_url,
+        service_key,
+        "GET",
+        f"/rest/v1/student_profiles?select=aluno_numero,perfil_publico,consentimento_em&turma_id=eq.{urllib.parse.quote(turma_id)}",
+    )
+    existing_map = {int(r["aluno_numero"]): r for r in (existing or [])}
+    now_iso = datetime.now(timezone.utc).isoformat()
+    rows = []
+    for a in alunos:
+        num = int(a["numero"])
+        prev = existing_map.get(num, {})
+        rows.append({
+            "turma_id": turma_id,
+            "aluno_numero": num,
+            "nome_exibicao": str(a["nome"]).strip(),
+            "perfil_publico": bool(prev.get("perfil_publico", False)),
+            "consentimento_em": prev.get("consentimento_em"),
+            "updated_at": now_iso,
+        })
+    sb_request(
+        base_url,
+        service_key,
+        "POST",
+        "/rest/v1/student_profiles?on_conflict=turma_id,aluno_numero",
+        rows,
+    )
+    print(f"[PROFILES OK] {len(rows)} perfis sincronizados em student_profiles ({turma_id})")
+
+
 def upload_turma_dataset_to_storage(base_url: str, service_key: str, turma_id: str, file_path: Path, bucket: str = "ime-private") -> None:
     raw_text = file_path.read_text(encoding="utf-8")
     start = raw_text.find("{")
     end = raw_text.rfind("}")
-    raw_bytes = raw_text[start : end + 1].encode("utf-8")
+    parsed_for_storage = anonymize_dataset_dict(json.loads(raw_text[start : end + 1]))
+    raw_bytes = json.dumps(parsed_for_storage, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     gz_bytes = gzip.compress(raw_bytes, compresslevel=9)
 
     for obj_path, payload, ctype in [
@@ -288,7 +353,19 @@ def cmd_provision(args: argparse.Namespace) -> None:
             print(f"[SKIP] Nº {a['numero']} {a['nome']}: {exc}", file=sys.stderr)
 
     print(f"Concluído: {created} criado(s), {skipped} ignorado(s).")
-    upload_turma_dataset_to_storage(url, key, args.turma, Path(args.file))
+    sync_student_profiles(url, key, args.turma, alunos)
+    if Path(args.file).suffix.lower() in {".json", ".js"}:
+        upload_turma_dataset_to_storage(url, key, args.turma, Path(args.file))
+
+
+def cmd_sync_profiles(args: argparse.Namespace) -> None:
+    url, key = require_env()
+    alunos = load_alunos(
+        Path(args.file),
+        Path(args.csv) if args.csv else None,
+        turma_id=args.turma,
+    )
+    sync_student_profiles(url, key, args.turma, alunos)
 
 
 def cmd_publish(args: argparse.Namespace) -> None:
@@ -368,7 +445,13 @@ def main() -> None:
     p_prov.add_argument("--csv", help="CSV opcional (Matricula,NomeCompleto)")
     p_prov.set_defaults(func=cmd_provision)
 
-    p_pub = sub.add_parser("publish", help="Publicar data.json (.gz) da turma no Storage e atualizar cache")
+    p_sync = sub.add_parser("sync-profiles", help="Sincronizar nomes reais na tabela student_profiles (protegida por RLS)")
+    p_sync.add_argument("--turma", required=True, help="Ex: turma_28")
+    p_sync.add_argument("--file", required=True, help="Caminho para data.js, data.json ou turma_XX_alunos.txt")
+    p_sync.add_argument("--csv", help="CSV opcional (Matricula,NomeCompleto)")
+    p_sync.set_defaults(func=cmd_sync_profiles)
+
+    p_pub = sub.add_parser("publish", help="Publicar data.json (.gz) anonimizado da turma no Storage e atualizar cache")
     p_pub.add_argument("--turma", required=True, help="Ex: turma_29")
     p_pub.add_argument("--file", required=True, help="Caminho para data.json")
     p_pub.set_defaults(func=cmd_publish)
@@ -379,7 +462,7 @@ def main() -> None:
     p_av.set_defaults(func=cmd_publish_avatars)
 
     p_res = sub.add_parser("reset", help="Resetar senha de um aluno (volta para senha padrão ou definida)")
-    p_res.add_argument("--login", required=True, help='Login (ex: "Pedro Silva 29" ou "Papaleo 28") ou e-mail')
+    p_res.add_argument("--login", required=True, help='Login (ex: "Aluno 28" ou "Discente 29") ou e-mail')
     p_res.add_argument("--password", help="Senha temporária opcional (se omitida, usa senha_Nome_Turma)")
     p_res.set_defaults(func=cmd_reset)
 

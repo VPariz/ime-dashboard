@@ -33,16 +33,41 @@ def sem_label(sem: str) -> str:
     return f"{ordem}º Semestre ({sem})"
 
 
+def anonymize_dataset_payload(payload: dict) -> dict:
+    """Substitui nome e nomeGuerra por 'Aluno #<numero>' mantendo numero, notas, curso e vínculo."""
+    name_to_anon: dict[str, str] = {}
+    for aluno in payload.get("alunos", []):
+        num = int(aluno["numero"])
+        anon_label = f"Aluno #{num}"
+        raw_nome = str(aluno.get("nome") or "").strip()
+        raw_guerra = str(aluno.get("nomeGuerra") or "").strip()
+        if raw_nome:
+            name_to_anon[raw_nome.upper()] = anon_label
+        if raw_guerra:
+            name_to_anon[raw_guerra.upper()] = anon_label
+        aluno["nome"] = anon_label
+        if "nomeGuerra" in aluno:
+            aluno["nomeGuerra"] = anon_label
+
+    for comp in payload.get("cursosComparativo", []):
+        best = str(comp.get("melhorAluno") or "").strip()
+        if best and best != "-":
+            comp["melhorAluno"] = name_to_anon.get(best.upper(), "Aluno Anônimo")
+
+    return payload
+
+
 def build_alunos_from_txt(txt_path: Path, base_num: int, sem_ord: int) -> list[dict]:
     if not txt_path.exists():
         return []
     names = [line.strip() for line in txt_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     curso_padrao = "Ciclo Básico" if sem_ord <= 4 else CURSOS_PADRAO[0]
     alunos = []
-    for idx, nome in enumerate(names, start=1):
+    for idx, _nome in enumerate(names, start=1):
+        num = base_num + idx
         alunos.append({
-            "numero": base_num + idx,
-            "nome": nome,
+            "numero": num,
+            "nome": f"Aluno #{num}",
             "curso": curso_padrao,
             "cg": False,
             "reserva": False,
@@ -66,6 +91,7 @@ def build_alunos_from_txt(txt_path: Path, base_num: int, sem_ord: int) -> list[d
 
 
 def write_json_and_gzip(dst: Path, payload: dict) -> tuple[int, int]:
+    anonymize_dataset_payload(payload)
     raw_bytes = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     dst.write_bytes(raw_bytes)
     gz_dst = dst.with_name(f"{dst.name}.gz")

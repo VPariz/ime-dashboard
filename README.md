@@ -1,4 +1,10 @@
-# 🎓 Dashboard de Desempenho Acadêmico e Militar • IME (Turma 2026)
+# 🎓 IME Analytics • Dashboard de Desempenho Acadêmico
+
+> [!IMPORTANT]
+> **Aviso de Privacidade (LGPD) e Isenção Institucional:**
+> - **Repositório 100% Sintético:** Este repositório público contém **exclusivamente código-fonte e dados fictícios (`demo-data.js`)** para fins de portfólio open-source. Nenhum dado pessoal, nota real ou identificação de alunos é armazenado ou versionado aqui.
+> - **Sem Vínculo Oficial:** Projeto estudantil independente de apoio acadêmico, sem afiliação, endosso ou vínculo institucional com o Instituto Militar de Engenharia (IME) ou o Exército Brasileiro.
+> - **Ambiente Restrito:** O uso em produção ocorre em instância privada protegida por autenticação, Row-Level Security (RLS), anonimização agregada por padrão e aceite obrigatório de Termo de Uso.
 
 Dashboard executivo moderno, responsivo e de alta performance desenvolvido para análise detalhada do desempenho acadêmico e militar dos 86 alunos do Instituto Militar de Engenharia (IME).
 

@@ -17,11 +17,14 @@ create table if not exists public.turmas (
 create table if not exists public.user_roles (
   user_id uuid primary key references auth.users(id) on delete cascade,
   email text not null,
-  username text,                                -- ex: 'Pedro Silva 29' ou 'Papaleo 28'
+  username text,                                -- ex: 'Aluno 28' ou 'Discente 29'
   role text not null check (role in ('viewer', 'gestor', 'super_admin')),
   turma_id text references public.turmas(id) on delete set null,
   aluno_numero integer,                         -- matrícula do aluno (para editar apenas suas preferências)
   must_change_password boolean not null default false,
+  accepted_terms_at timestamptz,
+  ime_email text,
+  ime_verified_at timestamptz,
   created_at timestamptz not null default now()
 );
 
@@ -29,6 +32,12 @@ create table if not exists public.user_roles (
 alter table public.user_roles add column if not exists username text;
 alter table public.user_roles add column if not exists aluno_numero integer;
 alter table public.user_roles add column if not exists must_change_password boolean not null default false;
+alter table public.user_roles add column if not exists accepted_terms_at timestamptz;
+alter table public.user_roles add column if not exists ime_email text;
+alter table public.user_roles add column if not exists ime_verified_at timestamptz;
+create unique index if not exists user_roles_ime_email_unique
+  on public.user_roles (lower(ime_email))
+  where ime_email is not null;
 
 -- 3. Whitelist opcional para pré-autorização
 create table if not exists public.allowed_emails (
@@ -128,6 +137,97 @@ end;
 $$;
 
 grant execute on function public.complete_password_change() to authenticated;
+
+-- RPC segura: permite ao próprio usuário registrar aceite do Termo de Uso (LGPD) e ativar sua ficha anônima
+create or replace function public.accept_terms_of_use()
+returns timestamptz
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_now timestamptz := now();
+  v_turma_id text;
+  v_aluno_num integer;
+  v_username text;
+begin
+  if auth.uid() is null then
+    raise exception 'Não autenticado';
+  end if;
+
+  update public.user_roles
+  set accepted_terms_at = coalesce(accepted_terms_at, v_now)
+  where user_id = auth.uid()
+  returning accepted_terms_at, turma_id, aluno_numero, username
+    into v_now, v_turma_id, v_aluno_num, v_username;
+
+  if v_turma_id is not null and v_aluno_num is not null then
+    insert into public.student_profiles (
+      turma_id, aluno_numero, nome_exibicao, perfil_publico, ativo_no_painel, updated_by, updated_at
+    )
+    values (
+      v_turma_id, v_aluno_num, coalesce(nullif(trim(v_username), ''), 'Aluno #' || v_aluno_num::text),
+      false, true, auth.uid(), now()
+    )
+    on conflict (turma_id, aluno_numero) do update
+      set ativo_no_painel = true,
+          updated_at = now();
+  end if;
+
+  return v_now;
+end;
+$$;
+
+grant execute on function public.accept_terms_of_use() to authenticated;
+
+-- RPC segura: confirma vínculo 2FA com conta Google institucional (@ime.eb.br)
+create or replace function public.confirm_ime_google_link()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  v_google_email text;
+  v_now timestamptz := now();
+begin
+  if auth.uid() is null then
+    raise exception 'Não autenticado';
+  end if;
+
+  select lower(i.identity_data->>'email')
+    into v_google_email
+  from auth.identities i
+  where i.user_id = auth.uid()
+    and i.provider = 'google'
+    and lower(coalesce(i.identity_data->>'email', '')) ~ '^[^@\s]+@ime\.eb\.br$'
+  limit 1;
+
+  if v_google_email is null then
+    raise exception 'Nenhuma conta Google @ime.eb.br vinculada a este usuário.';
+  end if;
+
+  if exists (
+    select 1 from public.user_roles
+    where lower(ime_email) = v_google_email
+      and user_id <> auth.uid()
+  ) then
+    raise exception 'Este e-mail @ime.eb.br já está vinculado a outro aluno.';
+  end if;
+
+  update public.user_roles
+  set ime_email = v_google_email,
+      ime_verified_at = coalesce(ime_verified_at, v_now)
+  where user_id = auth.uid();
+
+  return jsonb_build_object(
+    'ime_email', v_google_email,
+    'ime_verified_at', v_now
+  );
+end;
+$$;
+
+grant execute on function public.confirm_ime_google_link() to authenticated;
 
 -- 7. Políticas RLS — public.turmas
 drop policy if exists "turmas_select" on public.turmas;
@@ -244,6 +344,19 @@ using (
         or (
           (storage.foldername(name))[1] = 'avatars'
           and (storage.foldername(name))[2] = public.get_my_turma_id()
+          and (
+            (
+              public.get_my_aluno_numero() is not null
+              and split_part(storage.filename(name), '.', 1) = public.get_my_aluno_numero()::text
+            )
+            or (
+              split_part(storage.filename(name), '.', 1) ~ '^[0-9]+$'
+              and public.is_student_profile_public(
+                (storage.foldername(name))[2],
+                split_part(storage.filename(name), '.', 1)::integer
+              )
+            )
+          )
         )
       )
     )
@@ -517,12 +630,124 @@ create table if not exists public.student_avatars (
 
 alter table public.student_avatars enable row level security;
 
+-- 12g. Perfis & Privacidade por Padrão (LGPD — Opt-In voluntário por aluno)
+create table if not exists public.student_profiles (
+  turma_id text not null references public.turmas(id) on delete cascade,
+  aluno_numero integer not null,
+  nome_exibicao text not null,
+  perfil_publico boolean not null default false,
+  ativo_no_painel boolean not null default false,
+  consentimento_em timestamptz,
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz not null default now(),
+  primary key (turma_id, aluno_numero)
+);
+
+alter table public.student_profiles add column if not exists ativo_no_painel boolean not null default false;
+grant select, insert, update, delete on public.student_profiles to service_role;
+grant select, insert, update on public.student_profiles to authenticated;
+
+create or replace function public.get_turma_visibility_flags(p_turma_id text)
+returns table (
+  aluno_numero integer,
+  ativo_no_painel boolean,
+  perfil_publico boolean
+)
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select sp.aluno_numero, sp.ativo_no_painel, sp.perfil_publico
+  from public.student_profiles sp
+  where sp.turma_id = p_turma_id
+    and (
+      public.get_my_role() = 'super_admin'
+      or p_turma_id = public.get_my_turma_id()
+    );
+$$;
+
+grant execute on function public.get_turma_visibility_flags(text) to authenticated;
+
+alter table public.student_profiles enable row level security;
+
+-- Helper SECURITY DEFINER para verificar se o perfil do aluno é público (sem recursão em RLS)
+create or replace function public.is_student_profile_public(p_turma_id text, p_aluno_numero integer)
+returns boolean
+language sql
+stable
+security definer
+set search_path = public
+as $$
+  select coalesce(
+    (
+      select sp.perfil_publico
+      from public.student_profiles sp
+      where sp.turma_id = p_turma_id
+        and sp.aluno_numero = p_aluno_numero
+    ),
+    false
+  );
+$$;
+
+-- RLS SELECT: aluno da turma só lê nome_exibicao se for o próprio perfil OU se perfil_publico = true
+drop policy if exists "student_profiles_select" on public.student_profiles;
+create policy "student_profiles_select"
+on public.student_profiles for select to authenticated
+using (
+  public.get_my_role() = 'super_admin'
+  or (
+    turma_id = public.get_my_turma_id()
+    and (
+      perfil_publico = true
+      or (public.get_my_aluno_numero() is not null and aluno_numero = public.get_my_aluno_numero())
+    )
+  )
+);
+
+-- RLS UPDATE: somente o próprio aluno (ou super_admin) atualiza sua linha
+drop policy if exists "student_profiles_update" on public.student_profiles;
+create policy "student_profiles_update"
+on public.student_profiles for update to authenticated
+using (
+  public.get_my_role() = 'super_admin'
+  or (
+    turma_id = public.get_my_turma_id()
+    and public.get_my_aluno_numero() is not null
+    and aluno_numero = public.get_my_aluno_numero()
+  )
+)
+with check (
+  public.get_my_role() = 'super_admin'
+  or (
+    turma_id = public.get_my_turma_id()
+    and public.get_my_aluno_numero() is not null
+    and aluno_numero = public.get_my_aluno_numero()
+  )
+);
+
+-- RLS INSERT: apenas super_admin ou gestor da turma no provisionamento
+drop policy if exists "student_profiles_insert" on public.student_profiles;
+create policy "student_profiles_insert"
+on public.student_profiles for insert to authenticated
+with check (
+  public.get_my_role() = 'super_admin'
+  or (public.get_my_role() = 'gestor' and turma_id = public.get_my_turma_id())
+);
+
+-- RLS SELECT em student_avatars: espelha exatamente a regra de student_profiles
 drop policy if exists "student_avatars_select" on public.student_avatars;
 create policy "student_avatars_select"
 on public.student_avatars for select to authenticated
 using (
   public.get_my_role() = 'super_admin'
-  or turma_id = public.get_my_turma_id()
+  or (
+    turma_id = public.get_my_turma_id()
+    and (
+      (public.get_my_aluno_numero() is not null and aluno_numero = public.get_my_aluno_numero())
+      or public.is_student_profile_public(turma_id, aluno_numero)
+    )
+  )
 );
 
 drop policy if exists "student_avatars_write" on public.student_avatars;
@@ -546,6 +771,90 @@ with check (
     and aluno_numero = public.get_my_aluno_numero()
   )
 );
+
+-- 12g. Privacidade por Padrão (LGPD — Opt-In voluntário por aluno)
+create table if not exists public.student_privacy (
+  turma_id text not null references public.turmas(id) on delete cascade,
+  aluno_numero integer not null,
+  perfil_publico boolean not null default false,
+  consentimento_em timestamptz,
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz not null default now(),
+  primary key (turma_id, aluno_numero)
+);
+
+alter table public.student_privacy enable row level security;
+
+drop policy if exists "student_privacy_select" on public.student_privacy;
+create policy "student_privacy_select"
+on public.student_privacy for select to authenticated
+using (
+  public.get_my_role() = 'super_admin'
+  or turma_id = public.get_my_turma_id()
+);
+
+drop policy if exists "student_privacy_write_own" on public.student_privacy;
+create policy "student_privacy_write_own"
+on public.student_privacy for all to authenticated
+using (
+  turma_id = public.get_my_turma_id()
+  and public.get_my_aluno_numero() is not null
+  and aluno_numero = public.get_my_aluno_numero()
+)
+with check (
+  turma_id = public.get_my_turma_id()
+  and public.get_my_aluno_numero() is not null
+  and aluno_numero = public.get_my_aluno_numero()
+);
+
+create or replace function public.set_my_privacy_opt_in(p_perfil_publico boolean)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_turma_id text := public.get_my_turma_id();
+  v_aluno_num integer := public.get_my_aluno_numero();
+  v_now timestamptz := now();
+  v_consent timestamptz := case when coalesce(p_perfil_publico, false) then v_now else null end;
+  v_fallback_name text;
+begin
+  if auth.uid() is null then
+    raise exception 'Não autenticado';
+  end if;
+  if v_turma_id is null or v_aluno_num is null then
+    raise exception 'Conta sem turma ou matrícula vinculada';
+  end if;
+
+  select coalesce(nullif(trim(username), ''), 'Aluno #' || v_aluno_num::text)
+    into v_fallback_name
+  from public.user_roles
+  where user_id = auth.uid();
+
+  insert into public.student_profiles (
+    turma_id, aluno_numero, nome_exibicao, perfil_publico, consentimento_em, updated_by, updated_at
+  )
+  values (
+    v_turma_id, v_aluno_num, coalesce(v_fallback_name, 'Aluno #' || v_aluno_num::text),
+    coalesce(p_perfil_publico, false), v_consent, auth.uid(), v_now
+  )
+  on conflict (turma_id, aluno_numero) do update
+    set perfil_publico = excluded.perfil_publico,
+        consentimento_em = excluded.consentimento_em,
+        updated_by = auth.uid(),
+        updated_at = v_now;
+
+  return jsonb_build_object(
+    'turma_id', v_turma_id,
+    'aluno_numero', v_aluno_num,
+    'perfil_publico', coalesce(p_perfil_publico, false),
+    'consentimento_em', v_consent
+  );
+end;
+$$;
+
+grant execute on function public.set_my_privacy_opt_in(boolean) to authenticated;
 
 -- 13. Trigger opcional para Whitelist
 create or replace function public.handle_allowed_signup()
@@ -604,6 +913,18 @@ end $$;
 do $$
 begin
   alter publication supabase_realtime add table public.student_avatars;
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.student_privacy;
+exception when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.student_profiles;
 exception when duplicate_object then null;
 end $$;
 

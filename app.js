@@ -94,7 +94,24 @@ document.addEventListener('DOMContentLoaded', () => {
   btnAuthTabSignUp?.addEventListener('click', () => setAuthTabMode('signup'));
 
   const sbCfg = window.SUPABASE_CONFIG || {};
-  const isSupabaseConfigured = Boolean(
+  const isDemoOnly = Boolean(sbCfg.demoOnly);
+  const requireInstitutionalGoogle = Boolean(sbCfg.requireInstitutionalGoogle);
+  const requireImeGoogleLink = Boolean(sbCfg.requireImeGoogleLink);
+  const allowedImeDomains = Array.isArray(sbCfg.allowedEmailDomains) && sbCfg.allowedEmailDomains.length > 0
+    ? sbCfg.allowedEmailDomains.map(d => String(d).trim().toLowerCase().replace(/^@/, ''))
+    : ['ime.eb.br'];
+
+  function isValidImeInstitutionalEmail(rawEmail) {
+    const email = String(rawEmail || '').trim().toLowerCase();
+    const atIdx = email.lastIndexOf('@');
+    if (atIdx <= 0) return false;
+    const localPart = email.slice(0, atIdx);
+    const domain = email.slice(atIdx + 1);
+    if (!/^[a-z0-9._+-]+$/.test(localPart)) return false;
+    return allowedImeDomains.includes(domain);
+  }
+
+  const isSupabaseConfigured = !isDemoOnly && Boolean(
     sbCfg.url && sbCfg.anonKey && window.supabase && typeof window.supabase.createClient === 'function'
   );
   const sbClient = isSupabaseConfigured ? window.supabase.createClient(sbCfg.url, sbCfg.anonKey) : null;
@@ -302,6 +319,156 @@ document.addEventListener('DOMContentLoaded', () => {
       btnCancel?.addEventListener('click', onCancel);
       modal.classList.remove('hidden');
       inpNew?.focus();
+    });
+  }
+
+  function promptMandatoryTermsAcceptance(sb, sessionInfo) {
+    return new Promise((resolve, reject) => {
+      const modal = document.getElementById('termsOfUseModal');
+      const form = document.getElementById('termsOfUseForm');
+      const chk = document.getElementById('acceptTermsCheckbox');
+      const errEl = document.getElementById('termsOfUseError');
+      const subEl = document.getElementById('termsUserSubtitle');
+      const btnAccept = document.getElementById('btnTermsAccept');
+      const btnDecline = document.getElementById('btnTermsDecline');
+
+      if (!modal || !form || !chk) {
+        resolve();
+        return;
+      }
+
+      if (subEl) {
+        subEl.textContent = `Olá, ${sessionInfo.username || sessionInfo.email}! Leia e aceite o Termo de Uso para liberar o acesso ao painel.`;
+      }
+      chk.checked = false;
+      if (btnAccept) {
+        btnAccept.disabled = true;
+        btnAccept.textContent = 'Aceitar Termo e Acessar Painel';
+      }
+      if (errEl) {
+        errEl.textContent = '';
+        errEl.classList.add('hidden');
+      }
+
+      const onCheckChange = () => {
+        if (btnAccept) btnAccept.disabled = !chk.checked;
+      };
+
+      const cleanup = () => {
+        chk.removeEventListener('change', onCheckChange);
+        form.removeEventListener('submit', onSubmit);
+        btnDecline?.removeEventListener('click', onDecline);
+        modal.classList.add('hidden');
+      };
+
+      const onDecline = async () => {
+        cleanup();
+        try { await sb.auth.signOut(); } catch {}
+        reject(new Error('É necessário aceitar o Termo de Uso para acessar o painel.'));
+      };
+
+      const onSubmit = async (e) => {
+        e.preventDefault();
+        if (!chk.checked) return;
+        if (btnAccept) {
+          btnAccept.disabled = true;
+          btnAccept.textContent = 'Registrando aceite...';
+        }
+        try {
+          const { error: rpcErr } = await sb.rpc('accept_terms_of_use');
+          if (rpcErr) throw new Error(rpcErr.message);
+          cleanup();
+          resolve();
+        } catch (err) {
+          if (errEl) {
+            errEl.textContent = err.message || 'Erro ao registrar aceite do Termo de Uso.';
+            errEl.classList.remove('hidden');
+          }
+          if (btnAccept) {
+            btnAccept.disabled = !chk.checked;
+            btnAccept.textContent = 'Aceitar Termo e Acessar Painel';
+          }
+        }
+      };
+
+      chk.addEventListener('change', onCheckChange);
+      form.addEventListener('submit', onSubmit);
+      btnDecline?.addEventListener('click', onDecline);
+      modal.classList.remove('hidden');
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+    });
+  }
+
+  function promptMandatoryImeGoogleLink(sb, sessionInfo, initialError = '') {
+    return new Promise((_resolve, reject) => {
+      const modal = document.getElementById('linkImeGoogleModal');
+      const subEl = document.getElementById('linkImeSubtitle');
+      const errEl = document.getElementById('linkImeError');
+      const btnLink = document.getElementById('btnLinkImeGoogle');
+      const btnCancel = document.getElementById('btnLinkImeCancel');
+      if (!modal || !btnLink) {
+        reject(new Error('Modal de vínculo @ime.eb.br não encontrado.'));
+        return;
+      }
+
+      if (subEl) {
+        subEl.innerHTML = `Olá, <strong class="text-white">${escapeHtml(sessionInfo.username || sessionInfo.email)}</strong>! Para concluir a autenticação em 2 fatores, vincule sua conta Google institucional (<code>@ime.eb.br</code>).`;
+      }
+      if (errEl) {
+        if (initialError) {
+          errEl.textContent = initialError;
+          errEl.classList.remove('hidden');
+        } else {
+          errEl.textContent = '';
+          errEl.classList.add('hidden');
+        }
+      }
+
+      const cleanup = () => {
+        btnLink.removeEventListener('click', onLinkClick);
+        btnCancel?.removeEventListener('click', onCancel);
+        modal.classList.add('hidden');
+      };
+
+      const onCancel = async () => {
+        cleanup();
+        try { await sb.auth.signOut(); } catch {}
+        reject(new Error('É obrigatório vincular sua conta Google @ime.eb.br para acessar.'));
+      };
+
+      const onLinkClick = async () => {
+        btnLink.disabled = true;
+        if (errEl) errEl.classList.add('hidden');
+        try {
+          const redirectTo = `${window.location.origin}${window.location.pathname}`;
+          const { error } = await sb.auth.linkIdentity({
+            provider: 'google',
+            options: {
+              redirectTo,
+              queryParams: {
+                hd: allowedImeDomains[0] || 'ime.eb.br',
+                prompt: 'select_account'
+              }
+            }
+          });
+          if (error) throw new Error(error.message);
+        } catch (err) {
+          btnLink.disabled = false;
+          if (errEl) {
+            errEl.textContent = err.message || 'Erro ao iniciar vínculo com Google (@ime.eb.br).';
+            errEl.classList.remove('hidden');
+          }
+        }
+      };
+
+      btnLink.addEventListener('click', onLinkClick);
+      btnCancel?.addEventListener('click', onCancel);
+      modal.classList.remove('hidden');
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
     });
   }
 
@@ -563,28 +730,48 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   async function resolveSupabaseSessionAndLoad(sb, user, rawEnteredPassword = '') {
+    if (isDemoOnly) {
+      throw new Error('Autenticação desabilitada no modo vitrine (demoOnly).');
+    }
+    const identities = Array.isArray(user?.identities) ? user.identities : [];
+    const googleIdentity = identities.find(i => i.provider === 'google');
+    const googleEmail = String(googleIdentity?.identity_data?.email || user?.email || '').trim().toLowerCase();
+    const isGoogleOnlySession = (user?.app_metadata?.provider === 'google' || Boolean(googleIdentity))
+      && !identities.some(i => i.provider === 'email');
+
+    if ((isGoogleOnlySession || requireInstitutionalGoogle) && !isValidImeInstitutionalEmail(googleEmail)) {
+      try { await sb.auth.signOut(); } catch {}
+      throw new Error('Acesso restrito: entre usando seu e-mail institucional @ime.eb.br.');
+    }
+
     const bucket = sbCfg.bucket || 'ime-private';
     let role = 'viewer';
     let userTurmaId = null;
     let alunoNumero = null;
     let username = null;
     let mustChangePassword = false;
+    let acceptedTermsAt = null;
+    let imeVerifiedAt = null;
+    let hasRoleRow = false;
     let turmas = [];
 
-    // 1. Buscar papel, matrícula e flag de troca obrigatória em user_roles
+    // 1. Buscar papel, matrícula, troca obrigatória, aceite do Termo e vínculo 2FA @ime.eb.br
     try {
       const { data: roleRow, error: roleErr } = await sb
         .from('user_roles')
-        .select('role, turma_id, aluno_numero, username, must_change_password')
+        .select('role, turma_id, aluno_numero, username, must_change_password, accepted_terms_at, ime_email, ime_verified_at')
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (!roleErr && roleRow) {
+        hasRoleRow = true;
         role = roleRow.role || 'viewer';
         userTurmaId = roleRow.turma_id || null;
         alunoNumero = roleRow.aluno_numero ?? null;
         username = roleRow.username || null;
         mustChangePassword = Boolean(roleRow.must_change_password);
+        acceptedTermsAt = roleRow.accepted_terms_at || null;
+        imeVerifiedAt = roleRow.ime_verified_at || null;
       } else if (!roleErr && !roleRow) {
         const { error: probeErr } = await sb.from('turmas').select('id').limit(1);
         if (!probeErr) {
@@ -599,6 +786,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mustChangePassword) {
       await promptMandatoryPasswordChange(sb, { username, email: user.email }, rawEnteredPassword);
       mustChangePassword = false;
+    }
+
+    // 1c. Aceite obrigatório do Termo de Uso (LGPD) antes de baixar ou exibir qualquer dado
+    if (hasRoleRow && !acceptedTermsAt) {
+      await promptMandatoryTermsAcceptance(sb, { username, email: user.email });
+      acceptedTermsAt = new Date().toISOString();
+    }
+
+    // 1d. 2º Fator obrigatório: vínculo com conta Google @ime.eb.br
+    if (requireImeGoogleLink && hasRoleRow && !imeVerifiedAt) {
+      if (googleIdentity && isValidImeInstitutionalEmail(googleEmail)) {
+        const { error: linkErr } = await sb.rpc('confirm_ime_google_link');
+        if (linkErr) {
+          try { await sb.auth.unlinkIdentity(googleIdentity); } catch {}
+          await promptMandatoryImeGoogleLink(sb, { username, email: user.email }, linkErr.message);
+        }
+        imeVerifiedAt = new Date().toISOString();
+      } else {
+        let initialErr = '';
+        if (googleIdentity && !isValidImeInstitutionalEmail(googleEmail)) {
+          initialErr = `A conta vinculada (${googleEmail}) não é @ime.eb.br. Vincule seu e-mail institucional.`;
+          try { await sb.auth.unlinkIdentity(googleIdentity); } catch {}
+        }
+        await promptMandatoryImeGoogleLink(sb, { username, email: user.email }, initialErr);
+      }
     }
 
     // 2. Buscar turmas visíveis pelo usuário (RLS filtra automaticamente)
@@ -630,6 +842,30 @@ document.addEventListener('DOMContentLoaded', () => {
       };
       turmas = [activeTurma];
     }
+
+    // 2b. Carregar perfis autorizados via RLS (student_profiles) e flags de quem já entrou no painel
+    let authorizedProfiles = [];
+    let publicAlunoNumeros = [];
+    let activeAlunoNumeros = [];
+    try {
+      const [{ data: profRows, error: profErr }, { data: flagRows, error: flagErr }] = await Promise.all([
+        sb.from('student_profiles').select('aluno_numero, nome_exibicao, perfil_publico').eq('turma_id', activeTurma.id),
+        sb.rpc('get_turma_visibility_flags', { p_turma_id: activeTurma.id })
+      ]);
+      if (!profErr && Array.isArray(profRows)) {
+        authorizedProfiles = profRows;
+        publicAlunoNumeros = profRows
+          .filter(r => Boolean(r.perfil_publico))
+          .map(r => Number(r.aluno_numero));
+      }
+      if (!flagErr && Array.isArray(flagRows)) {
+        activeAlunoNumeros = flagRows
+          .filter(r => Boolean(r.ativo_no_painel))
+          .map(r => Number(r.aluno_numero));
+      } else if (Array.isArray(profRows)) {
+        activeAlunoNumeros = profRows.map(r => Number(r.aluno_numero));
+      }
+    } catch {}
 
     // 3. Baixar JSON do bucket privado (com cache IndexedDB por turmas.updated_at)
     const objectPath = activeTurma.storage_path || `${activeTurma.id}/data.json`;
@@ -685,6 +921,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // 4. Fazer o merge em memória dos nomes autorizados via RLS (apenas próprio aluno + quem deu opt-in)
+    const profileByNum = new Map(authorizedProfiles.map(r => [Number(r.aluno_numero), r]));
+    const anonToRealMap = new Map();
+    parsed.alunos.forEach(a => {
+      const num = Number(a.numero);
+      const anonLabel = `Aluno #${num}`;
+      const prof = profileByNum.get(num);
+      if (prof && prof.nome_exibicao) {
+        anonToRealMap.set(anonLabel, prof.nome_exibicao);
+        a.nome = prof.nome_exibicao;
+        if ('nomeGuerra' in a) a.nomeGuerra = prof.nome_exibicao;
+        a._perfilPublico = Boolean(prof.perfil_publico);
+      } else {
+        a.nome = anonLabel;
+        if ('nomeGuerra' in a) a.nomeGuerra = anonLabel;
+        a._perfilPublico = false;
+      }
+    });
+
+    (parsed.cursosComparativo || []).forEach(c => {
+      if (c.melhorAluno && anonToRealMap.has(c.melhorAluno)) {
+        c.melhorAluno = anonToRealMap.get(c.melhorAluno);
+      }
+    });
+
     return {
       dataset: parsed,
       sessionMeta: {
@@ -700,7 +961,10 @@ document.addEventListener('DOMContentLoaded', () => {
         storagePath: objectPath,
         bucket,
         sb,
-        isStarterEmpty
+        isStarterEmpty,
+        publicAlunoNumeros,
+        activeAlunoNumeros,
+        authorizedProfiles
       }
     };
   }
@@ -718,13 +982,17 @@ document.addEventListener('DOMContentLoaded', () => {
     return parsed;
   }
 
-  if (!isSupabaseConfigured && notConfiguredNote) {
+  if (isDemoOnly) {
+    loginForm?.classList.add('hidden');
+    document.getElementById('demoOnlyBanner')?.classList.remove('hidden');
+    if (authHeadingTitle) authHeadingTitle.textContent = 'Portfólio Público • Demonstração';
+  } else if (!isSupabaseConfigured && notConfiguredNote) {
     notConfiguredNote.classList.remove('hidden');
   }
 
   // Tentativa automática de restaurar sessão Supabase
   (async () => {
-    if (!sbClient) return;
+    if (!sbClient || isDemoOnly) return;
     checkingBanner?.classList.remove('hidden');
     try {
       const { data: sessData } = await sbClient.auth.getSession();
@@ -775,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
         if (error) {
           throw new Error(error.message === 'Invalid login credentials'
-            ? 'Login ou senha inválidos. Verifique o formato (ex: Pedro Igor 28) e a senha.'
+            ? 'Login ou senha inválidos. Verifique o formato (ex: Aluno 28) e a senha.'
             : error.message);
         }
         const res = await resolveSupabaseSessionAndLoad(sbClient, data.user, password);
@@ -788,6 +1056,32 @@ document.addEventListener('DOMContentLoaded', () => {
         btnLoginSubmit.disabled = false;
         btnLoginSubmit.innerHTML = origHtml;
       }
+    }
+  });
+
+  document.getElementById('btnGoogleImeLogin')?.addEventListener('click', async () => {
+    showLoginError('');
+    showLoginInfo('');
+    if (isDemoOnly) return;
+    if (!sbClient) {
+      showLoginError('Configure url e anonKey em supabase-config.js antes de usar o login.');
+      return;
+    }
+    try {
+      const redirectTo = `${window.location.origin}${window.location.pathname}`;
+      const { error } = await sbClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo,
+          queryParams: {
+            hd: allowedImeDomains[0] || 'ime.eb.br',
+            prompt: 'select_account'
+          }
+        }
+      });
+      if (error) throw new Error(error.message);
+    } catch (err) {
+      showLoginError(err.message || 'Não foi possível iniciar o login com Google (@ime.eb.br).');
     }
   });
 
@@ -816,13 +1110,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Se o usuário trocou de turma dentro do Modo Demo, recarrega direto no Demo da turma escolhida
+  // Em modo vitrine (demoOnly: true) ou se trocou de turma no Demo, abre direto no Modo Demo
   try {
     const savedDemoTurma = sessionStorage.getItem('ime_demo_turma');
-    if (savedDemoTurma && window.IME_DEMO_DATA) {
-      launchDemoMode(savedDemoTurma);
+    if ((isDemoOnly || savedDemoTurma) && window.IME_DEMO_DATA) {
+      launchDemoMode(savedDemoTurma || 'turma_28');
     }
-  } catch {}
+  } catch {
+    if (isDemoOnly && window.IME_DEMO_DATA) launchDemoMode('turma_28');
+  }
 
   document.getElementById('btnEnterDemo')?.addEventListener('click', () => {
     if (!window.IME_DEMO_DATA) {
@@ -838,9 +1134,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     const sampleRows = [
-      { Matricula: 28001, Nome: 'PEDRO IGOR', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.1', Codigo: '09301', Disciplina: 'ESTRUTURAS DE DADOS', Tipo: 'Profissional', VE: 8.5, VC: 8.0, VF: 9.0, MVE: '', NF: '' },
-      { Matricula: 28001, Nome: 'PEDRO IGOR', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.2', Codigo: '09310', Disciplina: 'BANCO DE DADOS', Tipo: 'Profissional', VE: 9.0, VC: 8.5, VF: '', MVE: '', NF: '' },
-      { Matricula: 28001, Nome: 'PEDRO IGOR', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.2', Codigo: '09315', Disciplina: 'LABORATÓRIO DE SISTEMAS DIGITAIS', Tipo: 'Prática', VE: 9.2, VC: '', VF: '', MVE: 9.2, NF: '' },
+      { Matricula: 28001, Nome: 'ALUNO EXEMPLO', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.1', Codigo: '09301', Disciplina: 'ESTRUTURAS DE DADOS', Tipo: 'Profissional', VE: 8.5, VC: 8.0, VF: 9.0, MVE: '', NF: '' },
+      { Matricula: 28001, Nome: 'ALUNO EXEMPLO', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.2', Codigo: '09310', Disciplina: 'BANCO DE DADOS', Tipo: 'Profissional', VE: 9.0, VC: 8.5, VF: '', MVE: '', NF: '' },
+      { Matricula: 28001, Nome: 'ALUNO EXEMPLO', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.2', Codigo: '09315', Disciplina: 'LABORATÓRIO DE SISTEMAS DIGITAIS', Tipo: 'Prática', VE: 9.2, VC: '', VF: '', MVE: 9.2, NF: '' },
       { Matricula: 28002, Nome: 'LUCAS ALMEIDA', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.1', Codigo: '09301', Disciplina: 'ESTRUTURAS DE DADOS', Tipo: 'Profissional', VE: 7.5, VC: 7.0, VF: 8.0, MVE: '', NF: '' },
       { Matricula: 28002, Nome: 'LUCAS ALMEIDA', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.2', Codigo: '09310', Disciplina: 'BANCO DE DADOS', Tipo: 'Profissional', VE: 7.8, VC: 8.2, VF: '', MVE: '', NF: '' },
       { Matricula: 28003, Nome: 'MARIANA COSTA', Curso: 'Eletrônica', Vinculo: 'Reserva', Semestre: '3.2', Codigo: '07320', Disciplina: 'CIRCUITOS ELETRÔNICOS', Tipo: 'Profissional', VE: 8.8, VC: 9.0, VF: '', MVE: '', NF: '' }
@@ -1093,7 +1389,65 @@ document.addEventListener('DOMContentLoaded', () => {
     const IS_SUPER_ADMIN = USER_ROLE === 'super_admin';
     const CAN_MANAGE_GRADES = USER_ROLE === 'gestor' || USER_ROLE === 'super_admin' || sessionMeta.mode === 'demo';
     const MY_ALUNO_NUM = sessionMeta.alunoNumero ?? null;
+    const publicProfileSet = new Set((sessionMeta.publicAlunoNumeros || []).map(Number));
+    const activeStudentSet = new Set((sessionMeta.activeAlunoNumeros || []).map(Number));
+    let demoSelfPublicOptIn = true; // No Modo Demo começa visível, mas pode ser testado no Meu Painel
     let demoCareerViewAs = 'gestor'; // 'gestor' | 'viewer' (apenas Modo Demo)
+
+    function isOwnStudentRecord(aluno) {
+      if (!aluno) return false;
+      const myNum = getEffectiveAlunoNumero();
+      return myNum !== null && Number(aluno.numero) === Number(myNum);
+    }
+
+    function isStudentFichaVisible(aluno) {
+      if (!aluno) return false;
+      if (sessionMeta.mode !== 'supabase') return true;
+      if (isOwnStudentRecord(aluno)) return true;
+      if (USER_ROLE === 'super_admin') return true;
+      return activeStudentSet.has(Number(aluno.numero));
+    }
+
+    function isStudentPublicToPeers(aluno) {
+      if (!aluno) return false;
+      if (sessionMeta.mode !== 'supabase') {
+        if (sessionMeta.mode === 'demo' && isOwnStudentRecord(aluno)) {
+          return demoSelfPublicOptIn;
+        }
+        return true;
+      }
+      return publicProfileSet.has(Number(aluno.numero));
+    }
+
+    function canViewStudentIdentity(aluno, { forcePersonal = false } = {}) {
+      if (!aluno) return false;
+      if (isOwnStudentRecord(aluno)) return true;
+      return isStudentPublicToPeers(aluno);
+    }
+
+    function getStudentDisplayName(aluno, { showSelfPrivacyHint = false, forcePersonal = false } = {}) {
+      if (!aluno) return '-';
+      if (forcePersonal && isOwnStudentRecord(aluno)) return aluno.nome;
+      if (isOwnStudentRecord(aluno)) {
+        if (showSelfPrivacyHint && !isStudentPublicToPeers(aluno)) {
+          return `${aluno.nome} (Você · Anônimo)`;
+        }
+        return aluno.nome;
+      }
+      if (isStudentPublicToPeers(aluno)) return aluno.nome;
+      return `Aluno #${aluno.numero}`;
+    }
+
+    function matchesStudentSearch(aluno, rawQuery) {
+      const q = String(rawQuery || '').trim().toLowerCase();
+      if (!q) return true;
+      const visibleName = getStudentDisplayName(aluno).toLowerCase();
+      const se = (courseToSE[aluno.curso] || '').toLowerCase();
+      return visibleName.includes(q)
+        || String(aluno.numero).includes(q)
+        || (aluno.curso || '').toLowerCase().includes(q)
+        || se.includes(q);
+    }
     let careerRealtimeChannel = null;
     let careerLoadedStageKey = null;
     let CURRENT_SEM = sessionMeta.semestreAtual
@@ -1253,11 +1607,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return MY_ALUNO_NUM !== null && String(MY_ALUNO_NUM) === String(alunoNumero);
     }
 
-    function renderAvatarInnerHtml(aluno) {
+    const ANONYMOUS_AVATAR_SVG = `<svg class="w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>`;
+
+    function renderAvatarInnerHtml(aluno, { forcePersonal = false } = {}) {
       if (!aluno) return '?';
+      if (!canViewStudentIdentity(aluno, { forcePersonal })) {
+        return ANONYMOUS_AVATAR_SVG;
+      }
       const url = avatarUrlMap.get(Number(aluno.numero));
       if (url) {
-        return `<img src="${url}" alt="${escapeHtml(aluno.nome)}" class="w-full h-full object-cover" />`;
+        return `<img src="${url}" alt="${escapeHtml(getStudentDisplayName(aluno, { forcePersonal }))}" class="w-full h-full object-cover" />`;
       }
       return escapeHtml(getFirstNameInitial(aluno.nome));
     }
@@ -1271,9 +1630,16 @@ document.addEventListener('DOMContentLoaded', () => {
           .eq('turma_id', ACTIVE_TURMA.id);
         if (error || !rows?.length) return;
 
+        // Só baixa/exibe foto de quem ativou perfil_publico = true ou do próprio usuário logado
+        const permittedRows = rows.filter(r =>
+          publicProfileSet.has(Number(r.aluno_numero))
+          || (MY_ALUNO_NUM !== null && Number(r.aluno_numero) === Number(MY_ALUNO_NUM))
+        );
+        if (!permittedRows.length) return;
+
         const missingRows = [];
         let changed = false;
-        for (const r of rows) {
+        for (const r of permittedRows) {
           const cachedBlob = await getCachedAvatarBlob(ACTIVE_TURMA.id, r.aluno_numero, r.storage_path, r.updated_at);
           if (cachedBlob) {
             avatarUrlMap.set(Number(r.aluno_numero), URL.createObjectURL(cachedBlob));
@@ -1421,9 +1787,13 @@ document.addEventListener('DOMContentLoaded', () => {
         badgeEl.className = `hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border max-w-[210px] truncate ${colorCls}`;
         if (actionLabelEl) actionLabelEl.textContent = 'Sair';
       } else if (sessionMeta.mode === 'demo') {
-        badgeEl.textContent = '🧪 Modo Demo';
+        badgeEl.textContent = isDemoOnly ? '🧪 Portfólio Demo' : '🧪 Modo Demo';
         badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-amber-500/35 bg-amber-500/15 text-amber-300 max-w-[160px] truncate';
-        if (actionLabelEl) actionLabelEl.textContent = 'Login';
+        if (isDemoOnly && btnAuthAction) {
+          btnAuthAction.classList.add('hidden');
+        } else if (actionLabelEl) {
+          actionLabelEl.textContent = 'Login';
+        }
       } else {
         badgeEl.textContent = '📁 Planilha / Arquivo Local';
         badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-sky-500/35 bg-sky-500/15 text-sky-300 max-w-[180px] truncate';
@@ -1654,7 +2024,8 @@ document.addEventListener('DOMContentLoaded', () => {
       mediaGeral: avg(members.map(a => a.mediaGeral)),
       menorCR: sorted[sorted.length - 1]?.mediaGraduacao ?? null,
       maiorCR: sorted[0]?.mediaGraduacao ?? null,
-      melhorAluno: sorted[0]?.nome ?? '-',
+      melhorAluno: sorted[0] ? getStudentDisplayName(sorted[0]) : '-',
+      melhorAlunoObj: sorted[0] || null,
       semestres,
       semestresCumulativo,
       isSEGroup
@@ -1962,11 +2333,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!matchesCourseFilter(aluno.curso, state.filterCurso)) return false;
       if (!state.includedVinculos.has(aluno.vinculo)) return false;
       if (state.tableSearch.trim()) {
-        const query = state.tableSearch.toLowerCase();
-        const matchesName = aluno.nome.toLowerCase().includes(query);
-        const matchesNum = String(aluno.numero).includes(query);
-        const matchesCurso = aluno.curso.toLowerCase().includes(query);
-        if (!matchesName && !matchesNum && !matchesCurso) return false;
+        if (!matchesStudentSearch(aluno, state.tableSearch)) return false;
       }
       return true;
     });
@@ -2087,7 +2454,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('podiumContainer');
     if (!container) return;
 
-    const top3 = [...filteredAlunos].sort((a, b) => a.rankGraduacao - b.rankGraduacao).slice(0, 3);
+    const top3 = [...filteredAlunos].filter(isStudentFichaVisible).sort((a, b) => a.rankGraduacao - b.rankGraduacao).slice(0, 3);
     
     if (top3.length === 0) {
       if (DATA.alunos.length === 0) {
@@ -2122,7 +2489,7 @@ document.addEventListener('DOMContentLoaded', () => {
               ${renderAvatarInnerHtml(aluno)}
             </div>
             <div class="flex-1 min-w-0">
-              <h4 class="font-extrabold text-sm text-white truncate">${aluno.nome}</h4>
+              <h4 class="font-extrabold text-sm text-white truncate">${escapeHtml(getStudentDisplayName(aluno, { showSelfPrivacyHint: true }))}</h4>
               <div class="flex items-center gap-2 mt-1">
                 ${getCourseBadge(aluno.curso)}
                 ${getVinculoBadge(aluno.vinculo)}
@@ -2741,7 +3108,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="p-2.5 rounded-xl bg-slate-950/60 border border-slate-800/80 space-y-1.5 text-xs">
             <div class="flex items-center justify-between text-slate-300">
               <span class="text-slate-400 flex items-center gap-1">🥇 1º Lugar:</span>
-              <span class="font-bold text-slate-200 truncate max-w-[170px]">${c.melhorAluno}</span>
+              <span class="font-bold text-slate-200 truncate max-w-[170px]">${escapeHtml(c.melhorAlunoObj ? getStudentDisplayName(c.melhorAlunoObj) : c.melhorAluno)}</span>
             </div>
             <div class="flex items-center justify-between text-slate-300">
               <span class="text-slate-400">Faixa de CR:</span>
@@ -2819,7 +3186,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="text-rose-400">${fmtNum(c.menorCR)}</span> / <span class="text-emerald-400">${fmtNum(c.maiorCR)}</span>
           </td>
           <td class="py-3 px-4 font-bold text-slate-200">
-            🥇 ${c.melhorAluno}
+            🥇 ${escapeHtml(c.melhorAlunoObj ? getStudentDisplayName(c.melhorAlunoObj) : c.melhorAluno)}
           </td>
         </tr>
       `;
@@ -3034,7 +3401,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <div class="min-w-0">
                 <h4 class="font-bold text-slate-100 text-sm leading-snug hover:text-blue-400 transition truncate">
-                  ${aluno.nome}
+                  ${escapeHtml(getStudentDisplayName(aluno, { showSelfPrivacyHint: true }))}
                 </h4>
                 <div class="flex items-center gap-1.5 mt-1 flex-wrap">
                   <span class="text-[11px] font-mono text-slate-400 font-semibold">#${aluno.numero}</span>
@@ -3091,9 +3458,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!panel) return;
 
     const q = (state.vfSearch || '').trim().toLowerCase();
+    const visibleVfScoped = filteredAlunos.filter(isStudentFichaVisible);
     const baseAlumnos = q
-      ? filteredAlunos.filter(a => a.nome.toLowerCase().includes(q) || a.curso.toLowerCase().includes(q) || String(a.numero).includes(q))
-      : filteredAlunos;
+      ? visibleVfScoped.filter(a => matchesStudentSearch(a, q))
+      : visibleVfScoped;
 
     const riskList = baseAlumnos.filter(a => a.vfRiskLevel === 'risk').sort((a, b) => b.maxVf32 - a.maxVf32);
     const warnList = baseAlumnos.filter(a => a.vfRiskLevel === 'warn').sort((a, b) => b.maxVf32 - a.maxVf32);
@@ -3155,7 +3523,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="space-y-1.5 w-full">
                   <div class="flex items-start justify-between gap-2">
                     <div class="min-w-0">
-                      <div class="text-xs font-extrabold text-slate-100 truncate">${a.nome}</div>
+                      <div class="text-xs font-extrabold text-slate-100 truncate">${escapeHtml(getStudentDisplayName(a, { showSelfPrivacyHint: true }))}</div>
                       <div class="text-[10px] text-slate-400 truncate mt-0.5">${a.curso} · #${a.rankGraduacao}</div>
                     </div>
                     <div class="text-right shrink-0">
@@ -3258,7 +3626,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const tbody = document.getElementById('rankingTableBody');
     if (!tbody) return;
 
-    const sorted = [...filteredAlunos].sort((a, b) => {
+    const sorted = [...filteredAlunos].filter(isStudentFichaVisible).sort((a, b) => {
       let valA = a[state.sortColumn];
       let valB = b[state.sortColumn];
 
@@ -3322,7 +3690,7 @@ document.addEventListener('DOMContentLoaded', () => {
               <div class="text-[10px] text-cyan-300">Prév: #${aluno.rankCursoPrevia ?? aluno.rankCurso}</div>
             </td>
             <td class="py-3 px-4 font-bold text-slate-100 hover:text-blue-400">
-              ${aluno.nome}
+              ${escapeHtml(getStudentDisplayName(aluno, { showSelfPrivacyHint: true }))}
             </td>
             <td class="py-3 px-3">
               ${getCourseBadge(aluno.curso)}
@@ -3992,7 +4360,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- TAB 5: COMPARADOR 1x1 ALUNOS ---
   function formatAlunoLabel(a) {
-    return a ? `#${a.rankGraduacao} ${a.nome} (${a.curso})` : '';
+    return a ? `#${a.rankGraduacao} ${getStudentDisplayName(a)} (${a.curso})` : '';
   }
 
   function setupComparatorSearch(inputId, resultsId, stateKey) {
@@ -4001,15 +4369,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!inp || !res) return;
 
     const renderMatches = (query) => {
-      const q = (query || '').trim().toLowerCase();
-      const matches = getVinculoScopedAlunos().filter(a => {
-        if (!q) return true;
-        const se = courseToSE[a.curso] || '';
-        return a.nome.toLowerCase().includes(q) ||
-          String(a.numero).includes(q) ||
-          a.curso.toLowerCase().includes(q) ||
-          se.toLowerCase().includes(q);
-      });
+      const matches = getVinculoScopedAlunos().filter(a => isStudentFichaVisible(a) && matchesStudentSearch(a, query));
 
       if (matches.length === 0) {
         res.innerHTML = `<div class="px-3 py-2.5 text-xs text-slate-500">Nenhum aluno encontrado.</div>`;
@@ -4019,7 +4379,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return `
             <button type="button" data-pick-aluno="${a.numero}" class="w-full text-left px-3 py-2 hover:bg-slate-800/90 flex items-center justify-between gap-2 text-xs transition ${isSelected ? 'bg-blue-500/10' : ''}">
               <div class="min-w-0">
-                <span class="font-bold text-slate-100">${a.nome}</span>
+                <span class="font-bold text-slate-100">${escapeHtml(getStudentDisplayName(a, { showSelfPrivacyHint: true }))}</span>
                 <span class="text-[11px] text-slate-400 ml-1.5">#${a.rankGraduacao} · ${a.curso}</span>
               </div>
               <span class="font-mono-numbers font-bold text-blue-400 shrink-0">${fmtNum(a.mediaGraduacao)}</span>
@@ -4158,7 +4518,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${renderAvatarInnerHtml(aluno)}
               </div>
               <div>
-                <h3 class="font-extrabold text-base text-white">${aluno.nome}</h3>
+                <h3 class="font-extrabold text-base text-white">${escapeHtml(getStudentDisplayName(aluno, { showSelfPrivacyHint: true }))}</h3>
                 <div class="flex items-center gap-2 mt-1">
                   ${getCourseBadge(aluno.curso)}
                   ${getVinculoBadge(aluno.vinculo)}
@@ -4208,11 +4568,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const turmaLabel = isSem ? 'Média da Turma (Semestral)' : 'CR Cumulativo Turma';
 
+      const nameA1 = getStudentDisplayName(a1);
+      const nameA2 = getStudentDisplayName(a2);
       const subtitle = document.getElementById('comparatorSubtitle');
       if (subtitle) {
         subtitle.textContent = isSem
-          ? `${a1.nome} vs ${a2.nome} vs Média da Turma (Médias Semestrais)`
-          : `${a1.nome} vs ${a2.nome} vs Turma (CR Cumulativo Acumulado)`;
+          ? `${nameA1} vs ${nameA2} vs Média da Turma (Médias Semestrais)`
+          : `${nameA1} vs ${nameA2} vs Turma (CR Cumulativo Acumulado)`;
       }
 
       const compBounds = computeDynamicBounds([dataA1, dataA2, dataTurma], 0.8, 0.2);
@@ -4223,7 +4585,7 @@ document.addEventListener('DOMContentLoaded', () => {
           labels: semestres.map(s => s === '3.2' ? '3.2 (Parcial)' : `Sem. ${s}`),
           datasets: [
             {
-              label: a1.nome,
+              label: nameA1,
               data: dataA1,
               borderColor: '#3b82f6',
               backgroundColor: '#3b82f6',
@@ -4232,7 +4594,7 @@ document.addEventListener('DOMContentLoaded', () => {
               tension: 0.25
             },
             {
-              label: a2.nome,
+              label: nameA2,
               data: dataA2,
               borderColor: '#10b981',
               backgroundColor: '#10b981',
@@ -4301,8 +4663,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const th2 = document.getElementById('thCompAluno2');
     if (!semFilterEl || !tbody) return;
 
-    if (th1) th1.textContent = a1.nome;
-    if (th2) th2.textContent = a2.nome;
+    const name1 = getStudentDisplayName(a1);
+    const name2 = getStudentDisplayName(a2);
+    if (th1) th1.textContent = name1;
+    if (th2) th2.textContent = name2;
 
     const semestres = DATA.metadata.semestres;
     const pills = [
@@ -4480,12 +4844,12 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-800/80 text-xs">
               <div class="p-2 rounded-lg bg-slate-950/60">
-                <span class="text-[10px] text-blue-400 font-bold block truncate">${a1.nome}</span>
+                <span class="text-[10px] text-blue-400 font-bold block truncate">${escapeHtml(name1)}</span>
                 <span class="font-extrabold font-mono-numbers ${g1 !== null && g2 !== null && g1 > g2 ? 'text-blue-400' : 'text-slate-200'}">${g1 !== null ? fmtNum(g1) : '-'}</span>
                 ${sub1 ? `<span class="text-[10px] text-slate-500 block">${sub1}</span>` : ''}
               </div>
               <div class="p-2 rounded-lg bg-slate-950/60">
-                <span class="text-[10px] text-emerald-400 font-bold block truncate">${a2.nome}</span>
+                <span class="text-[10px] text-emerald-400 font-bold block truncate">${escapeHtml(name2)}</span>
                 <span class="font-extrabold font-mono-numbers ${g1 !== null && g2 !== null && g2 > g1 ? 'text-emerald-400' : 'text-slate-200'}">${g2 !== null ? fmtNum(g2) : '-'}</span>
                 ${sub2 ? `<span class="text-[10px] text-slate-500 block">${sub2}</span>` : ''}
               </div>
@@ -4506,14 +4870,14 @@ document.addEventListener('DOMContentLoaded', () => {
       summaryEl.innerHTML = `
         <div class="p-3 rounded-xl bg-slate-900/60 border border-blue-500/20 flex items-center justify-between">
           <div>
-            <span class="text-[10px] uppercase font-bold text-blue-400 block">${a1.nome} (${scopeLabel})</span>
+            <span class="text-[10px] uppercase font-bold text-blue-400 block">${escapeHtml(name1)} (${scopeLabel})</span>
             <span class="text-xs text-slate-400">${avgTypeLabel} (${grades1.length} disc.)</span>
           </div>
           <span class="text-lg font-extrabold text-blue-400 font-mono-numbers">${fmtNum(avg1)}</span>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/60 border border-emerald-500/20 flex items-center justify-between">
           <div>
-            <span class="text-[10px] uppercase font-bold text-emerald-400 block">${a2.nome} (${scopeLabel})</span>
+            <span class="text-[10px] uppercase font-bold text-emerald-400 block">${escapeHtml(name2)} (${scopeLabel})</span>
             <span class="text-xs text-slate-400">${avgTypeLabel} (${grades2.length} disc.)</span>
           </div>
           <span class="text-lg font-extrabold text-emerald-400 font-mono-numbers">${fmtNum(avg2)}</span>
@@ -4537,13 +4901,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- MODAL: FICHA COMPLETA DO ALUNO ---
   function openStudentModal(num) {
     const aluno = DATA.alunos.find(a => a.numero === num);
-    if (!aluno) return;
+    if (!aluno || !isStudentFichaVisible(aluno)) return;
 
     state.activeStudentModal = aluno;
     state.modalSemesterFilter = 'ALL';
     const modal = document.getElementById('studentModal');
     
-    document.getElementById('modalStudentName').textContent = aluno.nome;
+    document.getElementById('modalStudentName').textContent = getStudentDisplayName(aluno, { showSelfPrivacyHint: true });
     document.getElementById('modalAvatar').innerHTML = renderAvatarInnerHtml(aluno);
     document.getElementById('lblModalUploadAvatar')?.classList.toggle('hidden', !canUploadAvatarFor(aluno.numero));
     document.getElementById('modalStudentNum').textContent = aluno.numero;
@@ -4606,7 +4970,8 @@ document.addEventListener('DOMContentLoaded', () => {
       ? scopedBench.map(s => s.mediaGraduacaoTurma)
       : scopedBench.map(s => s.mediaGraduacaoTurmaCumulativa);
 
-    const alunoLabel = isSem ? `${aluno.nome} (Semestral)` : `${aluno.nome} (CR Cumulativo)`;
+    const studentDisplay = getStudentDisplayName(aluno);
+    const alunoLabel = isSem ? `${studentDisplay} (Semestral)` : `${studentDisplay} (CR Cumulativo)`;
 
     const modalBounds = computeDynamicBounds([studentVals, cursoVals, turmaVals], 0.8, 0.2);
 
@@ -4919,12 +5284,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- CSV EXPORT ---
   function exportFilteredCSV() {
     const headers = ['Rank_Graduacao', 'Rank_Geral', 'Rank_Curso', 'Numero', 'Nome', 'Curso', 'Vinculo', 'CR_Graduacao', 'CR_Geral_80_20', 'CR_32_Parcial', 'Disciplinas_Concluidas', 'Maior_Nota', 'Menor_Nota'];
-    const rows = filteredAlunos.map(a => [
+    const rows = filteredAlunos.filter(isStudentFichaVisible).map(a => [
       a.rankGraduacao,
       a.rankGeral,
       a.rankCurso,
       a.numero,
-      `"${a.nome}"`,
+      `"${getStudentDisplayName(a).replace(/"/g, '""')}"`,
       `"${a.curso}"`,
       a.vinculo,
       a.mediaGraduacao,
@@ -5393,7 +5758,7 @@ document.addEventListener('DOMContentLoaded', () => {
               break;
             }
           }
-          lines.push(`${idx + 1}º ${a.nome} → ${chosen}`);
+          lines.push(`${idx + 1}º ${getStudentDisplayName(a)} → ${chosen}`);
         });
         try {
           await navigator.clipboard.writeText(lines.join('\n'));
@@ -5694,7 +6059,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </span>
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(a.nome)}</span>
+                    <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(getStudentDisplayName(a))}</span>
                     ${isSelf ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-extrabold">Você</span>' : ''}
                     ${orphanPrefs.length ? '<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold" title="Alguma vaga salva anteriormente foi alterada ou removida pelo Gestor">Revisar</span>' : ''}
                     <span class="text-[10px] font-mono-numbers text-blue-400 font-bold">${fmtNum(score)}</span>
@@ -5815,7 +6180,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const loc = prefs[i];
         if ((remaining.get(loc) || 0) > 0) {
           remaining.set(loc, remaining.get(loc) - 1);
-          assignedByVaga.get(loc)?.push(`${idx + 1}º ${a.nome}`);
+          assignedByVaga.get(loc)?.push(`${idx + 1}º ${getStudentDisplayName(a)}`);
           chosen = loc;
           chosenRank = i + 1;
           alocados++;
@@ -5833,7 +6198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr class="table-hover-row border-b border-slate-800/40">
           <td class="py-2.5 px-2.5 sm:px-3 font-mono-numbers font-bold text-slate-300">${idx + 1}º</td>
           <td class="py-2.5 px-3 sm:px-4 font-bold text-slate-100">
-            <div>${a.nome}</div>
+            <div>${escapeHtml(getStudentDisplayName(a, { showSelfPrivacyHint: true }))}</div>
             <div class="sm:hidden text-[10px] font-mono-numbers text-blue-400">CR ${fmtNum(score)}</div>
           </td>
           <td class="hidden sm:table-cell py-2.5 px-3 text-right font-mono-numbers text-blue-400 font-bold">${fmtNum(score)}</td>
@@ -6003,11 +6368,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const matches = DATA.alunos.filter(a =>
-        a.nome.toLowerCase().includes(q) ||
-        String(a.numero).includes(q) ||
-        a.curso.toLowerCase().includes(q)
-      ).slice(0, 8);
+      const matches = DATA.alunos.filter(a => isStudentFichaVisible(a) && matchesStudentSearch(a, q)).slice(0, 8);
 
       if (matches.length === 0) {
         mobileSearchResults.innerHTML = `<div class="px-4 py-3 text-slate-500 text-xs">Nenhum aluno encontrado</div>`;
@@ -6015,7 +6376,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileSearchResults.innerHTML = matches.map(a => `
           <div class="px-4 py-2.5 hover:bg-slate-800/80 active:bg-slate-800 cursor-pointer flex items-center justify-between text-xs transition" onclick="window.app.openStudentModal(${a.numero}); document.getElementById('mobileSearchDrawer').classList.add('hidden');">
             <div>
-              <span class="font-bold text-white">${a.nome}</span>
+              <span class="font-bold text-white">${escapeHtml(getStudentDisplayName(a, { showSelfPrivacyHint: true }))}</span>
               <div class="flex items-center gap-1.5 mt-0.5">
                 <span class="text-slate-400 text-[11px] font-mono">#${a.numero}</span>
                 <span class="text-slate-500">•</span>
@@ -6157,11 +6518,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      const matches = DATA.alunos.filter(a => 
-        a.nome.toLowerCase().includes(q) || 
-        String(a.numero).includes(q) ||
-        a.curso.toLowerCase().includes(q)
-      ).slice(0, 8);
+      const matches = DATA.alunos.filter(a => isStudentFichaVisible(a) && matchesStudentSearch(a, q)).slice(0, 8);
 
       if (matches.length === 0) {
         quickSearchResults.innerHTML = `<div class="px-3 py-2 text-slate-500 text-xs">Nenhum aluno encontrado</div>`;
@@ -6169,7 +6526,7 @@ document.addEventListener('DOMContentLoaded', () => {
         quickSearchResults.innerHTML = matches.map(a => `
           <div class="px-3 py-2 hover:bg-slate-800 cursor-pointer flex items-center justify-between text-xs" onclick="window.app.openStudentModal(${a.numero})">
             <div>
-              <span class="font-bold text-white">${a.nome}</span>
+              <span class="font-bold text-white">${escapeHtml(getStudentDisplayName(a, { showSelfPrivacyHint: true }))}</span>
               <span class="text-slate-400 text-[10px] ml-1.5">${a.curso}</span>
             </div>
             <span class="font-bold text-blue-400 font-mono-numbers">${fmtNum(a.mediaGraduacao)}</span>
@@ -6577,11 +6934,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const clone = structuredClone(DATA);
     clone.metadata.semestreAtual = CURRENT_SEM;
     clone.metadata.turma = ACTIVE_TURMA.nome || clone.metadata.turma;
+    const nameToAnon = new Map();
+    (clone.alunos || []).forEach(a => {
+      const anon = `Aluno #${a.numero}`;
+      if (a.nome) nameToAnon.set(a.nome, anon);
+      if (a.nomeGuerra) nameToAnon.set(a.nomeGuerra, anon);
+    });
+    (clone.cursosComparativo || []).forEach(c => {
+      if (c.melhorAluno && nameToAnon.has(c.melhorAluno)) {
+        c.melhorAluno = nameToAnon.get(c.melhorAluno);
+      }
+    });
     clone.disciplinas = (clone.disciplinas || []).map(({ cursos, cursoLabel, vfMediaNec, vfEmRisco, vfRiscoAlto, ...rest }) => rest);
-    clone.alunos = (clone.alunos || []).map(({ vfRiskSubjects, maxVf32, avgVf32, vfRiskCount, vfRiskLevel, ...a }) => ({
-      ...a,
-      disciplinas: (a.disciplinas || []).map(({ _manualNf, ...d }) => d)
-    }));
+    clone.alunos = (clone.alunos || []).map(({ vfRiskSubjects, maxVf32, avgVf32, vfRiskCount, vfRiskLevel, _perfilPublico, ...a }) => {
+      const anon = `Aluno #${a.numero}`;
+      const cleanAluno = {
+        ...a,
+        nome: anon,
+        disciplinas: (a.disciplinas || []).map(({ _manualNf, ...d }) => d)
+      };
+      if ('nomeGuerra' in cleanAluno) cleanAluno.nomeGuerra = anon;
+      return cleanAluno;
+    });
     return clone;
   }
 
@@ -8565,12 +8939,85 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function syncPrivacyToggleUI(aluno) {
+    const toggle = document.getElementById('mpPrivacyOptInToggle');
+    const badge = document.getElementById('mpPrivacyStatusBadge');
+    const helpText = document.getElementById('mpPrivacyHelpText');
+    const saveStatus = document.getElementById('mpPrivacySaveStatus');
+    if (!toggle || !aluno) return;
+
+    const isPublic = isStudentPublicToPeers(aluno);
+    toggle.checked = isPublic;
+
+    if (badge) {
+      badge.className = isPublic
+        ? 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/35'
+        : 'px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700';
+      badge.textContent = isPublic
+        ? '🌐 Visível para a turma'
+        : `🔒 Anônimo (Aluno #${aluno.numero})`;
+    }
+    if (helpText) {
+      helpText.innerHTML = isPublic
+        ? 'Seu nome e foto estão visíveis nas listagens, fichas e rankings para os integrantes autenticados da turma.'
+        : `Enquanto desativado, seus colegas veem apenas <strong class="text-slate-200">Aluno #${aluno.numero}</strong> e avatar genérico (LGPD).`;
+    }
+
+    if (toggle.getAttribute('data-privacy-bound') !== '1') {
+      toggle.setAttribute('data-privacy-bound', '1');
+      toggle.addEventListener('change', async () => {
+        const currentAluno = getPersonalAlunoTarget();
+        if (!currentAluno) return;
+        const nextPublic = Boolean(toggle.checked);
+        toggle.disabled = true;
+        if (saveStatus) {
+          saveStatus.textContent = 'Salvando...';
+          saveStatus.className = 'text-[11px] font-semibold text-amber-300';
+          saveStatus.classList.remove('hidden');
+        }
+
+        try {
+          if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+            const { error } = await sessionMeta.sb.rpc('set_my_privacy_opt_in', {
+              p_perfil_publico: nextPublic
+            });
+            if (error) throw new Error(error.message);
+
+            if (nextPublic) publicProfileSet.add(Number(currentAluno.numero));
+            else publicProfileSet.delete(Number(currentAluno.numero));
+          } else {
+            demoSelfPublicOptIn = nextPublic;
+          }
+
+          syncPrivacyToggleUI(currentAluno);
+          applyFilters();
+          if (state.currentTab === 'disciplinas') renderDisciplinasTab();
+          if (saveStatus) {
+            saveStatus.textContent = nextPublic ? 'Consentimento registrado!' : 'Modo anônimo ativado!';
+            saveStatus.className = 'text-[11px] font-semibold text-emerald-400';
+          }
+        } catch (err) {
+          toggle.checked = !nextPublic;
+          syncPrivacyToggleUI(currentAluno);
+          if (saveStatus) {
+            saveStatus.textContent = `Erro: ${err.message}`;
+            saveStatus.className = 'text-[11px] font-semibold text-rose-400';
+          }
+        } finally {
+          toggle.disabled = false;
+        }
+      });
+    }
+  }
+
   function renderMeuPainelTab() {
     const aluno = getPersonalAlunoTarget();
     if (!aluno) return;
 
+    // No Meu Painel, o próprio aluno sempre vê seus dados completos e pode alternar o Opt-In
     const avEl = document.getElementById('mpAvatarContainer');
-    if (avEl) avEl.innerHTML = renderAvatarInnerHtml(aluno);
+    if (avEl) avEl.innerHTML = renderAvatarInnerHtml(aluno, { forcePersonal: true });
+    syncPrivacyToggleUI(aluno);
 
     const nameEl = document.getElementById('mpStudentName');
     const courseEl = document.getElementById('mpStudentCourseBadge');

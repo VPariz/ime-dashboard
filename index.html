@@ -77,6 +77,9 @@
         </div>
 
         <!-- Status / Auto-session check banner -->
+        <div id="demoOnlyBanner" class="hidden p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-xs text-indigo-200 leading-relaxed">
+          <strong>Modo Portfólio Público:</strong> nesta hospedagem demonstrativa o acesso aos dados reais das turmas está desabilitado. Explore os dados fictícios abaixo.
+        </div>
         <div id="authCheckingBanner" class="hidden p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs text-blue-300 flex items-center gap-2">
           <i data-lucide="loader-2" class="w-4 h-4 animate-spin shrink-0"></i>
           <span>Verificando sessão salva e carregando dados...</span>
@@ -86,8 +89,8 @@
         <form id="loginForm" class="space-y-3">
           <div>
             <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">Login (Nome + Turma)</label>
-            <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Pedro Igor 28 ou Papaleo 28" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <p class="text-[10.5px] text-slate-500 mt-1">1º acesso: senha padrão <code>senha_Nome_Turma</code> (ex.: <code>senha_Pedro_Igor_28</code>). Será solicitada troca por senha forte.</p>
+            <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Aluno 28 ou Discente 29" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <p class="text-[10.5px] text-slate-500 mt-1">1º acesso: senha padrão <code>senha_Nome_Turma</code> (ex.: <code>senha_Aluno_28</code>). Será solicitada troca por senha forte.</p>
           </div>
           <div>
             <label for="loginPassword" class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
@@ -103,6 +106,13 @@
           <button type="submit" id="btnLoginSubmit" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
             <i data-lucide="log-in" class="w-4 h-4"></i>
             <span id="btnLoginSubmitText">Entrar</span>
+          </button>
+
+          <button type="button" id="btnGoogleImeLogin" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-100 text-sm font-bold transition flex items-center justify-center gap-2" title="Entrar com conta Google institucional @ime.eb.br">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.2-1.5 3.6-5.4 3.6-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.1 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12S6.6 21.8 12 21.8c6.9 0 9.5-4.8 9.5-7.3 0-.5-.1-.9-.1-1.3H12z"/>
+            </svg>
+            <span>Entrar com Google (@ime.eb.br)</span>
           </button>
         </form>
 
@@ -182,6 +192,82 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Mandatory First-Login Terms of Use & LGPD Acceptance Modal -->
+  <div id="termsOfUseModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+    <div class="w-full max-w-lg glass-panel rounded-2xl border border-blue-500/40 p-6 shadow-2xl space-y-4 animate-fade-in">
+      <div class="space-y-1">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-[11px] font-bold text-blue-300">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+          <span>Termo de Uso &amp; Conformidade LGPD</span>
+        </div>
+        <h2 class="text-base sm:text-lg font-extrabold text-white pt-1">Condições de Acesso ao Painel</h2>
+        <p id="termsUserSubtitle" class="text-xs text-slate-400">
+          Leia atentamente e aceite os termos abaixo para liberar o acesso ao painel da sua turma.
+        </p>
+      </div>
+
+      <div class="space-y-2.5 max-h-64 overflow-y-auto p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+        <p>
+          <strong class="text-white">1. Iniciativa Independente:</strong> Esta plataforma é uma ferramenta estudantil independente desenvolvida exclusivamente para apoio acadêmico e portfólio open-source, <strong>sem vínculo oficial, institucional ou endosso</strong> do Instituto Militar de Engenharia (IME) ou do Exército Brasileiro.
+        </p>
+        <p>
+          <strong class="text-white">2. Sigilo e Proibição de Redistribuição:</strong> Os dados exibidos neste ambiente autenticado destinam-se exclusivamente ao acompanhamento pessoal e interno dos integrantes autorizados da turma. É <strong>expressamente proibido</strong> capturar telas (prints), exportar, divulgar ou compartilhar notas, classificações ou informações de terceiros fora da turma.
+        </p>
+        <p>
+          <strong class="text-white">3. Anonimato Padrão e LGPD (Lei nº 13.709/2018):</strong> Estatísticas comparativas entre turmas são processadas de forma estritamente agregada e anonimizada por padrão. O descumprimento das regras de confidencialidade implicará revogação imediata do acesso e eventual responsabilização nas esferas cabíveis.
+        </p>
+      </div>
+
+      <form id="termsOfUseForm" class="space-y-3">
+        <label class="flex items-start gap-2.5 p-3 rounded-xl bg-slate-900/70 border border-slate-800 cursor-pointer select-none text-xs text-slate-200">
+          <input type="checkbox" id="acceptTermsCheckbox" required class="mt-0.5 rounded border-slate-600 bg-slate-950 text-blue-500 focus:ring-blue-500">
+          <span>Declaro que li, compreendi e concordo integralmente com o Termo de Uso, comprometendo-me a não redistribuir prints ou dados acadêmicos de terceiros.</span>
+        </label>
+
+        <div id="termsOfUseError" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-medium"></div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button type="button" id="btnTermsDecline" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+            Recusar e Sair
+          </button>
+          <button type="submit" id="btnTermsAccept" disabled class="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 disabled:opacity-45 disabled:cursor-not-allowed text-white text-sm font-bold transition shadow-lg shadow-blue-600/20">
+            Aceitar Termo e Acessar Painel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mandatory 2FA Link: Institutional Google Account (@ime.eb.br) -->
+  <div id="linkImeGoogleModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+    <div class="w-full max-w-md glass-panel rounded-2xl border border-emerald-500/40 p-6 shadow-2xl space-y-4 animate-fade-in">
+      <div class="space-y-1">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-bold text-emerald-300">
+          <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+          <span>Verificação em 2 Fatores • Conta IME</span>
+        </div>
+        <h2 class="text-base sm:text-lg font-extrabold text-white pt-1">Vincule seu E-mail @ime.eb.br</h2>
+        <p id="linkImeSubtitle" class="text-xs text-slate-400 leading-relaxed">
+          Para confirmar que você é aluno ativo, vincule sua conta Google institucional (<code>@ime.eb.br</code>) a este login. Isso é feito apenas uma vez.
+        </p>
+      </div>
+
+      <div id="linkImeError" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-medium"></div>
+
+      <div class="flex items-center gap-2 pt-1">
+        <button type="button" id="btnLinkImeCancel" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+          Sair
+        </button>
+        <button type="button" id="btnLinkImeGoogle" class="flex-1 py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-bold transition shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2">
+          <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill="#FFFFFF" d="M12 10.2v3.9h5.4c-.2 1.2-1.5 3.6-5.4 3.6-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.1 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12S6.6 21.8 12 21.8c6.9 0 9.5-4.8 9.5-7.3 0-.5-.1-.9-.1-1.3H12z"/>
+          </svg>
+          <span>Vincular Google (@ime.eb.br)</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -593,6 +679,30 @@
             </div>
           </div>
         </div>
+
+        <!-- Controle LGPD: Privacy by Default (Opt-In voluntário) -->
+        <div class="pt-3 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-3">
+          <label for="mpPrivacyOptInToggle" class="flex items-center gap-3 cursor-pointer select-none min-w-0">
+            <span class="relative inline-flex items-center shrink-0">
+              <input type="checkbox" id="mpPrivacyOptInToggle" class="sr-only peer">
+              <span class="w-11 h-6 bg-slate-800 border border-slate-700 rounded-full peer peer-checked:bg-emerald-600 peer-checked:border-emerald-500 transition-colors after:content-[''] after:absolute after:top-0.5 after:left-[3px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:after:translate-x-full"></span>
+            </span>
+            <span class="min-w-0">
+              <span class="block text-xs sm:text-[13px] font-bold text-slate-100">
+                Exibir meu nome e foto no ranking e fichas da turma (Padrão: Anônimo)
+              </span>
+              <span id="mpPrivacyHelpText" class="block text-[11px] text-slate-400">
+                Enquanto desativado, seus colegas veem apenas <strong class="text-slate-200">Aluno #Matrícula</strong> e avatar genérico (LGPD).
+              </span>
+            </span>
+          </label>
+          <div class="flex items-center gap-2 shrink-0">
+            <span id="mpPrivacyStatusBadge" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-800 text-slate-300 border border-slate-700">
+              🔒 Anônimo para a turma
+            </span>
+            <span id="mpPrivacySaveStatus" class="text-[11px] font-semibold text-emerald-400 hidden"></span>
+          </div>
+        </div>
       </div>
 
       <!-- Bloco 1: Minhas Notas do Semestre Atual (2 -> 7 VEs com Peso, VC e VF) -->
@@ -700,20 +810,6 @@
     <!-- TAB 1: VISÃO GERAL -->
     <section id="tab-overview" class="tab-content space-y-6 animate-fade-in">
       
-      <!-- Top Performers Podium Banner -->
-      <div class="glass-panel p-5 rounded-2xl border border-slate-800">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <i data-lucide="crown" class="w-4 h-4 text-amber-400"></i>
-            Top 3 Destaques Acadêmicos da Turma (CR Graduação)
-          </h2>
-          <span class="text-xs text-blue-400 font-semibold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">Classificação Acadêmica</span>
-        </div>
-        <div id="podiumContainer" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <!-- Populated by JS -->
-        </div>
-      </div>
-
       <!-- Quick VF 3.2 Status Strip -->
       <div id="overviewVfBanner" class="glass-panel p-4 rounded-2xl border border-slate-800 flex flex-wrap items-center justify-between gap-3">
         <!-- Populated by JS -->
@@ -1670,7 +1766,7 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
-              <input type="text" id="saWlEmail" placeholder="Ex: Pedro Igor 28" class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <input type="text" id="saWlEmail" placeholder="Ex: Aluno 28" class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <input type="number" id="saWlAlunoNum" placeholder="Nº Matrícula" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" title="Matrícula do aluno na turma (opcional)">
               <select id="saWlRole" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <option value="viewer">Aluno</option>
@@ -1688,7 +1784,7 @@
               </button>
             </div>
             <div id="saBatchBox" class="hidden space-y-2 pt-1">
-              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 por linha: login, matricula (ex: Pedro Igor 28, 30142)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 por linha: login, matricula (ex: Discente 29, 30142)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
               <button id="btnSaSubmitBatch" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Adicionar em Lote</button>
             </div>
 
@@ -2163,9 +2259,16 @@
   </div>
 
   <!-- Footer -->
-  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/80 text-center text-xs text-slate-500 mb-16 md:mb-0">
-    <p>Painel de Desempenho Acadêmico &amp; Militar • Engenharia IME</p>
-    <p class="mt-1 text-[11px]">Desenvolvido com Tailwind CSS & Chart.js • Hospedado no GitHub Pages</p>
+  <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/80 text-center text-xs text-slate-400 space-y-2 mb-16 md:mb-0">
+    <p class="font-semibold text-slate-300">
+      IME Analytics • Iniciativa Estudantil Independente para Apoio Acadêmico &amp; Portfólio Open-Source
+    </p>
+    <p class="text-[11px] text-slate-400 max-w-3xl mx-auto leading-relaxed">
+      <strong>Isenção Institucional:</strong> Este projeto não possui vínculo oficial, afiliação ou endosso do Instituto Militar de Engenharia (IME) ou do Exército Brasileiro.
+    </p>
+    <p class="text-[11px] text-slate-500 max-w-3xl mx-auto leading-relaxed">
+      <strong>Privacidade &amp; LGPD:</strong> O repositório público utiliza exclusivamente dados sintéticos (<code>demo-data.js</code>). Em ambientes autenticados, dados individuais são restritos por controle de acesso e anonimizados por padrão nas estatísticas agregadas.
+    </p>
   </footer>
 
   <!-- Mobile Bottom Navigation Bar (App Experience) -->
