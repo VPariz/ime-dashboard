@@ -6,6 +6,8 @@ Thumbs.db
 # Private student data (never commit to public GitHub)
 data.js
 data.json
+data.json.gz
 data.enc.js
 *.private.json
+*.json.gz
 starter_turmas/

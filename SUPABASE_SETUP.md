@@ -3,7 +3,7 @@
 Este projeto mantém **apenas o código-fonte e o Modo Demo fictício no GitHub**.  
 Os dados reais (`data.js` / `data.json`) ficam fora do repositório e são acessados conforme o nível de acesso no **Supabase**:
 
-| Papel (`role`) | Turmas visíveis | Notas (Semestre atual) | Lugares/Vagas (Eng., Estágio, OM) | Preferências (1ª–10ª opção) | Usuários & Reset de Senha |
+| Papel (`role`) | Turmas visíveis | Notas (Semestre atual) | Lugares/Vagas (Eng., Estágio, OM) | Preferências (dinâmico: vagas/alunos) | Usuários & Reset de Senha |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **`super_admin`** (Você) | Todas (`28` a `31`+) | Edita + define semestre atual | Edita todas | Edita todas | Cria, promove `gestor` e reseta senhas |
 | **`gestor`** (Admin da turma) | Apenas a sua | Edita/importa apenas semestre atual | Edita apenas da sua turma | Edita da sua turma | Não acessa |
@@ -41,8 +41,12 @@ python prepare_supabase_data.py
 ```
 
 No Supabase (**Storage -> `ime-private`**):
-- Suba `data.json` em `turma_28/data.json`.
-- Suba `starter_turmas/turma_29_data.json` em `turma_29/data.json`, `turma_30_data.json` em `turma_30/data.json` e `turma_31_data.json` em `turma_31/data.json`.
+- Suba preferencialmente as versões comprimidas (`.json.gz`, ~92% menores — o app lê com fallback automático para `.json`):
+  - `data.json.gz` em `turma_28/data.json.gz`
+  - `starter_turmas/turma_29_data.json.gz` em `turma_29/data.json.gz`
+  - `starter_turmas/turma_30_data.json.gz` em `turma_30/data.json.gz`
+  - `starter_turmas/turma_31_data.json.gz` em `turma_31/data.json.gz`
+- Ao publicar notas pela aba **Gestão & Notas**, o próprio site já comprime o payload em Gzip (`.json.gz`) usando `CompressionStream`.
 
 ---
 
@@ -94,5 +98,6 @@ Ao executar o [supabase_schema.sql](supabase_schema.sql) atualizado (idempotente
 - **`student_current_grades`**: notas pessoais do semestre atual (2 a 7 VEs com peso individual, VC e VF), isoladas por RLS para o próprio aluno (não alteram o ranking oficial).
 - **`student_subturmas`**: escolha de `Turma A` / `Turma B` (1º ano `1.1–1.2`) ou `Turma A` / `Turma B` / `Turma C` (2º ano `2.1–2.2`).
 - **`calendar_events`**: provas, trabalhos, listas e anotações de estudo compartilhadas por `(turma_id, semestre, grupo_academico)`, com suporte a anotações privadas (`is_private = true`) e atualização em tempo real via Supabase Realtime.
-- **`student_avatars` + Storage `ime-private/avatars/<turma_id>/<aluno_numero>.webp`**: fotos de perfil comprimidas no navegador para `256×256` WebP (`<= 60 KB`, teto `150 KB`, bloqueio de SVG/HTML). Alunos sobem a própria foto; múltiplos **Gestores** por turma podem subir fotos dos colegas da própria turma; **Super Admin** em qualquer turma. Sem foto, exibe a inicial do 1º nome com 0 requisições ao Storage.
-- **Cache inteligente (IndexedDB + `bump_my_turma_version`)**: o cliente guarda o `data.json` da turma no IndexedDB indexado por `turmas.updated_at`. Quando um Gestor publica novas notas, o RPC `bump_my_turma_version` atualiza o timestamp e invalida o cache automaticamente, economizando Egress no plano gratuito.
+- **`student_avatars` + Storage `ime-private/avatars/<turma_id>/<aluno_numero>.webp`**: fotos de perfil comprimidas no navegador para `128×128` WebP (`<= 25 KB` alvo, teto `50 KB`, bloqueio de SVG/HTML) e cacheadas em **IndexedDB**. Alunos sobem a própria foto; múltiplos **Gestores** por turma podem subir fotos dos colegas da própria turma; **Super Admin** em qualquer turma. Sem foto, exibe a inicial do 1º nome com 0 requisições ao Storage.
+- **`career_vagas.is_provisional`**: permite ao Gestor sinalizar se as vagas de **Engenharia** (`1.1–2.2`, Média Geral), **Estágio** (`3.1–4.2`, Média de Graduação) ou **OM** (`5.1+`, Média Geral) ainda são **Provisórias** ou já **Oficiais**, com nº de preferências ajustado dinamicamente (`min(vagas, alunos)`).
+- **Cache inteligente (IndexedDB + `bump_my_turma_version`)**: o cliente guarda o dataset (e os blobs dos avatares) no IndexedDB indexado por `turmas.updated_at`. Quando um Gestor publica novas notas, o RPC `bump_my_turma_version` atualiza o timestamp e invalida o cache automaticamente, economizando Egress no plano gratuito.
