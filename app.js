@@ -3437,7 +3437,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!container) return;
 
     if (displayed.length === 0) {
-      container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-500 glass-panel rounded-2xl border border-slate-800">Nenhum aluno encontrado para os filtros selecionados.</div>`;
+      const emptyMsg = (sessionMeta.mode === 'supabase' && filteredAlunos.length > 0)
+        ? `Nenhum integrante desta seleção acessou o painel ainda (os ${filteredAlunos.length} alunos seguem computados nas médias estatísticas).`
+        : 'Nenhum aluno encontrado para os filtros selecionados.';
+      container.innerHTML = `<div class="col-span-full py-8 text-center text-slate-500 glass-panel rounded-2xl border border-slate-800 px-4">${emptyMsg}</div>`;
       return;
     }
 
@@ -3718,7 +3721,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return state.sortAsc ? (valA - valB) : (valB - valA);
     });
 
-    document.getElementById('tableResultsCount').textContent = `${sorted.length} alunos listados`;
+    const resultsCountEl = document.getElementById('tableResultsCount');
+    if (resultsCountEl) {
+      resultsCountEl.textContent = (sessionMeta.mode === 'supabase' && sorted.length < filteredAlunos.length)
+        ? `${sorted.length} de ${filteredAlunos.length} ativos (demais apenas nas médias)`
+        : `${sorted.length} alunos listados`;
+    }
 
     let displayed = sorted;
     if (state.pageSize !== 'ALL') {
@@ -3732,7 +3740,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (displayed.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="13" class="py-8 text-center text-slate-500">Nenhum aluno encontrado para os filtros selecionados.</td></tr>`;
+      const emptyMsg = (sessionMeta.mode === 'supabase' && filteredAlunos.length > 0 && sorted.length === 0)
+        ? `Nenhum integrante desta seleção acessou o painel ainda (os ${filteredAlunos.length} alunos seguem computados nas médias estatísticas).`
+        : 'Nenhum aluno encontrado para os filtros selecionados.';
+      tbody.innerHTML = `<tr><td colspan="13" class="py-8 text-center text-slate-500">${emptyMsg}</td></tr>`;
     } else {
       tbody.innerHTML = displayed.map(aluno => {
         let rankIcon = '';
@@ -8585,6 +8596,58 @@ document.addEventListener('DOMContentLoaded', () => {
         renderMeuPainelCalendar(aluno);
       })
       .subscribe();
+  }
+
+  // Realtime de Privacidade (atualiza fichas/opt-in/avatares ao vivo na turma)
+  if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+    try {
+      sessionMeta.sb
+        .channel(`privacy_live_${ACTIVE_TURMA.id}`)
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'student_profiles',
+          filter: `turma_id=eq.${ACTIVE_TURMA.id}`
+        }, async () => {
+          try {
+            const [{ data: profRows }, { data: flagRows }] = await Promise.all([
+              sessionMeta.sb.from('student_profiles').select('aluno_numero, nome_exibicao, perfil_publico').eq('turma_id', ACTIVE_TURMA.id),
+              sessionMeta.sb.rpc('get_turma_visibility_flags', { p_turma_id: ACTIVE_TURMA.id })
+            ]);
+            if (Array.isArray(flagRows)) {
+              activeStudentSet.clear();
+              flagRows.filter(r => Boolean(r.ativo_no_painel)).forEach(r => activeStudentSet.add(Number(r.aluno_numero)));
+              publicProfileSet.clear();
+              flagRows.filter(r => Boolean(r.perfil_publico)).forEach(r => publicProfileSet.add(Number(r.aluno_numero)));
+            }
+            if (Array.isArray(profRows)) {
+              const profMap = new Map(profRows.map(r => [Number(r.aluno_numero), r]));
+              DATA.alunos.forEach(a => {
+                const num = Number(a.numero);
+                const prof = profMap.get(num);
+                if (prof && prof.nome_exibicao) {
+                  a.nome = prof.nome_exibicao;
+                  if ('nomeGuerra' in a) a.nomeGuerra = prof.nome_exibicao;
+                  a._perfilPublico = Boolean(prof.perfil_publico);
+                } else {
+                  a.nome = `Aluno #${num}`;
+                  if ('nomeGuerra' in a) a.nomeGuerra = `Aluno #${num}`;
+                  a._perfilPublico = false;
+                }
+              });
+            }
+            for (const num of [...avatarUrlMap.keys()]) {
+              const isSelf = MY_ALUNO_NUM !== null && Number(num) === Number(MY_ALUNO_NUM);
+              if (!isSelf && !publicProfileSet.has(Number(num))) {
+                avatarUrlMap.delete(num);
+              }
+            }
+            await loadTurmaAvatarsFromSupabase();
+            applyFilters();
+          } catch {}
+        })
+        .subscribe();
+    } catch {}
   }
 
   async function saveStudentSubturma(aluno, chosen) {
