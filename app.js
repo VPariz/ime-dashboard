@@ -775,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const { data, error } = await sbClient.auth.signInWithPassword({ email, password });
         if (error) {
           throw new Error(error.message === 'Invalid login credentials'
-            ? 'Login ou senha inválidos. Verifique o formato (ex: Pedro Silva 29) e a senha.'
+            ? 'Login ou senha inválidos. Verifique o formato (ex: Pedro Igor 28) e a senha.'
             : error.message);
         }
         const res = await resolveSupabaseSessionAndLoad(sbClient, data.user, password);
@@ -832,6 +832,221 @@ document.addEventListener('DOMContentLoaded', () => {
     launchDemoMode('turma_28');
   });
 
+  function downloadLocalSpreadsheetTemplate() {
+    if (!window.XLSX) {
+      showLoginError('Biblioteca de planilhas (SheetJS) ainda não carregou.');
+      return;
+    }
+    const sampleRows = [
+      { Matricula: 28001, Nome: 'PEDRO IGOR', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.1', Codigo: '09301', Disciplina: 'ESTRUTURAS DE DADOS', Tipo: 'Profissional', VE: 8.5, VC: 8.0, VF: 9.0, MVE: '', NF: '' },
+      { Matricula: 28001, Nome: 'PEDRO IGOR', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.2', Codigo: '09310', Disciplina: 'BANCO DE DADOS', Tipo: 'Profissional', VE: 9.0, VC: 8.5, VF: '', MVE: '', NF: '' },
+      { Matricula: 28001, Nome: 'PEDRO IGOR', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.2', Codigo: '09315', Disciplina: 'LABORATÓRIO DE SISTEMAS DIGITAIS', Tipo: 'Prática', VE: 9.2, VC: '', VF: '', MVE: 9.2, NF: '' },
+      { Matricula: 28002, Nome: 'LUCAS ALMEIDA', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.1', Codigo: '09301', Disciplina: 'ESTRUTURAS DE DADOS', Tipo: 'Profissional', VE: 7.5, VC: 7.0, VF: 8.0, MVE: '', NF: '' },
+      { Matricula: 28002, Nome: 'LUCAS ALMEIDA', Curso: 'Computação', Vinculo: 'Ativa', Semestre: '3.2', Codigo: '09310', Disciplina: 'BANCO DE DADOS', Tipo: 'Profissional', VE: 7.8, VC: 8.2, VF: '', MVE: '', NF: '' },
+      { Matricula: 28003, Nome: 'MARIANA COSTA', Curso: 'Eletrônica', Vinculo: 'Reserva', Semestre: '3.2', Codigo: '07320', Disciplina: 'CIRCUITOS ELETRÔNICOS', Tipo: 'Profissional', VE: 8.8, VC: 9.0, VF: '', MVE: '', NF: '' }
+    ];
+    const instructions = [
+      { Coluna: 'Matricula', Obrigatorio: 'Sim (ou Nome)', Descricao: 'Número de matrícula do aluno (ex: 28001)' },
+      { Coluna: 'Nome', Obrigatorio: 'Sim', Descricao: 'Nome ou nome de guerra do aluno' },
+      { Coluna: 'Curso', Obrigatorio: 'Opcional', Descricao: 'Engenharia ou Ciclo Básico (ex: Computação, Eletrônica, Ciclo Básico)' },
+      { Coluna: 'Vinculo', Obrigatorio: 'Opcional', Descricao: 'Ativa, Reserva ou CG (padrão: Ativa)' },
+      { Coluna: 'Semestre', Obrigatorio: 'Opcional', Descricao: 'Período no formato Ano.Semestre (ex: 1.1, 2.2, 3.2). Padrão: 3.2' },
+      { Coluna: 'Codigo', Obrigatorio: 'Sim (ou Disciplina)', Descricao: 'Código da matéria (ex: 09310)' },
+      { Coluna: 'Disciplina', Obrigatorio: 'Sim', Descricao: 'Nome da matéria (ex: BANCO DE DADOS)' },
+      { Coluna: 'Tipo', Obrigatorio: 'Opcional', Descricao: 'Profissional, Básico, Militar ou Prática (matérias práticas usam apenas VE/MVE)' },
+      { Coluna: 'VE / VC / VF / MVE / NF', Obrigatorio: 'Opcional', Descricao: 'Notas de 0 a 10 (aceita vírgula ou ponto). Deixe em branco o que ainda não saiu.' }
+    ];
+    const wb = window.XLSX.utils.book_new();
+    const wsNotas = window.XLSX.utils.json_to_sheet(sampleRows);
+    const wsInst = window.XLSX.utils.json_to_sheet(instructions);
+    window.XLSX.utils.book_append_sheet(wb, wsNotas, 'Notas');
+    window.XLSX.utils.book_append_sheet(wb, wsInst, 'Instrucoes');
+    window.XLSX.writeFile(wb, 'modelo_notas_ime.xlsx');
+  }
+
+  function parseLocalSpreadsheetToDataset(arrayBuffer, fileName = 'Planilha Local') {
+    if (!window.XLSX) {
+      throw new Error('Biblioteca Excel (SheetJS) não carregada.');
+    }
+    const wb = window.XLSX.read(arrayBuffer, { type: 'array' });
+    const sheetName = wb.SheetNames?.[0];
+    if (!sheetName) throw new Error('Planilha sem abas.');
+    const rows = window.XLSX.utils.sheet_to_json(wb.Sheets[sheetName], { defval: '' });
+    if (!rows.length) throw new Error('A primeira aba da planilha está vazia.');
+
+    const cols = Object.keys(rows[0] || {});
+    const normCol = (s) => String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+    const findCol = (patterns) => cols.find(c => patterns.some(p => p.test(normCol(c)))) || '';
+
+    const map = {
+      numero: findCol([/^matr/, /^num/, /^n[º°o]?$/, /^id$/]),
+      nome: findCol([/nome/, /aluno/, /guerra/]),
+      curso: findCol([/curso/, /eng/, /espec/]),
+      vinculo: findCol([/vinc/, /situacao_mil/]),
+      semestre: findCol([/^sem/, /periodo/]),
+      codigo: findCol([/^cod/, /sigla/]),
+      disciplina: findCol([/disc/, /materia/, /assunto/]),
+      tipo: findCol([/^tipo$/, /ciclo/, /natureza/]),
+      ve: findCol([/^ve$/, /media_ve/]),
+      vc: findCol([/^vc$/]),
+      vf: findCol([/^vf$/]),
+      mve: findCol([/^mve$/, /pratica/]),
+      nf: findCol([/^nf$/, /nota_final/, /^media$/, /^final$/])
+    };
+
+    if (!map.numero && !map.nome) {
+      throw new Error('Não foi possível identificar a coluna de Nome ou Matrícula na planilha.');
+    }
+    if (!map.codigo && !map.disciplina) {
+      throw new Error('Não foi possível identificar a coluna de Disciplina ou Código na planilha.');
+    }
+
+    const parseNum = (v) => {
+      if (v === null || v === undefined || String(v).trim() === '') return null;
+      const n = parseFloat(String(v).replace(',', '.'));
+      return isNaN(n) ? null : Math.round(n * 100) / 100;
+    };
+
+    const alunosMap = new Map();
+    const cursosSet = new Set();
+    const semSet = new Set();
+
+    rows.forEach((r, idx) => {
+      const rawNum = map.numero ? String(r[map.numero] ?? '').trim() : '';
+      const rawName = map.nome ? String(r[map.nome] ?? '').trim() : '';
+      if (!rawNum && !rawName) return;
+
+      const key = rawNum || normCol(rawName);
+      let aluno = alunosMap.get(key);
+      const cursoVal = (map.curso ? String(r[map.curso] ?? '').trim() : '') || 'Computação';
+      const vincRaw = (map.vinculo ? String(r[map.vinculo] ?? '').trim() : '') || 'Ativa';
+      const vinculo = ['Ativa', 'Reserva', 'CG'].includes(vincRaw) ? vincRaw : 'Ativa';
+      cursosSet.add(cursoVal);
+
+      if (!aluno) {
+        const numero = parseInt(rawNum, 10) || (28000 + alunosMap.size + 1);
+        aluno = {
+          numero,
+          nome: (rawName || `ALUNO ${numero}`).toUpperCase(),
+          curso: cursoVal,
+          cg: vinculo === 'CG',
+          reserva: vinculo === 'Reserva',
+          vinculo,
+          mediaGraduacao: 0,
+          mediaGeral: 0,
+          mediaMilitar: 0,
+          media32: null,
+          concluidas: 0,
+          matriculadas: 0,
+          totalDisciplinas: 0,
+          maiorNota: 0,
+          menorNota: 0,
+          evolucao: [],
+          disciplinas: [],
+          rankGraduacao: alunosMap.size + 1,
+          rankGeral: alunosMap.size + 1,
+          rankCurso: 1
+        };
+        alunosMap.set(key, aluno);
+      }
+
+      const semRaw = (map.semestre ? String(r[map.semestre] ?? '').trim() : '') || '3.2';
+      const sem = /^\d+\.\d+$/.test(semRaw) ? semRaw : '3.2';
+      semSet.add(sem);
+
+      const discName = (map.disciplina ? String(r[map.disciplina] ?? '').trim() : '').toUpperCase();
+      const codRaw = (map.codigo ? String(r[map.codigo] ?? '').trim() : '');
+      if (!discName && !codRaw) return;
+      const finalName = discName || codRaw.toUpperCase();
+      const finalCod = codRaw || normCol(finalName).slice(0, 6).replace(/\s+/g, '').toUpperCase() || `D${idx + 1}`;
+
+      const tipoRaw = (map.tipo ? String(r[map.tipo] ?? '').trim() : '') || 'Profissional';
+      const isMil = /militar/i.test(tipoRaw);
+      const mveVal = map.mve ? parseNum(r[map.mve]) : null;
+      const isPrat = /pr[aá]tica/i.test(tipoRaw) || (mveVal !== null && parseNum(r[map.vc]) === null && parseNum(r[map.vf]) === null);
+      const tipo = isMil ? 'Militar' : (/b[aá]sico/i.test(tipoRaw) ? 'Básico' : 'Profissional');
+
+      const veVal = map.ve ? parseNum(r[map.ve]) : null;
+      const vcVal = isPrat ? null : (map.vc ? parseNum(r[map.vc]) : null);
+      const vfVal = isPrat ? null : (map.vf ? parseNum(r[map.vf]) : null);
+      const nfVal = map.nf ? parseNum(r[map.nf]) : null;
+
+      aluno.disciplinas.push({
+        semestre: sem,
+        semestreOrdem: buildSemesterOrder(sem),
+        disciplina: `${finalName} (${finalCod})`,
+        nome: finalName,
+        codigo: finalCod,
+        grupoEquivalente: finalName,
+        tipo,
+        ciclo: isMil ? 'Militar' : tipo,
+        militar: isMil,
+        ve: veVal,
+        vc: vcVal,
+        vf: vfVal,
+        med: null,
+        erp: null,
+        ero: null,
+        nf: nfVal,
+        notaEfetiva: null,
+        isParcial: true,
+        isPratica: isPrat,
+        mve: isPrat ? (mveVal ?? veVal) : mveVal,
+        _manualNf: nfVal !== null && vfVal === null && !isPrat,
+        situacao: 'Em Andamento (Parcial)',
+        mediaTurma: null,
+        delta: null
+      });
+    });
+
+    const alunos = [...alunosMap.values()];
+    if (!alunos.length) throw new Error('Nenhum aluno válido encontrado na planilha.');
+
+    const semestres = [...semSet].sort((a, b) => buildSemesterOrder(a) - buildSemesterOrder(b));
+    if (!semestres.length) semestres.push('3.2');
+    const curSem = semestres[semestres.length - 1];
+    const semestresNomes = {};
+    semestres.forEach(s => {
+      semestresNomes[s] = `${buildSemesterOrder(s)}º Semestre (${s})`;
+    });
+    const cleanTitle = String(fileName || 'Planilha Local').replace(/\.[^.]+$/, '');
+
+    return {
+      _fromSpreadsheet: true,
+      metadata: {
+        titulo: `Painel Acadêmico • ${cleanTitle}`,
+        turma: cleanTitle,
+        semestreAtual: curSem,
+        totalAlunos: alunos.length,
+        totalDisciplinas: 0,
+        mediaGraduacaoTurma: 0,
+        mediaGeralTurma: 0,
+        mediaMilitarTurma: 0,
+        cursos: cursosSet.size ? [...cursosSet] : DEFAULT_CURSOS_IME,
+        semestres,
+        semestresNomes,
+        vinculos: {
+          Ativa: alunos.filter(a => a.vinculo === 'Ativa').length,
+          Reserva: alunos.filter(a => a.vinculo === 'Reserva').length,
+          CG: alunos.filter(a => a.vinculo === 'CG').length
+        }
+      },
+      cursosComparativo: [],
+      semestresBenchmark: [],
+      disciplinas: [],
+      alunos
+    };
+  }
+
+  if (window.__IME_PERSONAL_HELPERS) {
+    window.__IME_PERSONAL_HELPERS.parseLocalSpreadsheetToDataset = parseLocalSpreadsheetToDataset;
+    window.__IME_PERSONAL_HELPERS.downloadLocalSpreadsheetTemplate = downloadLocalSpreadsheetTemplate;
+  }
+
+  document.getElementById('btnDownloadLocalTemplate')?.addEventListener('click', () => {
+    downloadLocalSpreadsheetTemplate();
+  });
+
   const localFileInput = document.getElementById('localDataFileInput');
   document.getElementById('btnTriggerLocalFile')?.addEventListener('click', () => {
     localFileInput?.click();
@@ -840,23 +1055,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const file = e.target.files?.[0];
     if (!file) return;
     showLoginError('');
+    const lower = (file.name || '').toLowerCase();
+    const isSpreadsheet = /\.(xlsx|xls|csv|tsv|ods)$/.test(lower);
     const reader = new FileReader();
     reader.onload = () => {
       try {
-        const parsed = parseLocalDatasetText(String(reader.result || ''));
+        const parsed = isSpreadsheet
+          ? parseLocalSpreadsheetToDataset(reader.result, file.name)
+          : parseLocalDatasetText(String(reader.result || ''));
         const curSem = parsed.metadata?.semestreAtual || parsed.metadata?.semestres?.[parsed.metadata.semestres.length - 1] || '3.2';
+        const turmaLabel = parsed.metadata?.turma || 'Arquivo Local';
         startDashboard(parsed, {
           mode: 'local',
           role: 'gestor',
-          turma: { id: 'local', nome: parsed.metadata?.turma || 'Arquivo Local', semestre_atual: curSem },
-          turmas: [{ id: 'local', nome: parsed.metadata?.turma || 'Arquivo Local', semestre_atual: curSem }],
+          turma: { id: 'local', nome: turmaLabel, semestre_atual: curSem },
+          turmas: [{ id: 'local', nome: turmaLabel, semestre_atual: curSem }],
           semestreAtual: curSem
         });
       } catch (err) {
         showLoginError(`Erro ao ler arquivo local: ${err.message}`);
       }
     };
-    reader.readAsText(file, 'utf-8');
+    if (isSpreadsheet) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file, 'utf-8');
+    }
     e.target.value = '';
   });
 
@@ -1185,16 +1409,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const badgeEl = document.getElementById('authSessionBadge');
     const actionLabelEl = document.getElementById('authActionLabel');
     const btnAuthAction = document.getElementById('btnAuthAction');
-    const roleLabelMap = {
-      super_admin: '👑 Super Admin',
-      gestor: '✏️ Gestor',
-      viewer: '👁️ Turma',
-      demo: '🧪 Demo (Portfólio)'
-    };
     if (badgeEl) {
       badgeEl.classList.remove('hidden');
       if (sessionMeta.mode === 'supabase') {
-        badgeEl.textContent = `${roleLabelMap[USER_ROLE] || USER_ROLE} • ${sessionMeta.username || sessionMeta.email || ''}`;
+        badgeEl.textContent = `👤 ${sessionMeta.username || sessionMeta.email || 'Conectado'}`;
         const colorCls = USER_ROLE === 'super_admin'
           ? 'border-purple-500/40 bg-purple-500/15 text-purple-300'
           : (USER_ROLE === 'gestor'
@@ -1203,12 +1421,12 @@ document.addEventListener('DOMContentLoaded', () => {
         badgeEl.className = `hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border max-w-[210px] truncate ${colorCls}`;
         if (actionLabelEl) actionLabelEl.textContent = 'Sair';
       } else if (sessionMeta.mode === 'demo') {
-        badgeEl.textContent = '🧪 Demo (Fictício)';
+        badgeEl.textContent = '🧪 Modo Demo';
         badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-amber-500/35 bg-amber-500/15 text-amber-300 max-w-[160px] truncate';
         if (actionLabelEl) actionLabelEl.textContent = 'Login';
       } else {
-        badgeEl.textContent = '📁 Arquivo Local';
-        badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-sky-500/35 bg-sky-500/15 text-sky-300 max-w-[160px] truncate';
+        badgeEl.textContent = '📁 Planilha / Arquivo Local';
+        badgeEl.className = 'hidden sm:inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-sky-500/35 bg-sky-500/15 text-sky-300 max-w-[180px] truncate';
         if (actionLabelEl) actionLabelEl.textContent = 'Trocar';
       }
     }
@@ -4918,15 +5136,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportBtn = document.getElementById('btnEstagioExport');
 
     if (rtPill) {
-      rtPill.textContent = sessionMeta.mode === 'supabase' ? '🟢 Ao Vivo (Supabase Realtime)' : '🧪 Simulação Local (Demo)';
+      rtPill.textContent = sessionMeta.mode === 'supabase' ? '🟢 Sincronizado' : '🧪 Simulação Local';
     }
     if (idNotice) {
       if (canSlots) {
-        idNotice.innerHTML = `<strong class="text-emerald-300">Modo Gestor:</strong> você pode editar os locais, quantidades de vagas e preferências desta turma.`;
+        idNotice.innerHTML = `<span class="text-emerald-300 font-semibold">Edição liberada:</span> você pode atualizar os locais, quantidades de vagas e preferências desta turma.`;
       } else if (myAluno) {
-        idNotice.innerHTML = `Logado como <strong class="text-cyan-300">${escapeHtml(myAluno.nome)}</strong> (Nº ${myAluno.numero}) — edite abaixo <strong>apenas as suas preferências</strong> e salve ao vivo.`;
+        idNotice.innerHTML = `Logado como <strong class="text-cyan-300">${escapeHtml(myAluno.nome)}</strong> (Nº ${myAluno.numero}) — edite abaixo <strong>apenas as suas preferências</strong> e salve.`;
       } else {
-        idNotice.innerHTML = `<span class="text-amber-300">Sua conta ainda não está vinculada a uma matrícula — visualização somente leitura. Peça ao Super Admin.</span>`;
+        idNotice.innerHTML = `<span class="text-amber-300">Sua conta ainda não está vinculada a uma matrícula — visualização somente leitura.</span>`;
       }
     }
     if (saveLbl) saveLbl.textContent = canSlots ? 'Salvar Vagas & Escolhas' : 'Salvar Minhas Preferências';
@@ -4950,13 +5168,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (statusBanner && statusText) {
       if (!isFromDb && sessionMeta.mode === 'supabase') {
         statusBanner.className = 'p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 flex items-center justify-between gap-2 flex-wrap';
-        statusText.textContent = 'Simulação automática — vagas oficiais ainda não publicadas pelo Gestor.';
+        statusText.textContent = 'Simulação inicial — vagas oficiais ainda não divulgadas.';
       } else if (isProvisional) {
         statusBanner.className = 'p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 flex items-center justify-between gap-2 flex-wrap';
-        statusText.textContent = 'Vagas Provisórias (sujeitas a alteração pelo Gestor).';
+        statusText.textContent = 'Vagas provisórias (sujeitas a alteração).';
       } else {
         statusBanner.className = 'p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200 flex items-center justify-between gap-2 flex-wrap';
-        statusText.textContent = 'Vagas Oficiais confirmadas pelo Gestor.';
+        statusText.textContent = 'Vagas oficiais confirmadas.';
       }
     }
 
@@ -5762,7 +5980,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     DATA.alunos.forEach(aluno => {
       (aluno.disciplinas || []).forEach(d => {
-        if (d.semestre === CURRENT_SEM) {
+        if (d.semestre === CURRENT_SEM || DATA._fromSpreadsheet) {
           recomputeDisciplineEntry(d);
         }
         const key = `${d.codigo}||${d.semestre}`;
@@ -6260,7 +6478,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const wlTurmaSel = document.getElementById('saWlTurma');
     if (wlTurmaSel) {
       wlTurmaSel.innerHTML = VISIBLE_TURMAS.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.nome)}</option>`).join('') +
-        `<option value="">Todas (Super Admin)</option>`;
+        `<option value="">Todas (Admin Geral)</option>`;
       wlTurmaSel.value = ACTIVE_TURMA.id;
     }
 
@@ -6268,7 +6486,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const box = document.getElementById('saUsersList');
       if (!box) return;
       if (sessionMeta.mode !== 'supabase' || !sessionMeta.sb) {
-        box.innerHTML = `<div class="p-3 text-slate-400">Modo Demo: conecte ao Supabase para listar, promover <strong>Gestor</strong>, vincular matrículas e <strong>Resetar Senha</strong> das contas reais. Você pode testar <strong>Prévia Logins (.csv)</strong> acima.</div>`;
+        box.innerHTML = `<div class="p-3 text-slate-400">Modo Demo: conecte ao servidor para listar contas, definir permissões, vincular matrículas e <strong>Resetar Senha</strong>. Você pode testar <strong>Prévia Logins (.csv)</strong> acima.</div>`;
         return;
       }
       box.innerHTML = `<div class="p-3 text-slate-400">Carregando usuários e whitelist...</div>`;
@@ -6295,9 +6513,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="flex flex-wrap items-center gap-1.5">
               <select data-edit-role="${escapeHtml(u.user_id)}" class="text-[11px] bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-semibold">
-                <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Aluno (Viewer)</option>
-                <option value="gestor" ${u.role === 'gestor' ? 'selected' : ''}>Gestor Turma</option>
-                <option value="super_admin" ${u.role === 'super_admin' ? 'selected' : ''}>Super Admin</option>
+                <option value="viewer" ${u.role === 'viewer' ? 'selected' : ''}>Aluno</option>
+                <option value="gestor" ${u.role === 'gestor' ? 'selected' : ''}>Admin da Turma</option>
+                <option value="super_admin" ${u.role === 'super_admin' ? 'selected' : ''}>Admin Geral</option>
               </select>
               <select data-edit-turma="${escapeHtml(u.user_id)}" class="text-[11px] bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 font-semibold">
                 ${turmaOptions(u.turma_id)}
@@ -6559,7 +6777,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const rolePill = document.getElementById('gestaoRolePill');
     if (rolePill) {
-      rolePill.textContent = USER_ROLE === 'super_admin' ? 'Super Admin' : (USER_ROLE === 'gestor' ? 'Gestor da Turma' : 'Simulação Demo');
+      rolePill.textContent = USER_ROLE === 'super_admin' ? 'Admin Geral' : (USER_ROLE === 'gestor' ? 'Admin da Turma' : 'Simulação Local');
     }
     document.getElementById('gestaoSemestreLockPill').textContent = `Semestre Editável: ${CURRENT_SEM}`;
     document.getElementById('impSemAtualLabel').textContent = CURRENT_SEM;
@@ -7800,8 +8018,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }).join('');
 
     const statusPillHtml = isProvisional
-      ? '<div class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 font-semibold">Vagas provisórias (gerenciadas pelo Gestor)</div>'
-      : '<div class="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200 font-semibold">Vagas oficiais confirmadas pelo Gestor</div>';
+      ? '<div class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 font-semibold">Vagas provisórias (sujeitas a alteração)</div>'
+      : '<div class="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200 font-semibold">Vagas oficiais confirmadas</div>';
 
     const orphanHtml = orphanPrefs.length
       ? `<div class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-200">Vagas atualizadas — opção removida: <strong>${orphanPrefs.map(escapeHtml).join(', ')}</strong>.</div>`
@@ -8025,6 +8243,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Initial Run
+  if (DATA._fromSpreadsheet) {
+    recalculateFullDataset({ skipGestaoRender: true });
+    delete DATA._fromSpreadsheet;
+  }
   applyDeviceMode('auto');
   syncCareerStageTab();
   initOverviewCharts();

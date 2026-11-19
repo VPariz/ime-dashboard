@@ -69,14 +69,10 @@
 
       <!-- Main Auth Card -->
       <div class="glass-panel rounded-2xl border border-slate-800 p-5 sm:p-6 shadow-2xl space-y-5">
-        <div class="space-y-1.5">
-          <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-[11px] font-bold text-emerald-300">
-            <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
-            <span>Login Multi-Turma • Visualizador / Gestor / Super Admin</span>
-          </div>
-          <h2 id="authHeadingTitle" class="text-base sm:text-lg font-extrabold text-white pt-1">Entrar no Painel</h2>
+        <div class="space-y-1">
+          <h2 id="authHeadingTitle" class="text-base sm:text-lg font-extrabold text-white">Entrar no Painel</h2>
           <p class="text-xs text-slate-400 leading-relaxed">
-            Os dados reais das turmas ficam protegidos por RLS no Supabase. Entre com seu acesso ou teste o painel completo no Modo Demo com dados fictícios.
+            Entre com seu login da turma para acessar suas notas, rankings e simulações, ou explore o painel abaixo.
           </p>
         </div>
 
@@ -96,8 +92,8 @@
         <form id="loginForm" class="space-y-3">
           <div>
             <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">Login (Nome + Turma) ou E-mail</label>
-            <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Pedro Silva 29 ou Papaleo 28" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <p class="text-[10.5px] text-slate-500 mt-1">1º acesso: senha padrão <code>senha_Nome_Turma</code> (ex.: <code>senha_Pedro_Silva_29</code>). Será solicitada troca por senha forte.</p>
+            <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Pedro Igor 28 ou Papaleo 28" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <p class="text-[10.5px] text-slate-500 mt-1">1º acesso: senha padrão <code>senha_Nome_Turma</code> (ex.: <code>senha_Pedro_Igor_28</code>). Será solicitada troca por senha forte.</p>
           </div>
           <div>
             <label for="loginPassword" class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
@@ -107,12 +103,12 @@
           <div id="loginInfo" class="hidden p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300 font-medium"></div>
           <div id="loginError" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-medium"></div>
           <div id="supabaseNotConfiguredNote" class="hidden p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 leading-relaxed">
-            <strong>Supabase ainda não configurado:</strong> preencha <code>supabase-config.js</code> conforme o guia <code>SUPABASE_SETUP.md</code>, ou use o <strong>Modo Demo</strong> / <strong>Arquivo Local</strong> abaixo.
+            <strong>Servidor ainda não configurado:</strong> preencha <code>supabase-config.js</code> ou use o <strong>Modo Demo</strong> / <strong>Planilha Local</strong> abaixo.
           </div>
 
           <button type="submit" id="btnLoginSubmit" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
             <i data-lucide="log-in" class="w-4 h-4"></i>
-            <span id="btnLoginSubmitText">Entrar com Login</span>
+            <span id="btnLoginSubmitText">Entrar</span>
           </button>
         </form>
 
@@ -122,22 +118,28 @@
           <div class="flex-grow border-t border-slate-800"></div>
         </div>
 
-        <!-- Portfolio Demo + Local File Actions -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-          <button type="button" id="btnEnterDemo" class="py-2.5 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-emerald-300 text-xs font-bold transition flex items-center justify-center gap-1.5">
-            <i data-lucide="sparkles" class="w-4 h-4"></i>
-            <span>Modo Demo (Portfólio)</span>
+        <!-- Demo + Local Spreadsheet/JSON Actions -->
+        <div class="space-y-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <button type="button" id="btnEnterDemo" class="py-2.5 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/35 text-emerald-300 text-xs font-bold transition flex items-center justify-center gap-1.5">
+              <i data-lucide="sparkles" class="w-4 h-4"></i>
+              <span>Modo Demo</span>
+            </button>
+            <button type="button" id="btnTriggerLocalFile" class="py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs font-bold transition flex items-center justify-center gap-1.5" title="Abrir planilha (.xlsx, .xls, .csv, .ods) ou arquivo .json / data.js">
+              <i data-lucide="folder-open" class="w-4 h-4 text-sky-400"></i>
+              <span>Abrir Planilha / JSON</span>
+            </button>
+            <input type="file" id="localDataFileInput" accept=".xlsx,.xls,.csv,.tsv,.ods,.js,.json" class="hidden">
+          </div>
+          <button type="button" id="btnDownloadLocalTemplate" class="w-full py-2 px-3 rounded-xl bg-slate-900/80 hover:bg-slate-800/90 border border-slate-800 text-slate-300 hover:text-white text-[11.5px] font-semibold transition flex items-center justify-center gap-1.5">
+            <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-emerald-400"></i>
+            <span>Baixar Planilha Modelo (.xlsx) para preencher</span>
           </button>
-          <button type="button" id="btnTriggerLocalFile" class="py-2.5 px-3 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-slate-200 text-xs font-bold transition flex items-center justify-center gap-1.5">
-            <i data-lucide="folder-open" class="w-4 h-4 text-sky-400"></i>
-            <span>Abrir data.js / .json</span>
-          </button>
-          <input type="file" id="localDataFileInput" accept=".js,.json" class="hidden">
         </div>
       </div>
 
       <p class="text-center text-[11px] text-slate-500">
-        Código aberto no GitHub para portfólio • Dataset real protegido fora do repositório
+        Painel Acadêmico • Engenharia IME
       </p>
     </div>
   </section>
@@ -1428,10 +1430,10 @@
             <span id="careerIdentityNotice" class="text-slate-300"></span>
           </div>
           <div id="demoCareerRoleWrap" class="hidden flex items-center gap-2">
-            <label for="selectDemoCareerRole" class="text-[11px] font-semibold text-amber-300">Simular perfil (Demo):</label>
+            <label for="selectDemoCareerRole" class="text-[11px] font-semibold text-amber-300">Simular visão:</label>
             <select id="selectDemoCareerRole" class="text-[11px] bg-slate-950 border border-amber-500/40 rounded-lg px-2 py-1 text-amber-200 font-bold focus:outline-none">
-              <option value="gestor">✏️ Gestor (edita vagas e tudo)</option>
-              <option value="viewer">👁️ Aluno individual (só suas opções)</option>
+              <option value="gestor">✏️ Coordenação (edita vagas e tudo)</option>
+              <option value="viewer">👁️ Aluno (só suas opções)</option>
             </select>
           </div>
         </div>
@@ -1478,7 +1480,7 @@
 
           <div id="careerVagasReadOnlyNotice" class="hidden p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/70 text-[11px] text-slate-400 flex items-center gap-2">
             <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
-            <span>Vagas e locais oficiais são gerenciados pelo Gestor da turma (somente leitura).</span>
+            <span>As vagas e locais são atualizados pela coordenação da turma.</span>
           </div>
 
           <form id="formAddEstagioVaga" class="flex items-center gap-2">
@@ -1571,7 +1573,7 @@
             <h2 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2 flex-wrap">
               <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-400"></i>
               <span>Gestão de Notas &amp; Importação</span>
-              <span id="gestaoRolePill" class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">Gestor</span>
+              <span id="gestaoRolePill" class="text-[11px] px-2.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-bold">Coordenação</span>
               <span id="gestaoSemestreLockPill" class="text-[11px] px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-bold">Semestre Editável: 3.2</span>
             </h2>
             <p class="text-xs text-slate-400 mt-1">
@@ -1591,22 +1593,22 @@
             </button>
             <button id="btnGestaoPublish" class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-sm">
               <i data-lucide="cloud-upload" class="w-3.5 h-3.5"></i>
-              <span id="btnGestaoPublishLabel">Salvar no Supabase</span>
+              <span id="btnGestaoPublishLabel">Salvar Alterações</span>
             </button>
           </div>
         </div>
         <div id="gestaoStatusBanner" class="hidden p-3 rounded-xl text-xs font-medium"></div>
       </div>
 
-      <!-- Super Admin Controls (Multi-Turma + Semestre Atual + Usuários) -->
+      <!-- Admin Controls (Multi-Turma + Semestre Atual + Usuários) -->
       <div id="superAdminPanel" class="hidden glass-panel p-5 rounded-2xl border border-purple-500/30 space-y-5">
         <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
           <div>
             <h3 class="text-sm font-bold text-purple-300 flex items-center gap-2">
-              <i data-lucide="crown" class="w-4 h-4 text-purple-400"></i>
-              <span>Administração Geral (Super Admin)</span>
+              <i data-lucide="settings-2" class="w-4 h-4 text-purple-400"></i>
+              <span>Configurações de Turmas &amp; Acessos</span>
             </h3>
-            <p class="text-[11px] text-slate-400 mt-0.5">Gerencie múltiplas turmas, defina o semestre aberto para edição em cada turma e controle quem é Visualizador, Gestor ou Super Admin.</p>
+            <p class="text-[11px] text-slate-400 mt-0.5">Gerencie as turmas cadastradas, defina o semestre aberto para edição e controle as contas e permissões.</p>
           </div>
           <span id="saDemoNotice" class="hidden text-[11px] px-2.5 py-1 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30 font-semibold">Prévia em Modo Demo (somente simulação local)</span>
         </div>
@@ -1662,12 +1664,12 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
-              <input type="text" id="saWlEmail" placeholder="Pedro Silva 29 ou email@..." class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <input type="text" id="saWlEmail" placeholder="Pedro Igor 28 ou email@..." class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <input type="number" id="saWlAlunoNum" placeholder="Nº Matrícula" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" title="Matrícula do aluno na turma (opcional)">
               <select id="saWlRole" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                <option value="viewer">Aluno (Viewer)</option>
-                <option value="gestor">Gestor Turma</option>
-                <option value="super_admin">Super Admin</option>
+                <option value="viewer">Aluno</option>
+                <option value="gestor">Admin da Turma</option>
+                <option value="super_admin">Admin Geral</option>
               </select>
               <select id="saWlTurma" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500"></select>
             </div>
@@ -1680,7 +1682,7 @@
               </button>
             </div>
             <div id="saBatchBox" class="hidden space-y-2 pt-1">
-              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 por linha: email_ou_login, matricula (ex: Pedro Silva 29, 30142)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 por linha: email_ou_login, matricula (ex: Pedro Igor 28, 30142)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
               <button id="btnSaSubmitBatch" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Adicionar em Lote</button>
             </div>
 
@@ -1757,7 +1759,7 @@
             </label>
             <label id="impSaFullReplaceWrap" class="hidden inline-flex items-center gap-2 cursor-pointer text-purple-300 font-semibold">
               <input type="checkbox" id="impSaFullReplace" class="rounded border-purple-500 bg-slate-900 text-purple-500">
-              <span>Super Admin: substituir dataset histórico completo (todos os semestres deste JSON)</span>
+              <span>Substituir histórico completo (todos os semestres deste JSON)</span>
             </label>
           </div>
 
@@ -2112,10 +2114,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119f"></script>
+  <script src="supabase-config.js?v=20261119g"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119f"></script>
+  <script src="demo-data.js?v=20261119g"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119f"></script>
+  <script src="app.js?v=20261119g"></script>
 </body>
 </html>
