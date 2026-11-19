@@ -623,6 +623,7 @@ create table if not exists public.turma_disciplina_stats (
   codigo text not null,
   nome text not null,
   grupo_equivalente text not null,
+  curso_label text,
   militar boolean not null default false,
   is_parcial boolean not null default false,
   qtd_alunos integer not null default 0,
@@ -633,6 +634,8 @@ create table if not exists public.turma_disciplina_stats (
   updated_at timestamptz not null default now(),
   primary key (turma_id, semestre, codigo)
 );
+
+alter table public.turma_disciplina_stats add column if not exists curso_label text;
 
 alter table public.turma_disciplina_stats enable row level security;
 

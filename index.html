@@ -1200,6 +1200,11 @@
               </optgroup>
             </select>
 
+            <select id="filterTurmaDisciplinas" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-cyan-300 font-semibold" title="Explore matérias de outras turmas (inclusive semestres futuros e Engenharias)">
+              <option value="CURRENT">Minha Turma (c/ comparativo)</option>
+              <option value="ALL_TURMAS">Todas as Turmas (incl. futuras)</option>
+            </select>
+
             <select id="filterSemestreDisciplinas" class="text-xs bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-slate-200">
               <option value="ALL">Todos os Semestres</option>
               <option value="1.1">1º Semestre (1.1)</option>
@@ -1207,7 +1212,7 @@
               <option value="2.1">3º Semestre (2.1)</option>
               <option value="2.2">4º Semestre (2.2)</option>
               <option value="3.1">5º Semestre (3.1)</option>
-              <option value="3.2">6º Semestre (3.2 Parcial)</option>
+              <option value="3.2">6º Semestre (3.2)</option>
             </select>
           </div>
         </div>
@@ -2065,6 +2070,98 @@
     </div>
   </div>
 
+  <!-- Subject Detail Modal -->
+  <div id="subjectModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+    <div class="w-full max-w-4xl max-h-[90vh] glass-panel rounded-3xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col animate-fade-in">
+      <div class="p-5 sm:p-6 bg-slate-950/90 border-b border-slate-800 flex items-start justify-between gap-4">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <h2 id="subjModalTitle" class="text-lg sm:text-xl font-extrabold text-white truncate">Disciplina</h2>
+            <span id="subjModalBadge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-500/15 text-blue-300 border border-blue-500/30">Básico</span>
+          </div>
+          <p id="subjModalSubtitle" class="text-xs text-slate-400 mt-1">Código • Semestre • Turma</p>
+        </div>
+        <button id="btnCloseSubjModal" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition shrink-0">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-blue-500/40">
+            <span class="text-[11px] font-bold text-blue-400 uppercase tracking-wider block">Média da Turma</span>
+            <span id="subjModalMedia" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">-</span>
+            <span id="subjModalTurmaLbl" class="text-[10px] text-slate-400 font-semibold">Turma atual</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Desvio Padrão</span>
+            <span id="subjModalDp" class="text-2xl font-extrabold text-white font-mono-numbers mt-1 block">-</span>
+            <span id="subjModalQtdLbl" class="text-[10px] text-slate-400 font-semibold">0 alunos</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Menor / Maior</span>
+            <span id="subjModalMinMax" class="text-xl font-extrabold text-white font-mono-numbers mt-1 block">- / -</span>
+            <span class="text-[10px] text-slate-400 font-semibold">Amplitude da turma</span>
+          </div>
+          <div class="p-3.5 rounded-2xl bg-slate-950/60 border border-emerald-500/30">
+            <span id="subjModalExtraTitle" class="text-[11px] font-bold text-emerald-400 uppercase tracking-wider block">Sua Nota / Destaque</span>
+            <span id="subjModalExtraVal" class="text-2xl font-extrabold text-emerald-300 font-mono-numbers mt-1 block">-</span>
+            <span id="subjModalExtraSub" class="text-[10px] text-slate-400 font-semibold">-</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
+              <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-cyan-400"></i>
+              <span>Comparação Entre Turmas</span>
+            </h4>
+            <div class="relative h-52">
+              <canvas id="chartSubjCrossTurma"></canvas>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
+            <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
+              <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-blue-400"></i>
+              <span>Distribuição de Notas</span>
+            </h4>
+            <div id="subjDistWrap" class="relative h-52">
+              <canvas id="chartSubjDist"></canvas>
+            </div>
+            <div id="subjDistEmpty" class="hidden h-52 flex items-center justify-center text-center text-xs text-slate-400 px-4">
+              Matéria de outra turma: exibindo apenas médias agregadas para preservar a privacidade individual dos alunos.
+            </div>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-950/60 border border-slate-800 space-y-3">
+          <h4 class="font-bold text-xs uppercase tracking-wider text-slate-300">Comparativo Detalhado por Turma</h4>
+          <div class="overflow-x-auto rounded-xl border border-slate-800">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-900 text-[10.5px] uppercase text-slate-400 font-bold border-b border-slate-800">
+                <tr>
+                  <th class="py-2 px-3">Turma</th>
+                  <th class="py-2 px-3">Sem.</th>
+                  <th class="py-2 px-3 text-center">Alunos</th>
+                  <th class="py-2 px-3 text-right">Média</th>
+                  <th class="py-2 px-3 text-right">Desvio Padrão</th>
+                  <th class="py-2 px-3 text-right">Mín / Máx</th>
+                </tr>
+              </thead>
+              <tbody id="subjModalTurmasBody" class="divide-y divide-slate-800/60"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+        <span>Ficha da Disciplina • Engenharia IME</span>
+        <button id="btnCloseSubjModalFooter" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition">Fechar</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Footer -->
   <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/80 text-center text-xs text-slate-500 mb-16 md:mb-0">
     <p>Painel de Desempenho Acadêmico &amp; Militar • Engenharia IME</p>
@@ -2115,10 +2212,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119o"></script>
+  <script src="supabase-config.js?v=20261119p"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119o"></script>
+  <script src="demo-data.js?v=20261119p"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119o"></script>
+  <script src="app.js?v=20261119p"></script>
 </body>
 </html>

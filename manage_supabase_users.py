@@ -158,15 +158,38 @@ def upload_turma_dataset_to_storage(base_url: str, service_key: str, turma_id: s
         parsed = json.loads(raw_bytes.decode("utf-8"))
         tname = parsed.get("metadata", {}).get("turma") or turma_id
         discs = parsed.get("disciplinas") or []
+        alunos_list = parsed.get("alunos") or []
+        disc_courses: dict[tuple[str, str], set[str]] = {}
+        for al in alunos_list:
+            c_name = str(al.get("curso") or "").strip()
+            for ad in (al.get("disciplinas") or []):
+                k = (str(ad.get("semestre") or ""), str(ad.get("codigo") or ""))
+                if c_name:
+                    disc_courses.setdefault(k, set()).add(c_name)
         if discs:
-            stat_rows = [
-                {
+            stat_rows = []
+            for d in discs:
+                sem_s = str(d.get("semestre") or "")
+                cod_s = str(d.get("codigo") or "")
+                if not sem_s or not cod_s:
+                    continue
+                cs = sorted(disc_courses.get((sem_s, cod_s), set()))
+                if d.get("militar"):
+                    c_lbl = "Militar"
+                elif len(cs) == 1:
+                    c_lbl = cs[0]
+                elif len(cs) > 1:
+                    c_lbl = "Básico / Comum"
+                else:
+                    c_lbl = str(d.get("ciclo") or "Básico")
+                stat_rows.append({
                     "turma_id": turma_id,
                     "turma_nome": tname,
-                    "semestre": str(d.get("semestre") or ""),
-                    "codigo": str(d.get("codigo") or ""),
+                    "semestre": sem_s,
+                    "codigo": cod_s,
                     "nome": str(d.get("nome") or ""),
                     "grupo_equivalente": str(d.get("grupoEquivalente") or d.get("nome") or ""),
+                    "curso_label": c_lbl,
                     "militar": bool(d.get("militar")),
                     "is_parcial": bool(d.get("isParcial")),
                     "qtd_alunos": int(d.get("qtdAlunos") or 0),
@@ -175,12 +198,16 @@ def upload_turma_dataset_to_storage(base_url: str, service_key: str, turma_id: s
                     "menor_nota": d.get("menorNota"),
                     "maior_nota": d.get("maiorNota"),
                     "updated_at": now_iso,
-                }
-                for d in discs
-                if d.get("semestre") and d.get("codigo")
-            ]
+                })
             if stat_rows:
-                sb_request(base_url, service_key, "POST", "/rest/v1/turma_disciplina_stats?on_conflict=turma_id,semestre,codigo", stat_rows)
+                try:
+                    sb_request(base_url, service_key, "POST", "/rest/v1/turma_disciplina_stats?on_conflict=turma_id,semestre,codigo", stat_rows)
+                except Exception as exc_col:
+                    if "curso_label" in str(exc_col):
+                        fallback_rows = [{k: v for k, v in r.items() if k != "curso_label"} for r in stat_rows]
+                        sb_request(base_url, service_key, "POST", "/rest/v1/turma_disciplina_stats?on_conflict=turma_id,semestre,codigo", fallback_rows)
+                    else:
+                        raise
                 print(f"[STATS OK] {len(stat_rows)} matérias publicadas em turma_disciplina_stats ({tname})")
     except Exception as exc:
         print(f"[AVISO] Estatísticas cross-turma não enviadas (rode o SQL atualizado se ainda não criou turma_disciplina_stats): {exc}", file=sys.stderr)
