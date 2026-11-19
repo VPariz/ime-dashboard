@@ -1468,6 +1468,14 @@
             <span id="estagioVagasResumo" class="text-xs font-mono-numbers text-cyan-300 font-bold">0 vagas</span>
           </div>
 
+          <div id="careerVagasStatusBanner" class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 flex items-center justify-between gap-2 flex-wrap">
+            <span id="careerVagasStatusText" class="font-semibold">Vagas provisórias (simulação).</span>
+            <label id="careerProvisionalToggleWrap" class="hidden inline-flex items-center gap-1.5 cursor-pointer text-[11px] text-amber-200 font-bold select-none">
+              <input type="checkbox" id="chkCareerVagasProvisional" checked class="rounded border-amber-500/60 bg-slate-950 text-amber-500 focus:ring-amber-500">
+              <span>Marcar como provisórias</span>
+            </label>
+          </div>
+
           <div id="careerVagasReadOnlyNotice" class="hidden p-2.5 rounded-xl bg-slate-900/80 border border-slate-700/70 text-[11px] text-slate-400 flex items-center gap-2">
             <i data-lucide="lock" class="w-3.5 h-3.5 text-slate-400 shrink-0"></i>
             <span>Vagas e locais oficiais são gerenciados pelo Gestor da turma (somente leitura).</span>
@@ -1486,15 +1494,15 @@
           </div>
         </div>
 
-        <!-- Classificação & Ordem de Preferência (até 10 opções) -->
+        <!-- Classificação & Ordem de Preferência (dinâmico) -->
         <div class="lg:col-span-7 glass-panel p-5 rounded-2xl border border-slate-800 space-y-4">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div>
               <h3 class="text-sm font-bold text-slate-100 flex items-center gap-2">
                 <i data-lucide="list-ordered" class="w-4 h-4 text-amber-400"></i>
-                2. Classificação &amp; Preferências (até 10 opções)
+                <span id="careerPrefsTitle">2. Classificação &amp; Preferências</span>
               </h3>
-              <p class="text-[11px] text-slate-400 mt-0.5">Clique em um aluno para definir sua ordem de escolha (1ª a 10ª opção).</p>
+              <p id="careerPrefsSubtitle" class="text-[11px] text-slate-400 mt-0.5">Clique em um aluno para definir sua ordem de escolha.</p>
             </div>
             <button id="btnEstagioSimular" class="px-3 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition flex items-center gap-1.5">
               <i data-lucide="play" class="w-3.5 h-3.5"></i>
@@ -2104,10 +2112,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119b"></script>
+  <script src="supabase-config.js?v=20261119c"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119b"></script>
+  <script src="demo-data.js?v=20261119c"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119b"></script>
+  <script src="app.js?v=20261119c"></script>
 </body>
 </html>

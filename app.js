@@ -305,15 +305,18 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- INDEXEDDB SMART CACHE (ECONOMIZA EGRESS NO PLANO GRATUITO) ---
+  // --- INDEXEDDB SMART CACHE (DATASETS + AVATARES — ECONOMIZA EGRESS NO PLANO GRATUITO) ---
   function openTurmaCacheDb() {
     return new Promise((resolve) => {
       if (!window.indexedDB) return resolve(null);
-      const req = window.indexedDB.open('ime_dashboard_cache_v1', 1);
+      const req = window.indexedDB.open('ime_dashboard_cache_v1', 2);
       req.onupgradeneeded = () => {
         const db = req.result;
         if (!db.objectStoreNames.contains('datasets')) {
           db.createObjectStore('datasets', { keyPath: 'turmaId' });
+        }
+        if (!db.objectStoreNames.contains('avatars')) {
+          db.createObjectStore('avatars', { keyPath: 'key' });
         }
       };
       req.onsuccess = () => resolve(req.result);
@@ -354,6 +357,102 @@ document.addEventListener('DOMContentLoaded', () => {
         tx.onerror = () => resolve();
       });
     } catch {}
+  }
+
+  async function getCachedAvatarBlob(turmaId, alunoNumero, expectedStoragePath, expectedUpdatedAt) {
+    try {
+      const db = await openTurmaCacheDb();
+      if (!db || !db.objectStoreNames.contains('avatars')) return null;
+      const key = `${turmaId}::${alunoNumero}`;
+      return await new Promise((resolve) => {
+        const tx = db.transaction('avatars', 'readonly');
+        const req = tx.objectStore('avatars').get(key);
+        req.onsuccess = () => {
+          const rec = req.result;
+          if (
+            rec &&
+            rec.blob &&
+            rec.storagePath === expectedStoragePath &&
+            (!expectedUpdatedAt || rec.updatedAt === expectedUpdatedAt)
+          ) {
+            resolve(rec.blob);
+          } else {
+            resolve(null);
+          }
+        };
+        req.onerror = () => resolve(null);
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  async function setCachedAvatarBlob(turmaId, alunoNumero, storagePath, updatedAt, blob) {
+    try {
+      const db = await openTurmaCacheDb();
+      if (!db || !db.objectStoreNames.contains('avatars')) return;
+      const key = `${turmaId}::${alunoNumero}`;
+      await new Promise((resolve) => {
+        const tx = db.transaction('avatars', 'readwrite');
+        tx.objectStore('avatars').put({
+          key,
+          storagePath: storagePath || '',
+          updatedAt: updatedAt || '',
+          blob,
+          savedAt: Date.now()
+        });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
+      });
+    } catch {}
+  }
+
+  // --- COMPRESSÃO GZIP NATIVA PARA DATASETS (REDUZ ~90% DO TAMANHO/EGRESS) ---
+  async function compressJsonToGzipBlob(payload) {
+    const jsonStr = JSON.stringify(payload);
+    const rawBlob = new Blob([jsonStr], { type: 'application/json' });
+    if (typeof CompressionStream === 'function') {
+      try {
+        const cs = new CompressionStream('gzip');
+        const compressedStream = rawBlob.stream().pipeThrough(cs);
+        const gzBlob = await new Response(compressedStream).blob();
+        if (gzBlob && gzBlob.size > 0 && gzBlob.size < rawBlob.size) {
+          return {
+            blob: new Blob([gzBlob], { type: 'application/gzip' }),
+            compressed: true,
+            rawBytes: rawBlob.size,
+            finalBytes: gzBlob.size
+          };
+        }
+      } catch {}
+    }
+    return { blob: rawBlob, compressed: false, rawBytes: rawBlob.size, finalBytes: rawBlob.size };
+  }
+
+  async function parseDatasetBlob(blob) {
+    if (!blob) throw new Error('Arquivo vazio.');
+    const buf = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    const isGzip = bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+    let text;
+    if (isGzip) {
+      if (typeof DecompressionStream !== 'function') {
+        throw new Error('Navegador sem suporte a DecompressionStream para arquivo .gz.');
+      }
+      const ds = new DecompressionStream('gzip');
+      const decompressedStream = new Blob([buf]).stream().pipeThrough(ds);
+      text = await new Response(decompressedStream).text();
+    } else {
+      text = new TextDecoder('utf-8').decode(bytes);
+    }
+    return JSON.parse(text);
+  }
+
+  function getMaxCareerPrefsCount(vagasCount, rankedCount) {
+    const v = Math.max(0, Number(vagasCount) || 0);
+    if (v === 0) return 0;
+    const r = Math.max(1, Number(rankedCount) || 1);
+    return Math.min(v, r);
   }
 
   // --- HELPERS PUROS: AVATAR INICIAL, COMPRESSÃO WEBP, 2..7 VEs PONDERADAS, SUBTURMAS ---
@@ -402,7 +501,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  async function compressAvatarImage(file, { maxSize = 256, targetBytes = 60 * 1024, hardMaxBytes = 150 * 1024 } = {}) {
+  async function compressAvatarImage(file, { maxSize = 128, targetBytes = 25 * 1024, hardMaxBytes = 50 * 1024 } = {}) {
     const allowed = ['image/webp', 'image/jpeg', 'image/png'];
     if (!file || !allowed.includes(file.type)) {
       throw new Error('Formato inválido. Envie apenas imagem JPG, PNG ou WebP.');
@@ -431,19 +530,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const toBlob = (mime, q) => new Promise(res => canvas.toBlob(res, mime, q));
       let mime = 'image/webp';
-      let blob = await toBlob(mime, 0.8);
+      let blob = await toBlob(mime, 0.78);
       if (!blob || blob.type !== 'image/webp') {
         mime = 'image/jpeg';
-        blob = await toBlob(mime, 0.8);
+        blob = await toBlob(mime, 0.78);
       }
 
-      let q = 0.72;
-      while (blob && blob.size > targetBytes && q >= 0.35) {
+      let q = 0.68;
+      while (blob && blob.size > targetBytes && q >= 0.3) {
         blob = await toBlob(mime, q);
-        q -= 0.1;
+        q -= 0.08;
       }
       if (!blob || blob.size > hardMaxBytes) {
-        throw new Error('Não foi possível comprimir a foto abaixo de 150 KB.');
+        throw new Error(`Não foi possível comprimir a foto abaixo de ${Math.round(hardMaxBytes / 1024)} KB.`);
       }
       const ext = mime === 'image/webp' ? 'webp' : 'jpg';
       return { blob, mime, ext };
@@ -457,7 +556,10 @@ document.addEventListener('DOMContentLoaded', () => {
     normalizeVeItems,
     calcWeightedMve,
     getAllowedSubturmasForSemester,
-    compressAvatarImage
+    compressAvatarImage,
+    compressJsonToGzipBlob,
+    parseDatasetBlob,
+    getMaxCareerPrefsCount
   };
 
   async function resolveSupabaseSessionAndLoad(sb, user, rawEnteredPassword = '') {
@@ -544,16 +646,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!parsed) {
-      let { data, error } = await sb.storage.from(bucket).download(objectPath);
-      if (error && activeTurma.id === 'turma_28' && objectPath !== 'data.json') {
-        const fb = await sb.storage.from(bucket).download('data.json');
-        if (!fb.error && fb.data) {
-          data = fb.data;
-          error = null;
+      const gzPath = objectPath.endsWith('.gz') ? objectPath : `${objectPath}.gz`;
+      let data = null;
+      let error = null;
+
+      // Prefere versão .json.gz (~90% menor) com fallback transparente para .json legado
+      const gzRes = await sb.storage.from(bucket).download(gzPath);
+      if (!gzRes.error && gzRes.data) {
+        data = gzRes.data;
+      } else {
+        const rawRes = await sb.storage.from(bucket).download(objectPath);
+        data = rawRes.data;
+        error = rawRes.error;
+        if (error && activeTurma.id === 'turma_28' && objectPath !== 'data.json') {
+          const fb = await sb.storage.from(bucket).download('data.json');
+          if (!fb.error && fb.data) {
+            data = fb.data;
+            error = null;
+          }
         }
       }
 
-      if (error) {
+      if (error || !data) {
         if (role === 'gestor' || role === 'super_admin') {
           parsed = createEmptyTurmaDataset(activeTurma);
           isStarterEmpty = true;
@@ -561,8 +675,7 @@ document.addEventListener('DOMContentLoaded', () => {
           throw new Error(`A turma "${activeTurma.nome}" ainda não possui notas publicadas.`);
         }
       } else {
-        const text = await data.text();
-        parsed = JSON.parse(text);
+        parsed = await parseDatasetBlob(data);
         if (!parsed || !Array.isArray(parsed.alunos)) {
           throw new Error('Arquivo JSON inválido no bucket privado.');
         }
@@ -787,13 +900,13 @@ document.addEventListener('DOMContentLoaded', () => {
           mobileLabel: 'Engenharia',
           heading: 'Escolha de Especialidade de Engenharia',
           badge: `Ativa + Reserva · Desbloqueado ${sem} (até 3.1)`,
-          subtitle: 'Simule a classificação geral da turma e as vagas disponíveis por Engenharia (1ª a 10ª opção) antes da escolha no início do 3.1.',
+          subtitle: 'Simule a classificação pela Média Geral da turma e as vagas disponíveis por Engenharia antes da escolha no início do 3.1.',
           scopeMode: 'turma',
           scopeKey: 'TURMA_COMPLETA',
           vinculosAllowed: ['Ativa', 'Reserva'],
           itemPlaceholder: 'Ex: Computação, Eletrônica, Fortificação...',
           addBtnLabel: '+ Eng.',
-          defaultCriterio: 'cumulativo',
+          defaultCriterio: 'geral',
           buildDefaultVagas: () => {
             const specCursos = (DATA.metadata?.cursos || []).filter(c => c !== 'Ciclo Básico');
             const cursos = specCursos.length > 1 ? specCursos : DEFAULT_CURSOS_IME;
@@ -815,7 +928,7 @@ document.addEventListener('DOMContentLoaded', () => {
           mobileLabel: 'Estágio',
           heading: 'Escolha de Vagas de Estágio por Engenharia',
           badge: `Somente Ativa · ${sem} – 4.2`,
-          subtitle: 'Cadastre as vagas disponíveis, defina até 10 opções de preferência por aluno e calcule a alocação automática respeitando a classificação do curso.',
+          subtitle: 'Cadastre as vagas disponíveis, defina a ordem de preferência por aluno e calcule a alocação automática respeitando a Média de Graduação do curso.',
           scopeMode: 'curso',
           vinculosAllowed: ['Ativa'],
           itemPlaceholder: 'Ex: IMBEL, CTEx, IPqM...',
@@ -933,19 +1046,48 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const { data: rows, error } = await sessionMeta.sb
           .from('student_avatars')
-          .select('aluno_numero, storage_path')
+          .select('aluno_numero, storage_path, updated_at')
           .eq('turma_id', ACTIVE_TURMA.id);
         if (error || !rows?.length) return;
-        const paths = rows.map(r => r.storage_path);
-        const { data: signed } = await sessionMeta.sb.storage
-          .from(sessionMeta.bucket)
-          .createSignedUrls(paths, 3600);
-        if (Array.isArray(signed)) {
-          signed.forEach((item, idx) => {
-            if (item?.signedUrl && rows[idx]) {
-              avatarUrlMap.set(Number(rows[idx].aluno_numero), item.signedUrl);
-            }
-          });
+
+        const missingRows = [];
+        let changed = false;
+        for (const r of rows) {
+          const cachedBlob = await getCachedAvatarBlob(ACTIVE_TURMA.id, r.aluno_numero, r.storage_path, r.updated_at);
+          if (cachedBlob) {
+            avatarUrlMap.set(Number(r.aluno_numero), URL.createObjectURL(cachedBlob));
+            changed = true;
+          } else {
+            missingRows.push(r);
+          }
+        }
+
+        if (missingRows.length > 0) {
+          const paths = missingRows.map(r => r.storage_path);
+          const { data: signed } = await sessionMeta.sb.storage
+            .from(sessionMeta.bucket)
+            .createSignedUrls(paths, 3600);
+          if (Array.isArray(signed)) {
+            await Promise.all(signed.map(async (item, idx) => {
+              const row = missingRows[idx];
+              if (!item?.signedUrl || !row) return;
+              try {
+                const resp = await fetch(item.signedUrl);
+                if (resp.ok) {
+                  const blob = await resp.blob();
+                  await setCachedAvatarBlob(ACTIVE_TURMA.id, row.aluno_numero, row.storage_path, row.updated_at, blob);
+                  avatarUrlMap.set(Number(row.aluno_numero), URL.createObjectURL(blob));
+                  changed = true;
+                  return;
+                }
+              } catch {}
+              avatarUrlMap.set(Number(row.aluno_numero), item.signedUrl);
+              changed = true;
+            }));
+          }
+        }
+
+        if (changed) {
           renderPodium();
           if (state.currentTab === 'meu-painel') renderMeuPainelTab();
           if (state.currentTab === 'comparator') renderStudentComparator();
@@ -965,6 +1107,7 @@ document.addEventListener('DOMContentLoaded', () => {
           .upload(storagePath, blob, { upsert: true, contentType: mime });
         if (upErr) throw new Error(upErr.message);
 
+        const updatedAt = new Date().toISOString();
         const { error: dbErr } = await sessionMeta.sb
           .from('student_avatars')
           .upsert({
@@ -972,10 +1115,11 @@ document.addEventListener('DOMContentLoaded', () => {
             aluno_numero: Number(alunoNumero),
             storage_path: storagePath,
             updated_by: sessionMeta.userId || null,
-            updated_at: new Date().toISOString()
+            updated_at: updatedAt
           }, { onConflict: 'turma_id,aluno_numero' });
         if (dbErr) throw new Error(dbErr.message);
 
+        await setCachedAvatarBlob(ACTIVE_TURMA.id, alunoNumero, storagePath, updatedAt, blob);
         const objUrl = URL.createObjectURL(blob);
         avatarUrlMap.set(Number(alunoNumero), objUrl);
       } else {
@@ -4428,7 +4572,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const nextData = {};
       (vagaRows || []).forEach(v => {
-        if (!nextData[v.scope_key]) nextData[v.scope_key] = { vagas: [], prefs: {}, _fromDb: true };
+        if (!nextData[v.scope_key]) {
+          nextData[v.scope_key] = {
+            vagas: [],
+            prefs: {},
+            _fromDb: true,
+            isProvisional: v.is_provisional !== false
+          };
+        } else if (v.is_provisional === false) {
+          nextData[v.scope_key].isProvisional = false;
+        }
         nextData[v.scope_key].vagas.push({ id: v.id, nome: v.nome, qtd: Number(v.qtd) || 1 });
       });
       (prefRows || []).forEach(p => {
@@ -4436,7 +4589,8 @@ document.addEventListener('DOMContentLoaded', () => {
           nextData[p.scope_key] = {
             vagas: ACTIVE_CAREER_STAGE.buildDefaultVagas(p.scope_key),
             prefs: {},
-            _fromDb: false
+            _fromDb: false,
+            isProvisional: true
           };
         }
         nextData[p.scope_key].prefs[p.aluno_numero] = Array.isArray(p.prefs) ? p.prefs : [];
@@ -4505,6 +4659,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (delErr) throw new Error(delErr.message);
 
           if (store.vagas.length > 0) {
+            const isProv = store.isProvisional !== false;
             const vagaRows = store.vagas.map((v, idx) => ({
               id: v.id || `v_${idx + 1}`,
               turma_id: ACTIVE_TURMA.id,
@@ -4512,11 +4667,17 @@ document.addEventListener('DOMContentLoaded', () => {
               scope_key: scopeKey,
               nome: v.nome,
               qtd: Math.max(1, Number(v.qtd) || 1),
+              is_provisional: isProv,
               sort_order: idx,
               updated_by: sessionMeta.userId || null,
               updated_at: new Date().toISOString()
             }));
-            const { error: insErr } = await sb.from('career_vagas').insert(vagaRows);
+            let { error: insErr } = await sb.from('career_vagas').insert(vagaRows);
+            if (insErr && /is_provisional/i.test(insErr.message || '')) {
+              const fallbackRows = vagaRows.map(({ is_provisional, ...rest }) => rest);
+              const retry = await sb.from('career_vagas').insert(fallbackRows);
+              insErr = retry.error;
+            }
             if (insErr) throw new Error(insErr.message);
           }
 
@@ -4618,6 +4779,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
       selCrit?.addEventListener('change', (e) => {
         state.estagioCriterio = e.target.value;
+        renderEstagioTab();
+      });
+
+      document.getElementById('chkCareerVagasProvisional')?.addEventListener('change', (e) => {
+        if (!canManageCareerSlots()) return;
+        const scopeKey = getActiveCareerScope();
+        const store = getEstagioCursoStore(scopeKey);
+        store.isProvisional = !!e.target.checked;
+        setEstagioStatus(
+          store.isProvisional
+            ? 'Marcado como Vagas Provisórias — clique em Salvar para publicar'
+            : 'Marcado como Vagas Oficiais — clique em Salvar para publicar'
+        );
         renderEstagioTab();
       });
 
@@ -4767,6 +4941,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const vagasEl = document.getElementById('estagioVagasList');
     const resumoEl = document.getElementById('estagioVagasResumo');
     const alunosEl = document.getElementById('estagioAlunosList');
+    const statusBanner = document.getElementById('careerVagasStatusBanner');
+    const statusText = document.getElementById('careerVagasStatusText');
+    const provToggleWrap = document.getElementById('careerProvisionalToggleWrap');
+    const provChk = document.getElementById('chkCareerVagasProvisional');
+
+    const isProvisional = store.isProvisional !== false;
+    const isFromDb = Boolean(store._fromDb);
+    if (provToggleWrap) provToggleWrap.classList.toggle('hidden', !canSlots);
+    if (provChk) provChk.checked = isProvisional;
+    if (statusBanner && statusText) {
+      if (!isFromDb && sessionMeta.mode === 'supabase') {
+        statusBanner.className = 'p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 flex items-center justify-between gap-2 flex-wrap';
+        statusText.textContent = 'Simulação automática — vagas oficiais ainda não publicadas pelo Gestor.';
+      } else if (isProvisional) {
+        statusBanner.className = 'p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 flex items-center justify-between gap-2 flex-wrap';
+        statusText.textContent = 'Vagas Provisórias (sujeitas a alteração pelo Gestor).';
+      } else {
+        statusBanner.className = 'p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200 flex items-center justify-between gap-2 flex-wrap';
+        statusText.textContent = 'Vagas Oficiais confirmadas pelo Gestor.';
+      }
+    }
 
     const totalVagas = store.vagas.reduce((s, v) => s + (v.qtd || 0), 0);
     if (resumoEl) {
@@ -4875,11 +5070,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (alunosEl) {
       const vagaNames = store.vagas.map(v => v.nome);
+      const vagaNameSet = new Set(vagaNames);
+      const maxOpts = getMaxCareerPrefsCount(vagaNames.length, ranked.length);
+
+      const prefsTitleEl = document.getElementById('careerPrefsTitle');
+      const prefsSubEl = document.getElementById('careerPrefsSubtitle');
+      if (prefsTitleEl) {
+        prefsTitleEl.textContent = maxOpts > 0
+          ? `2. Classificação & Preferências (até ${maxOpts} ${maxOpts === 1 ? 'opção' : 'opções'})`
+          : '2. Classificação & Preferências';
+      }
+      if (prefsSubEl) {
+        prefsSubEl.textContent = maxOpts > 0
+          ? `Clique em um aluno para definir sua ordem de escolha (1ª a ${maxOpts}ª opção — ajustado ao nº de vagas e alunos).`
+          : 'Aguardando cadastro de vagas para definir ordem de escolha.';
+      }
 
       alunosEl.innerHTML = ranked.map((a, idx) => {
         const score = getEstagioScore(a);
-        const prefs = store.prefs[a.numero] || [];
-        const filled = prefs.filter(Boolean);
+        const rawPrefs = store.prefs[a.numero] || [];
+        const prefs = rawPrefs.slice(0, maxOpts);
+        const orphanPrefs = rawPrefs.filter(p => p && !vagaNameSet.has(p));
+        const filled = prefs.filter(p => p && vagaNameSet.has(p));
         const isSelf = myNum !== null && String(myNum) === String(a.numero);
         const canEditThis = canEditAlunoPrefs(a.numero);
         const isExpanded = canEditThis && (state.estagioExpandedAluno === a.numero);
@@ -4903,6 +5115,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-xs font-bold text-slate-100 truncate">${escapeHtml(a.nome)}</span>
                     ${isSelf ? '<span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-extrabold">Você</span>' : ''}
+                    ${orphanPrefs.length ? '<span class="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px] font-bold" title="Alguma vaga salva anteriormente foi alterada ou removida pelo Gestor">Revisar</span>' : ''}
                     <span class="text-[10px] font-mono-numbers text-blue-400 font-bold">${fmtNum(score)}</span>
                     ${getVinculoBadge(a.vinculo)}
                   </div>
@@ -4911,7 +5124,7 @@ document.addEventListener('DOMContentLoaded', () => {
               </div>
               <div class="flex items-center gap-2 shrink-0">
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-bold font-mono-numbers ${filled.length ? 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30' : 'bg-slate-800 text-slate-400'}">
-                  ${filled.length}/10
+                  ${filled.length}/${maxOpts}
                 </span>
                 ${canEditThis
                   ? `<i data-lucide="${isExpanded ? 'chevron-up' : 'chevron-down'}" class="w-4 h-4 text-slate-400"></i>`
@@ -4921,13 +5134,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ${isExpanded ? `
               <div class="p-3 pt-2 border-t border-slate-800/80 bg-slate-950/50 space-y-2">
+                ${orphanPrefs.length ? `
+                  <div class="p-2 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200">
+                    As vagas foram atualizadas pelo Gestor — opção(ões) removida(s): <strong>${orphanPrefs.map(escapeHtml).join(', ')}</strong>. Revise sua lista e salve.
+                  </div>
+                ` : ''}
                 ${vagaNames.length === 0 ? `
                   <div class="text-xs text-amber-300">Nenhuma vaga cadastrada ainda na coluna ao lado (1. Vagas Disponíveis).</div>
                 ` : `
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    ${Array.from({ length: 10 }, (_, optIdx) => {
-                      const curVal = prefs[optIdx] || '';
-                      const usedElsewhere = new Set(prefs.filter((v, i) => v && i !== optIdx));
+                    ${Array.from({ length: maxOpts }, (_, optIdx) => {
+                      const curVal = vagaNameSet.has(prefs[optIdx]) ? prefs[optIdx] : '';
+                      const usedElsewhere = new Set(prefs.filter((v, i) => v && vagaNameSet.has(v) && i !== optIdx));
                       return `
                         <div class="flex items-center gap-1.5">
                           <span class="w-8 text-[11px] font-mono-numbers font-bold text-slate-400 shrink-0">${optIdx + 1}ª op.</span>
@@ -6582,11 +6800,31 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lbl) lbl.textContent = 'Enviando...';
       try {
         const payload = buildCleanPayloadForStorage();
-        const blob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
-        const { error } = await sessionMeta.sb.storage
-          .from(sessionMeta.bucket)
-          .upload(sessionMeta.storagePath, blob, { upsert: true, contentType: 'application/json' });
-        if (error) throw new Error(error.message);
+        const packed = await compressJsonToGzipBlob(payload);
+        let uploadedPath = sessionMeta.storagePath;
+        let usedGzip = false;
+
+        if (packed.compressed) {
+          const gzPath = sessionMeta.storagePath.endsWith('.gz')
+            ? sessionMeta.storagePath
+            : `${sessionMeta.storagePath}.gz`;
+          const { error: gzErr } = await sessionMeta.sb.storage
+            .from(sessionMeta.bucket)
+            .upload(gzPath, packed.blob, { upsert: true, contentType: 'application/gzip' });
+          if (!gzErr) {
+            uploadedPath = gzPath;
+            usedGzip = true;
+          }
+        }
+
+        if (!usedGzip) {
+          const rawBlob = new Blob([JSON.stringify(payload)], { type: 'application/json' });
+          const { error } = await sessionMeta.sb.storage
+            .from(sessionMeta.bucket)
+            .upload(sessionMeta.storagePath, rawBlob, { upsert: true, contentType: 'application/json' });
+          if (error) throw new Error(error.message);
+        }
+
         try {
           const { data: newTs } = await sessionMeta.sb.rpc('bump_my_turma_version', { p_turma_id: ACTIVE_TURMA.id });
           if (newTs) {
@@ -6595,7 +6833,10 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         } catch {}
         markGestaoDirty(false);
-        setGestaoStatus(`Dataset publicado com sucesso em "${sessionMeta.storagePath}"!`, 'ok');
+        const kbFinal = (packed.finalBytes / 1024).toFixed(0);
+        const kbRaw = (packed.rawBytes / 1024).toFixed(0);
+        const sizeNote = usedGzip ? ` (${kbFinal} KB gzip vs ${kbRaw} KB JSON)` : ` (${kbRaw} KB)`;
+        setGestaoStatus(`Dataset publicado com sucesso em "${uploadedPath}"${sizeNote}!`, 'ok');
       } catch (err) {
         setGestaoStatus(`Erro ao publicar no Supabase (verifique se seu usuário é Gestor/Super Admin desta turma): ${err.message}`, 'err');
       } finally {
@@ -7513,10 +7754,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (titleEl) titleEl.textContent = `Minhas Escolhas · ${ACTIVE_CAREER_STAGE.tabLabel}`;
     if (subEl) subEl.textContent = ACTIVE_CAREER_STAGE.subtitle;
 
-    const scopeKey = ACTIVE_CAREER_STAGE.scopeMode === 'turma' ? 'TURMA' : (aluno.curso || state.estagioCurso);
+    const scopeKey = ACTIVE_CAREER_STAGE.scopeMode === 'turma' ? 'TURMA_COMPLETA' : (aluno.curso || state.estagioCurso);
     const store = getEstagioCursoStore(scopeKey);
-    const myPrefs = store.prefs[aluno.numero] || [];
+    const rawMyPrefs = store.prefs[aluno.numero] || [];
     const vagas = store.vagas || [];
+    const vagaNameSet = new Set(vagas.map(v => v.nome));
 
     // Alocação estimada ao vivo
     const ranked = getEstagioRankedAlunos(scopeKey);
@@ -7537,28 +7779,45 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    const maxOpts = Math.min(5, Math.max(3, vagas.length));
-    const selectsHtml = Array.from({ length: maxOpts }, (_, idx) => {
-      const curVal = myPrefs[idx] || '';
-      const opts = ['<option value="">— Selecionar —</option>']
-        .concat(vagas.map(v => `<option value="${escapeHtml(v.nome)}" ${curVal === v.nome ? 'selected' : ''}>${escapeHtml(v.nome)} (${v.qtd} vaga${v.qtd > 1 ? 's' : ''})</option>`))
-        .join('');
-      return `
-        <div class="flex items-center gap-2">
-          <span class="text-[11px] font-extrabold text-cyan-300 w-10 shrink-0">${idx + 1}ª op.</span>
-          <select data-mp-career-idx="${idx}" class="mp-career-sel flex-1 bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-cyan-500">
-            ${opts}
-          </select>
-        </div>
-      `;
-    }).join('');
+    const maxOpts = getMaxCareerPrefsCount(vagas.length, ranked.length);
+    const myPrefs = rawMyPrefs.slice(0, maxOpts);
+    const orphanPrefs = rawMyPrefs.filter(p => p && !vagaNameSet.has(p));
+    const isProvisional = store.isProvisional !== false;
+
+    const selectsHtml = maxOpts === 0
+      ? '<div class="text-xs text-amber-300">Nenhuma vaga cadastrada ainda pelo Gestor.</div>'
+      : Array.from({ length: maxOpts }, (_, idx) => {
+          const curVal = vagaNameSet.has(myPrefs[idx]) ? myPrefs[idx] : '';
+          const usedElsewhere = new Set(myPrefs.filter((v, i) => v && vagaNameSet.has(v) && i !== idx));
+          const opts = ['<option value="">— Selecionar —</option>']
+            .concat(vagas.map(v => `<option value="${escapeHtml(v.nome)}" ${curVal === v.nome ? 'selected' : ''} ${usedElsewhere.has(v.nome) ? 'disabled' : ''}>${escapeHtml(v.nome)} (${v.qtd} vaga${v.qtd > 1 ? 's' : ''})${usedElsewhere.has(v.nome) ? ' · já escolhida' : ''}</option>`))
+            .join('');
+          return `
+            <div class="flex items-center gap-2">
+              <span class="text-[11px] font-extrabold text-cyan-300 w-10 shrink-0">${idx + 1}ª op.</span>
+              <select data-mp-career-idx="${idx}" class="mp-career-sel flex-1 bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-cyan-500">
+                ${opts}
+              </select>
+            </div>
+          `;
+        }).join('');
+
+    const statusPillHtml = isProvisional
+      ? '<div class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-200 font-semibold">Vagas provisórias (gerenciadas pelo Gestor)</div>'
+      : '<div class="px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-[11px] text-emerald-200 font-semibold">Vagas oficiais confirmadas pelo Gestor</div>';
+
+    const orphanHtml = orphanPrefs.length
+      ? `<div class="px-2.5 py-1.5 rounded-lg bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-200">Vagas atualizadas — opção removida: <strong>${orphanPrefs.map(escapeHtml).join(', ')}</strong>.</div>`
+      : '';
 
     bodyEl.innerHTML = `
+      ${statusPillHtml}
+      ${orphanHtml}
       <div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between gap-2 text-xs">
         <span class="text-slate-300 font-semibold">Previsão atual:</span>
         <span class="font-extrabold text-cyan-300 text-right">${escapeHtml(myAlloc)}</span>
       </div>
-      <div class="space-y-2">${selectsHtml}</div>
+      <div class="space-y-2 max-h-72 overflow-y-auto pr-1">${selectsHtml}</div>
       <div id="mpCareerSaveMsg" class="text-[11px] text-slate-400"></div>
     `;
 

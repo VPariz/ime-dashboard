@@ -51,11 +51,14 @@ create table if not exists public.career_vagas (
   scope_key text not null,                      -- 'TURMA_COMPLETA' ou nome da engenharia
   nome text not null,
   qtd integer not null check (qtd >= 1),
+  is_provisional boolean not null default true,
   sort_order integer not null default 0,
   updated_by uuid references auth.users(id) on delete set null,
   updated_at timestamptz not null default now(),
   primary key (turma_id, stage_key, scope_key, id)
 );
+
+alter table public.career_vagas add column if not exists is_provisional boolean not null default true;
 
 -- 5. Preferências individuais ao vivo (1ª a 10ª opção) — cada aluno edita apenas a própria linha
 create table if not exists public.career_preferences (
