@@ -72,7 +72,7 @@
         <div class="space-y-1">
           <h2 id="authHeadingTitle" class="text-base sm:text-lg font-extrabold text-white">Entrar no Painel</h2>
           <p class="text-xs text-slate-400 leading-relaxed">
-            Entre com seu login da turma para acessar suas notas, rankings e simulações, ou explore o painel abaixo.
+            Entre com sua conta Google institucional para acessar suas notas, rankings e simulações, ou explore o painel abaixo.
           </p>
         </div>
 
@@ -85,40 +85,46 @@
           <span>Verificando sessão salva e carregando dados...</span>
         </div>
 
-        <!-- Login Form -->
-        <form id="loginForm" class="space-y-3.5">
-          <div>
-            <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">Login (Nome + Turma)</label>
-            <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Pedro Igor 28 ou Papaleo 28" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <p class="text-[10.5px] text-slate-500 mt-1">Sua senha padrão é <code>senha_Nome_Turma</code> (ex: <code>senha_Pedro_Igor_28</code>).</p>
-          </div>
-          <div>
-            <label for="loginPassword" class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
-            <input type="password" id="loginPassword" required minlength="6" autocomplete="current-password" placeholder="••••••••" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          </div>
-
+        <!-- Primary Login: Google Institutional -->
+        <div class="space-y-3">
           <div id="loginInfo" class="hidden p-2.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-xs text-emerald-300 font-medium"></div>
           <div id="loginError" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-medium"></div>
           <div id="supabaseNotConfiguredNote" class="hidden p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 leading-relaxed">
             <strong>Servidor ainda não configurado:</strong> preencha <code>supabase-config.js</code> ou use o <strong>Modo Demo</strong> / <strong>Planilha Local</strong> abaixo.
           </div>
 
-          <button type="submit" id="btnLoginSubmit" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2">
-            <i data-lucide="log-in" class="w-4 h-4"></i>
-            <span id="btnLoginSubmitText">Entrar no Painel</span>
-          </button>
-
-          <button type="button" id="btnGoogleImeLogin" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-100 text-sm font-bold transition flex items-center justify-center gap-2" title="Entrar com conta Google institucional">
-            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+          <button type="button" id="btnGoogleImeLogin" class="w-full py-3 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-600/20 flex items-center justify-center gap-2.5" title="Entrar com conta Google institucional">
+            <svg class="w-4 h-4 shrink-0 bg-white rounded-full p-0.5" viewBox="0 0 24 24" aria-hidden="true">
               <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.2-1.5 3.6-5.4 3.6-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.1 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12S6.6 21.8 12 21.8c6.9 0 9.5-4.8 9.5-7.3 0-.5-.1-.9-.1-1.3H12z"/>
             </svg>
             <span>Entrar com Google institucional</span>
           </button>
 
           <p class="text-[10.5px] text-slate-500 text-center leading-relaxed">
-            🔒 Ao entrar, você concorda com os termos de privacidade. Seu perfil inicia protegido em modo anônimo.
+            🔒 No 1º acesso você apenas seleciona seu nome. Seu perfil inicia protegido em modo anônimo.
           </p>
-        </form>
+
+          <!-- Collapsible Fallback Login Form -->
+          <details class="pt-1">
+            <summary class="text-[11px] text-slate-400 hover:text-slate-200 cursor-pointer text-center select-none font-medium transition list-none">
+              Acesso alternativo com login e senha ▾
+            </summary>
+            <form id="loginForm" class="space-y-3 mt-3 pt-3 border-t border-slate-800/80">
+              <div>
+                <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">Login (Nome + Turma) ou E-mail</label>
+                <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Pedro Igor 28" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <div>
+                <label for="loginPassword" class="block text-xs font-semibold text-slate-300 mb-1">Senha</label>
+                <input type="password" id="loginPassword" required minlength="6" autocomplete="current-password" placeholder="••••••••" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
+              </div>
+              <button type="submit" id="btnLoginSubmit" class="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold transition flex items-center justify-center gap-2">
+                <i data-lucide="log-in" class="w-3.5 h-3.5"></i>
+                <span id="btnLoginSubmitText">Entrar com Senha</span>
+              </button>
+            </form>
+          </details>
+        </div>
 
         <div class="relative flex items-center py-1">
           <div class="flex-grow border-t border-slate-800"></div>
@@ -272,6 +278,46 @@
           <span>Vincular Google (@ime.eb.br)</span>
         </button>
       </div>
+    </div>
+  </div>
+
+  <!-- First-Login Google Onboarding Modal (Letra A: selecao unica de turma/aluno) -->
+  <div id="googleClaimModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+    <div class="w-full max-w-md glass-panel rounded-2xl border border-blue-500/40 p-5 sm:p-6 shadow-2xl space-y-4 animate-fade-in">
+      <div class="space-y-1">
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-[11px] font-bold text-blue-300">
+          <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+          <span>1º Acesso • Identificação Única</span>
+        </div>
+        <h2 class="text-base sm:text-lg font-extrabold text-white pt-1">Quem é você?</h2>
+        <p id="googleClaimSubtitle" class="text-xs text-slate-400 leading-relaxed">
+          Selecione sua turma e seu nome para vincular sua conta Google (apenas nesta primeira vez).
+        </p>
+      </div>
+
+      <form id="googleClaimForm" class="space-y-3">
+        <div>
+          <label for="claimTurmaSelect" class="block text-xs font-semibold text-slate-300 mb-1">Turma</label>
+          <select id="claimTurmaSelect" required class="w-full px-3 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+        </div>
+
+        <div>
+          <label for="claimStudentSearch" class="block text-xs font-semibold text-slate-300 mb-1">Buscar seu Nome ou Matrícula</label>
+          <input type="text" id="claimStudentSearch" placeholder="Digite seu nome ou número..." autocomplete="off" class="w-full px-3.5 py-2 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 mb-2">
+          <select id="claimStudentSelect" required size="5" class="w-full px-2 py-1.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500"></select>
+        </div>
+
+        <div id="googleClaimError" class="hidden p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-xs text-rose-300 font-medium"></div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button type="button" id="btnGoogleClaimCancel" class="px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+            Sair
+          </button>
+          <button type="submit" id="btnGoogleClaimSubmit" class="flex-1 py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-sm font-bold transition shadow-lg shadow-blue-600/20">
+            Confirmar e Entrar
+          </button>
+        </div>
+      </form>
     </div>
   </div>
 
@@ -2325,10 +2371,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119u"></script>
+  <script src="supabase-config.js?v=20261119v"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119u"></script>
+  <script src="demo-data.js?v=20261119v"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119u"></script>
+  <script src="app.js?v=20261119v"></script>
 </body>
 </html>

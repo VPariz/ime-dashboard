@@ -878,6 +878,10 @@ begin
     return new;
   end if;
 
+  if lower(coalesce(new.email, '')) ~ '^[^@\s]+@ime\.eb\.br$' then
+    return new;
+  end if;
+
   if new.email_confirmed_at is null and exists (select 1 from public.allowed_emails) then
     raise exception 'Conta nao autorizada na whitelist. Solicite inclusao ao Super Admin.';
   end if;
@@ -983,3 +987,162 @@ grant all on all tables in schema public to authenticated, service_role;
 grant all on all sequences in schema public to authenticated, service_role;
 alter default privileges in schema public grant all on tables to authenticated, service_role;
 alter default privileges in schema public grant all on sequences to authenticated, service_role;
+
+-- 17. Onboarding Google Institucional (1º Acesso sem senha padrão)
+create or replace function public.get_onboarding_turmas_and_students()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  v_email text;
+  v_turmas jsonb;
+  v_students jsonb;
+begin
+  if auth.uid() is null then
+    raise exception 'Não autenticado';
+  end if;
+
+  select lower(coalesce(
+    (select i.identity_data->>'email' from auth.identities i where i.user_id = auth.uid() and i.provider = 'google' limit 1),
+    (select u.email from auth.users u where u.id = auth.uid())
+  )) into v_email;
+
+  if coalesce(v_email, '') !~ '^[^@\s]+@ime\.eb\.br$' then
+    raise exception 'Acesso restrito a contas institucionais.';
+  end if;
+
+  select coalesce(jsonb_agg(jsonb_build_object('id', t.id, 'nome', t.nome) order by t.id), '[]'::jsonb)
+    into v_turmas
+  from public.turmas t;
+
+  select coalesce(jsonb_agg(jsonb_build_object(
+    'turma_id', sp.turma_id,
+    'aluno_numero', sp.aluno_numero,
+    'nome_exibicao', sp.nome_exibicao
+  ) order by sp.turma_id, sp.nome_exibicao), '[]'::jsonb)
+    into v_students
+  from public.student_profiles sp
+  where not exists (
+    select 1
+    from public.user_roles ur
+    where ur.turma_id = sp.turma_id
+      and ur.aluno_numero = sp.aluno_numero
+      and ur.ime_email is not null
+  );
+
+  return jsonb_build_object('turmas', v_turmas, 'students', v_students);
+end;
+$$;
+
+grant execute on function public.get_onboarding_turmas_and_students() to authenticated;
+
+create or replace function public.claim_student_google_account(
+  p_turma_id text,
+  p_aluno_numero integer
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+declare
+  v_email text;
+  v_now timestamptz := now();
+  v_nome text;
+  v_legacy_role text := 'viewer';
+  v_legacy_username text;
+begin
+  if auth.uid() is null then
+    raise exception 'Não autenticado';
+  end if;
+
+  select lower(coalesce(
+    (select i.identity_data->>'email' from auth.identities i where i.user_id = auth.uid() and i.provider = 'google' limit 1),
+    (select u.email from auth.users u where u.id = auth.uid())
+  )) into v_email;
+
+  if coalesce(v_email, '') !~ '^[^@\s]+@ime\.eb\.br$' then
+    raise exception 'Acesso restrito a contas institucionais.';
+  end if;
+
+  if exists (
+    select 1 from public.user_roles
+    where lower(ime_email) = v_email
+      and user_id <> auth.uid()
+  ) then
+    raise exception 'Esta conta Google já está vinculada a outro aluno.';
+  end if;
+
+  if exists (
+    select 1 from public.user_roles
+    where turma_id = p_turma_id
+      and aluno_numero = p_aluno_numero
+      and ime_email is not null
+      and user_id <> auth.uid()
+  ) then
+    raise exception 'Este aluno já vinculou outra conta Google institucional.';
+  end if;
+
+  select sp.nome_exibicao
+    into v_nome
+  from public.student_profiles sp
+  where sp.turma_id = p_turma_id
+    and sp.aluno_numero = p_aluno_numero;
+
+  if v_nome is null then
+    raise exception 'Aluno não encontrado nesta turma.';
+  end if;
+
+  select ur.role, ur.username
+    into v_legacy_role, v_legacy_username
+  from public.user_roles ur
+  where ur.turma_id = p_turma_id
+    and ur.aluno_numero = p_aluno_numero
+    and ur.ime_email is null
+  limit 1;
+
+  delete from public.user_roles
+  where turma_id = p_turma_id
+    and aluno_numero = p_aluno_numero
+    and ime_email is null
+    and user_id <> auth.uid();
+
+  insert into public.user_roles (
+    user_id, email, username, role, turma_id, aluno_numero,
+    must_change_password, accepted_terms_at, ime_email, ime_verified_at
+  )
+  values (
+    auth.uid(), v_email, coalesce(nullif(trim(v_legacy_username), ''), v_nome),
+    coalesce(v_legacy_role, 'viewer'), p_turma_id, p_aluno_numero,
+    false, v_now, v_email, v_now
+  )
+  on conflict (user_id) do update
+    set email = excluded.email,
+        username = excluded.username,
+        role = excluded.role,
+        turma_id = excluded.turma_id,
+        aluno_numero = excluded.aluno_numero,
+        must_change_password = false,
+        accepted_terms_at = coalesce(public.user_roles.accepted_terms_at, v_now),
+        ime_email = excluded.ime_email,
+        ime_verified_at = coalesce(public.user_roles.ime_verified_at, v_now);
+
+  update public.student_profiles
+  set ativo_no_painel = true,
+      updated_by = auth.uid(),
+      updated_at = v_now
+  where turma_id = p_turma_id
+    and aluno_numero = p_aluno_numero;
+
+  return jsonb_build_object(
+    'turma_id', p_turma_id,
+    'aluno_numero', p_aluno_numero,
+    'nome_exibicao', v_nome,
+    'ime_email', v_email
+  );
+end;
+$$;
+
+grant execute on function public.claim_student_google_account(text, integer) to authenticated;

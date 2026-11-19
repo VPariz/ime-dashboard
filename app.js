@@ -473,6 +473,148 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  function promptGoogleOnboardingClaim(sb, googleEmail) {
+    return new Promise(async (resolve, reject) => {
+      const modal = document.getElementById('googleClaimModal');
+      const form = document.getElementById('googleClaimForm');
+      const subEl = document.getElementById('googleClaimSubtitle');
+      const turmaSel = document.getElementById('claimTurmaSelect');
+      const searchInp = document.getElementById('claimStudentSearch');
+      const studentSel = document.getElementById('claimStudentSelect');
+      const errEl = document.getElementById('googleClaimError');
+      const btnSubmit = document.getElementById('btnGoogleClaimSubmit');
+      const btnCancel = document.getElementById('btnGoogleClaimCancel');
+
+      if (!modal || !form || !turmaSel || !studentSel) {
+        reject(new Error('Modal de identificação não encontrado.'));
+        return;
+      }
+
+      if (subEl) {
+        subEl.innerHTML = `Conectado como <strong class="text-white">${escapeHtml(googleEmail)}</strong>. Selecione sua turma e seu nome para vincular este acesso (apenas no 1º acesso).`;
+      }
+      if (errEl) {
+        errEl.textContent = '';
+        errEl.classList.add('hidden');
+      }
+      if (searchInp) searchInp.value = '';
+
+      let onboardingData = { turmas: [], students: [] };
+      try {
+        const { data, error } = await sb.rpc('get_onboarding_turmas_and_students');
+        if (error) throw new Error(error.message);
+        if (data && typeof data === 'object') {
+          onboardingData = data;
+        }
+      } catch (err) {
+        try { await sb.auth.signOut(); } catch {}
+        reject(new Error(err.message || 'Erro ao carregar lista de alunos para identificação.'));
+        return;
+      }
+
+      const turmas = Array.isArray(onboardingData.turmas) ? onboardingData.turmas : [];
+      const students = Array.isArray(onboardingData.students) ? onboardingData.students : [];
+      if (turmas.length === 0 || students.length === 0) {
+        try { await sb.auth.signOut(); } catch {}
+        reject(new Error('Nenhum aluno pendente de vínculo encontrado. Peça suporte ao administrador.'));
+        return;
+      }
+
+      turmaSel.innerHTML = '';
+      turmas.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.nome || t.id;
+        turmaSel.appendChild(opt);
+      });
+
+      const renderStudentsList = () => {
+        const selectedTurma = turmaSel.value;
+        const term = stripAccentsStr((searchInp?.value || '').trim()).toLowerCase();
+        const filtered = students.filter(s => {
+          if (s.turma_id !== selectedTurma) return false;
+          if (!term) return true;
+          const nomeNorm = stripAccentsStr(s.nome_exibicao || '').toLowerCase();
+          const numStr = String(s.aluno_numero || '');
+          return nomeNorm.includes(term) || numStr.includes(term);
+        });
+        studentSel.innerHTML = '';
+        filtered.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = String(s.aluno_numero);
+          opt.textContent = `${s.nome_exibicao} (#${s.aluno_numero})`;
+          studentSel.appendChild(opt);
+        });
+        if (filtered.length > 0) {
+          studentSel.selectedIndex = 0;
+        }
+      };
+
+      renderStudentsList();
+
+      const cleanup = () => {
+        turmaSel.removeEventListener('change', renderStudentsList);
+        searchInp?.removeEventListener('input', renderStudentsList);
+        form.removeEventListener('submit', onSubmit);
+        btnCancel?.removeEventListener('click', onCancel);
+        modal.classList.add('hidden');
+      };
+
+      const onCancel = async () => {
+        cleanup();
+        try { await sb.auth.signOut(); } catch {}
+        reject(new Error('Identificação cancelada pelo usuário.'));
+      };
+
+      const onSubmit = async (e) => {
+        e.preventDefault();
+        const turmaId = turmaSel.value;
+        const alunoNum = parseInt(studentSel.value, 10);
+        if (!turmaId || !Number.isFinite(alunoNum)) {
+          if (errEl) {
+            errEl.textContent = 'Selecione sua turma e o seu nome na lista.';
+            errEl.classList.remove('hidden');
+          }
+          return;
+        }
+        if (btnSubmit) {
+          btnSubmit.disabled = true;
+          btnSubmit.textContent = 'Vinculando acesso...';
+        }
+        if (errEl) errEl.classList.add('hidden');
+
+        try {
+          const { data, error } = await sb.rpc('claim_student_google_account', {
+            p_turma_id: turmaId,
+            p_aluno_numero: alunoNum
+          });
+          if (error) throw new Error(error.message);
+          cleanup();
+          resolve(data);
+        } catch (err) {
+          if (errEl) {
+            errEl.textContent = err.message || 'Erro ao vincular sua conta.';
+            errEl.classList.remove('hidden');
+          }
+          if (btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = 'Confirmar e Entrar';
+          }
+        }
+      };
+
+      turmaSel.addEventListener('change', renderStudentsList);
+      searchInp?.addEventListener('input', renderStudentsList);
+      form.addEventListener('submit', onSubmit);
+      btnCancel?.addEventListener('click', onCancel);
+      modal.classList.remove('hidden');
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
+      searchInp?.focus();
+    });
+  }
+
   // --- INDEXEDDB SMART CACHE (DATASETS + AVATARES — ECONOMIZA EGRESS NO PLANO GRATUITO) ---
   function openTurmaCacheDb() {
     return new Promise((resolve) => {
@@ -742,7 +884,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if ((isGoogleOnlySession || requireInstitutionalGoogle) && !isValidImeInstitutionalEmail(googleEmail)) {
       try { await sb.auth.signOut(); } catch {}
-      throw new Error('Acesso restrito: entre usando seu e-mail institucional @ime.eb.br.');
+      throw new Error('Acesso restrito: entre usando seu e-mail Google institucional.');
     }
 
     const bucket = sbCfg.bucket || 'ime-private';
@@ -774,9 +916,28 @@ document.addEventListener('DOMContentLoaded', () => {
         acceptedTermsAt = roleRow.accepted_terms_at || null;
         imeVerifiedAt = roleRow.ime_verified_at || null;
       } else if (!roleErr && !roleRow) {
-        const { error: probeErr } = await sb.from('turmas').select('id').limit(1);
-        if (!probeErr) {
-          throw new Error('Sua conta ainda não possui papel atribuído em user_roles. Peça ao Super Admin.');
+        if (isValidImeInstitutionalEmail(googleEmail)) {
+          await promptGoogleOnboardingClaim(sb, googleEmail);
+          const { data: claimedRow } = await sb
+            .from('user_roles')
+            .select('role, turma_id, aluno_numero, username, must_change_password, accepted_terms_at, ime_email, ime_verified_at')
+            .eq('user_id', user.id)
+            .maybeSingle();
+          if (claimedRow) {
+            hasRoleRow = true;
+            role = claimedRow.role || 'viewer';
+            userTurmaId = claimedRow.turma_id || null;
+            alunoNumero = claimedRow.aluno_numero ?? null;
+            username = claimedRow.username || null;
+            mustChangePassword = Boolean(claimedRow.must_change_password);
+            acceptedTermsAt = claimedRow.accepted_terms_at || null;
+            imeVerifiedAt = claimedRow.ime_verified_at || null;
+          }
+        } else {
+          const { error: probeErr } = await sb.from('turmas').select('id').limit(1);
+          if (!probeErr) {
+            throw new Error('Sua conta ainda não possui papel atribuído em user_roles. Peça ao Super Admin.');
+          }
         }
       }
     } catch (err) {
