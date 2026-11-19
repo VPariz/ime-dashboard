@@ -889,15 +889,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getTurmaCareerStage(sem) {
       const ord = buildSemesterOrder(sem);
-      if (ord <= 5) {
+      if (ord <= 4) {
         return {
           key: 'engenharia',
           enabled: true,
           tabLabel: 'Escolha de Engenharia',
           mobileLabel: 'Engenharia',
           heading: 'Escolha de Especialidade de Engenharia',
-          badge: `Ativa + Reserva · ${sem} (1.1 até 3.1)`,
-          subtitle: 'Simule a classificação pela Média Geral da turma e as vagas disponíveis por Engenharia antes da escolha no início do 3.1.',
+          badge: `Ativa + Reserva · ${sem} (escolha no início do 3.1)`,
+          subtitle: 'Simule a classificação pela Média Geral da turma e as vagas disponíveis por Engenharia antes da escolha no início do 3.1 (pré-aulas).',
           scopeMode: 'turma',
           scopeKey: 'TURMA_COMPLETA',
           vinculosAllowed: ['Ativa', 'Reserva'],
@@ -1308,7 +1308,7 @@ document.addEventListener('DOMContentLoaded', () => {
       courseView: 'table',
       modalDisciplineView: 'cards',
 
-      // Escolha de Engenharia (1.1-3.1) / Estágio (3.2-4.2) / Escolha de OM (5.1+)
+      // Escolha de Engenharia (1.1-2.2) / Estágio (3.1-4.2) / Escolha de OM (5.1+)
       estagioCurso: DATA.metadata.cursos[0] || 'Computação',
       estagioCriterio: ACTIVE_CAREER_STAGE?.defaultCriterio || 'cumulativo',
       estagioExpandedAluno: null,
@@ -4425,7 +4425,7 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshIcons();
   }
 
-  // --- TAB CICLO DE CARREIRA: ESCOLHA DE ENGENHARIA (1.1-3.1) / ESTÁGIO (3.2-4.2) / OM (5.1+) ---
+  // --- TAB CICLO DE CARREIRA: ESCOLHA DE ENGENHARIA (1.1-2.2) / ESTÁGIO (3.1-4.2) / OM (5.1+) ---
   function syncCareerStageTab({ reloadStore = false } = {}) {
     const prevKey = ACTIVE_CAREER_STAGE?.key;
     ACTIVE_CAREER_STAGE = getTurmaCareerStage(CURRENT_SEM);
