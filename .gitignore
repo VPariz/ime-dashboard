@@ -11,3 +11,5 @@ data.enc.js
 *.private.json
 *.json.gz
 starter_turmas/
+
+avatars_turma_*/

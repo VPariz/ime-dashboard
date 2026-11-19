@@ -238,6 +238,39 @@ def cmd_publish(args: argparse.Namespace) -> None:
     upload_turma_dataset_to_storage(url, key, args.turma, Path(args.file))
 
 
+def cmd_publish_avatars(args: argparse.Namespace) -> None:
+    url, key = require_env()
+    folder = Path(args.folder)
+    files = sorted(folder.glob("*.webp"))
+    if not files:
+        print(f"Nenhuma foto .webp em {folder}", file=sys.stderr)
+        sys.exit(1)
+    now_iso = datetime.now(timezone.utc).isoformat()
+    ok = 0
+    for f in files:
+        num = int(f.stem)
+        obj_path = f"avatars/{args.turma}/{num}.webp"
+        req = urllib.request.Request(
+            f"{url.rstrip('/')}/storage/v1/object/ime-private/{obj_path}",
+            data=f.read_bytes(),
+            headers={"apikey": key, "Authorization": f"Bearer {key}", "Content-Type": "image/webp", "x-upsert": "true"},
+            method="POST",
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                resp.read()
+            sb_request(url, key, "POST", "/rest/v1/student_avatars?on_conflict=turma_id,aluno_numero", {
+                "turma_id": args.turma,
+                "aluno_numero": num,
+                "storage_path": obj_path,
+                "updated_at": now_iso,
+            })
+            ok += 1
+        except Exception as exc:
+            print(f"[ERRO] {f.name}: {exc}", file=sys.stderr)
+    print(f"Fotos publicadas: {ok}/{len(files)} em {args.turma}")
+
+
 def cmd_reset(args: argparse.Namespace) -> None:
     url, key = require_env()
     email = normalize_login_to_email(args.login)
@@ -281,6 +314,11 @@ def main() -> None:
     p_pub.add_argument("--turma", required=True, help="Ex: turma_29")
     p_pub.add_argument("--file", required=True, help="Caminho para data.json")
     p_pub.set_defaults(func=cmd_publish)
+
+    p_av = sub.add_parser("publish-avatars", help="Enviar fotos .webp (<numero>.webp) de uma pasta para o Storage")
+    p_av.add_argument("--turma", required=True, help="Ex: turma_28")
+    p_av.add_argument("--folder", required=True, help="Pasta com arquivos <matricula>.webp")
+    p_av.set_defaults(func=cmd_publish_avatars)
 
     p_res = sub.add_parser("reset", help="Resetar senha de um aluno (volta para senha padrão ou definida)")
     p_res.add_argument("--login", required=True, help='Login (ex: "Pedro Silva 29" ou "Papaleo 28") ou e-mail')
