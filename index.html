@@ -424,26 +424,26 @@
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 text-xs">
         <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
           <div class="font-bold text-blue-400">CR Graduação (Principal)</div>
-          <p class="text-slate-300 leading-relaxed">Média simples de todas as disciplinas <strong>acadêmicas concluídas do 1.1 ao 3.1</strong>. Não inclui disciplinas militares nem parciais do 3.2.</p>
+          <p class="text-slate-300 leading-relaxed">Média simples de todas as disciplinas <strong>acadêmicas concluídas</strong> (semestres fechados). Não inclui disciplinas militares nem parciais em andamento.</p>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
           <div class="font-bold text-emerald-400">Média / CR Militar</div>
-          <p class="text-slate-300 leading-relaxed">Média simples das disciplinas <strong>militares concluídas até o 3.1</strong> (Instrução Militar e TFM). Alunos <strong>CG</strong> não possuem notas militares.</p>
+          <p class="text-slate-300 leading-relaxed">Média simples das disciplinas <strong>militares concluídas</strong> (Instrução Militar e TFM). Alunos <strong>CG</strong> não possuem notas militares.</p>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
           <div class="font-bold text-indigo-400">CR Geral (80/20)</div>
-          <p class="text-slate-300 leading-relaxed">Média ponderada oficial até o 3.1: <strong>0,80 × CR Graduação + 0,20 × CR Militar</strong>. Para alunos CG, coincide com o CR Graduação.</p>
+          <p class="text-slate-300 leading-relaxed">Média ponderada oficial nos semestres fechados: <strong>0,80 × CR Graduação + 0,20 × CR Militar</strong>. Para alunos CG, coincide com o CR Graduação.</p>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
           <div class="font-bold text-amber-400">Média Semestral vs. Cumulativa</div>
-          <p class="text-slate-300 leading-relaxed"><strong>Semestral:</strong> média isolada só daquele período (ex.: só 2.1). <strong>Cumulativa:</strong> média acumulada de todas as matérias de graduação do 1.1 <strong>até aquele período</strong> (no 3.2 inclui as parciais em andamento).</p>
+          <p class="text-slate-300 leading-relaxed"><strong>Semestral:</strong> média isolada só daquele período (ex.: só 2.1). <strong>Cumulativa:</strong> média acumulada de todas as matérias de graduação do 1.1 <strong>até aquele período</strong> (no semestre atual inclui as parciais em andamento).</p>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
-          <div class="font-bold text-cyan-400">3.2 (Parcial) &amp; Nota da Matéria</div>
-          <p class="text-slate-300 leading-relaxed">Fórmula IME: <strong>(Média VE + VC + 2×VF) / 4</strong>. No 3.2, sem VF lançada, considera as notas parciais já disponíveis (somente graduação nos gráficos e no CR 3.2).</p>
+          <div class="font-bold text-cyan-400">Semestre Atual (Parcial) &amp; Nota da Matéria</div>
+          <p class="text-slate-300 leading-relaxed">Fórmula IME: <strong>(Média VE + VC + 2×VF) / 4</strong>. No semestre atual, sem VF lançada, considera as notas parciais já disponíveis (somente graduação nos gráficos e na prévia parcial).</p>
         </div>
         <div class="p-3 rounded-xl bg-slate-900/70 border border-slate-800 space-y-1">
-          <div class="font-bold text-rose-400">VF Necessária (3.2)</div>
+          <div class="font-bold text-rose-400">VF Necessária (Semestre Atual)</div>
           <p class="text-slate-300 leading-relaxed">Nota mínima na VF para passar sem exame: exige <strong>VF ≥ 4,00</strong> e média final <strong>≥ 5,00</strong>. Verde ≤ 4,00 · Azul 4,01–5,00 · Amarelo 5,01–6,00 · Vermelho &gt; 6,00.</p>
         </div>
       </div>
@@ -467,7 +467,7 @@
         <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
           <span class="text-blue-400 font-semibold">Somente acadêmicas</span>
           <span class="text-slate-500">•</span>
-          <span>Concluídas até 3.1</span>
+          <span>Semestres fechados</span>
         </p>
       </div>
 
@@ -486,7 +486,7 @@
         <p class="text-[11px] text-slate-400 mt-2 flex items-center gap-1">
           <span id="kpiGeralDelta" class="text-indigo-400 font-semibold">80% Grad + 20% Mil</span>
           <span class="text-slate-500">•</span>
-          <span>Até 3.1 (CG = 100% Grad)</span>
+          <span>Semestres fechados (CG = 100% Grad)</span>
         </p>
       </div>
 
@@ -1113,12 +1113,12 @@
       <div class="p-4 rounded-2xl bg-blue-950/40 border border-blue-500/30 flex items-start gap-3">
         <i data-lucide="info" class="w-5 h-5 text-blue-400 shrink-0 mt-0.5"></i>
         <div class="text-xs text-slate-300 space-y-1.5">
-          <p class="font-bold text-blue-300">Avaliações IME & Esclarecimento de Matérias:</p>
+          <p class="font-bold text-blue-300">Avaliações IME &amp; Esclarecimento de Matérias:</p>
           <p>
-            <strong>Fórmula Ponderada Oficial do IME:</strong> A média da disciplina é calculada por <code class="text-blue-300 bg-blue-900/40 px-1.5 py-0.5 rounded border border-blue-500/30 font-bold">Média = (Média de VE + VC + 2×VF) / 4</code>. No 6º semestre (3.2), como a VF ainda não ocorreu, as notas refletem a média ponderada das avaliações parciais em andamento (VC e VE).
+            <strong>Fórmula Ponderada Oficial do IME:</strong> A média da disciplina é calculada por <code class="text-blue-300 bg-blue-900/40 px-1.5 py-0.5 rounded border border-blue-500/30 font-bold">Média = (Média de VE + VC + 2×VF) / 4</code>. No semestre atual em andamento, enquanto a VF ainda não ocorreu, as notas exibem a média parcial das avaliações já lançadas (VE e VC).
           </p>
           <p class="text-slate-400">
-            Disciplinas como <strong>Álgebra Linear I e II</strong>, <strong>Cálculo III e IV</strong>, <strong>Física III e IV</strong> e <strong>Mecânica I e II</strong> foram cadastradas no portal acadêmico sob códigos separados (ex: <code>01580</code> / <code>01060</code> / <code>01582</code>). <strong>Todos os 86 alunos cursaram e concluíram Álgebra Linear I e II</strong>.
+            Disciplinas equivalentes (como Álgebra Linear, Cálculo, Física e Química entre turmas/grades diferentes) são agrupadas pelo nome equivalente para permitir a comparação justa entre turmas.
           </p>
         </div>
       </div>
@@ -1161,9 +1161,9 @@
           <div>
             <h3 class="font-bold text-slate-100 text-sm flex items-center gap-2">
               <i data-lucide="layers" class="w-4 h-4 text-blue-400"></i>
-              Catálogo Completo das Disciplinas (168)
+              Catálogo Completo das Disciplinas
             </h3>
-            <p class="text-xs text-slate-400 mt-0.5">Todas as disciplinas do 1.1 ao 3.2 (6º Semestre)</p>
+            <p class="text-xs text-slate-400 mt-0.5">Todas as disciplinas cursadas pela turma até o semestre atual</p>
           </div>
 
           <!-- Disciplines Search & Filters -->
@@ -2056,7 +2056,7 @@
 
       <!-- Modal Footer -->
       <div class="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-        <span>Dados consolidados • Turma 2026 IME</span>
+        <span>Dados acadêmicos • Engenharia IME</span>
         <button id="btnCloseModalFooter" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition">
           Fechar
         </button>
@@ -2067,7 +2067,7 @@
 
   <!-- Footer -->
   <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/80 text-center text-xs text-slate-500 mb-16 md:mb-0">
-    <p>Painel de Inteligência de Dados Acadêmicos & Militares • Engenharia IME • Turma 2026</p>
+    <p>Painel de Desempenho Acadêmico &amp; Militar • Engenharia IME</p>
     <p class="mt-1 text-[11px]">Desenvolvido com Tailwind CSS & Chart.js • Hospedado no GitHub Pages</p>
   </footer>
 
@@ -2115,10 +2115,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119l"></script>
+  <script src="supabase-config.js?v=20261119m"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119l"></script>
+  <script src="demo-data.js?v=20261119m"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119l"></script>
+  <script src="app.js?v=20261119m"></script>
 </body>
 </html>

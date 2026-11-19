@@ -3653,9 +3653,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     tbody.innerHTML = filtered.map(d => {
-      const is32 = (d.semestre === '3.2');
-      const badge32 = is32 ? '<span class="ml-1.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-bold border border-amber-500/20">3.2 Parcial</span>' : '';
-      const vfRiskInfo = (is32 && d.vfMediaNec !== null)
+      const isCurSem = (d.semestre === CURRENT_SEM);
+      const badge32 = isCurSem ? `<span class="ml-1.5 px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[10px] font-bold border border-amber-500/20">${escapeHtml(CURRENT_SEM)} Parcial</span>` : '';
+      const vfRiskInfo = (isCurSem && d.vfMediaNec !== null)
         ? `<div class="text-[10px] mt-0.5 font-mono-numbers ${d.vfEmRisco > 0 ? 'text-amber-300' : 'text-emerald-400'}">VF nec. méd: ${fmtNum(d.vfMediaNec)}${d.vfEmRisco > 0 ? ` · <span class="text-rose-400 font-bold">${d.vfEmRisco} em risco (&gt;5.0)</span>` : ' · todos ≤ 5.0'}</div>`
         : '';
 
@@ -3695,7 +3695,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cardsEl.classList.remove('hidden');
         tableWrap.classList.add('hidden');
         cardsEl.innerHTML = filtered.map(d => {
-          const is32 = (d.semestre === '3.2');
+          const isCurSem = (d.semestre === CURRENT_SEM);
           return `
             <div class="p-3.5 rounded-xl bg-slate-900/70 border border-slate-800 space-y-2">
               <div class="flex items-start justify-between gap-2">
@@ -3704,7 +3704,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <span>${d.codigo}</span>
                     <span>• Sem. ${d.semestre}</span>
                     <span class="px-1.5 py-0.5 rounded bg-slate-800 text-slate-300 font-sans font-semibold">${d.cursoLabel || d.ciclo}</span>
-                    ${is32 ? '<span class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-sans font-bold">3.2</span>' : ''}
+                    ${isCurSem ? `<span class="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-sans font-bold">${escapeHtml(CURRENT_SEM)}</span>` : ''}
                   </div>
                   <div class="text-xs font-bold text-slate-100 mt-1">${d.nome}</div>
                 </div>
@@ -3718,7 +3718,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span><span class="text-rose-400">${fmtNum(d.menorNota)}</span> / <span class="text-emerald-400">${fmtNum(d.maiorNota)}</span></span>
               </div>
               ${getCrossTurmaBadgesHtml(d)}
-              ${is32 && d.vfMediaNec !== null ? `<div class="text-[11px] font-mono-numbers ${d.vfEmRisco > 0 ? 'text-amber-300' : 'text-emerald-400'}">VF nec. méd: ${fmtNum(d.vfMediaNec)}${d.vfEmRisco > 0 ? ` · ${d.vfEmRisco} em risco (>5.0)` : ''}</div>` : ''}
+              ${isCurSem && d.vfMediaNec !== null ? `<div class="text-[11px] font-mono-numbers ${d.vfEmRisco > 0 ? 'text-amber-300' : 'text-emerald-400'}">VF nec. méd: ${fmtNum(d.vfMediaNec)}${d.vfEmRisco > 0 ? ` · ${d.vfEmRisco} em risco (>5.0)` : ''}</div>` : ''}
             </div>
           `;
         }).join('') || `<div class="py-6 text-center text-xs text-slate-500">Nenhuma disciplina encontrada.</div>`;
