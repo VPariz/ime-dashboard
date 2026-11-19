@@ -6,8 +6,8 @@
  * Passo a passo completo em SUPABASE_SETUP.md
  */
 window.SUPABASE_CONFIG = {
-  url: '',
-  anonKey: '',
+  url: 'https://mjquvlhxvwowhdwoykgq.supabase.co',
+  anonKey: 'sb_publishable_-KVsy5FQ7x7ef6B7GKXhqg_wLZe45ia',
   bucket: 'ime-private',
   objectPath: 'turma_28/data.json'
 };
