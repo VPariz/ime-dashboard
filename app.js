@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const notConfiguredNote = document.getElementById('supabaseNotConfiguredNote');
 
   let authMode = 'signin'; // 'signin' | 'signup'
+  const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   function applyPreBootTheme(themeName) {
     const t = themeName || 'dark';
@@ -6689,7 +6690,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   const r2 = (v) => Math.round(v * 100) / 100;
-  const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const normStr = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim().toUpperCase();
   const numOrNull = (val) => {
     if (val === null || val === undefined || val === '') return null;
