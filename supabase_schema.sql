@@ -614,3 +614,10 @@ insert into public.turmas (id, nome, semestre_atual, storage_path) values
   ('turma_30', 'Turma 30', '1.2', 'turma_30/data.json'),
   ('turma_31', 'Turma 31', '1.1', 'turma_31/data.json')
 on conflict (id) do nothing;
+
+-- 16. Permissões de schema/tabelas/sequences para PostgREST (authenticated & service_role)
+grant usage on schema public to anon, authenticated, service_role;
+grant all on all tables in schema public to authenticated, service_role;
+grant all on all sequences in schema public to authenticated, service_role;
+alter default privileges in schema public grant all on tables to authenticated, service_role;
+alter default privileges in schema public grant all on sequences to authenticated, service_role;
