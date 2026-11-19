@@ -3491,7 +3491,98 @@ document.addEventListener('DOMContentLoaded', () => {
     }).sort((a, b) => (a.media ?? 999) - (b.media ?? 999));
   }
 
+  const crossTurmaStatsState = { loaded: false, loading: false, byGroup: new Map() };
+
+  function normDiscGroupKey(d) {
+    return normStr(d?.grupoEquivalente || d?.grupo_equivalente || d?.nome || '');
+  }
+
+  function indexCrossTurmaRows(rows) {
+    const byGroup = new Map();
+    (rows || []).forEach(r => {
+      if (!r || String(r.turma_id) === String(ACTIVE_TURMA.id)) return;
+      if (r.media === null || r.media === undefined) return;
+      const gKey = normDiscGroupKey(r);
+      if (!gKey) return;
+      if (!byGroup.has(gKey)) byGroup.set(gKey, []);
+      byGroup.get(gKey).push({
+        turma_id: r.turma_id,
+        turma_nome: r.turma_nome || r.turma_id,
+        semestre: r.semestre,
+        qtd_alunos: Number(r.qtd_alunos) || 0,
+        media: Number(r.media),
+        menor_nota: r.menor_nota !== null && r.menor_nota !== undefined ? Number(r.menor_nota) : null,
+        maior_nota: r.maior_nota !== null && r.maior_nota !== undefined ? Number(r.maior_nota) : null
+      });
+    });
+    byGroup.forEach(arr => arr.sort((a, b) => String(a.turma_id).localeCompare(String(b.turma_id))));
+    crossTurmaStatsState.byGroup = byGroup;
+  }
+
+  async function loadCrossTurmaDisciplinaStats() {
+    if (crossTurmaStatsState.loaded || crossTurmaStatsState.loading) return;
+    crossTurmaStatsState.loading = true;
+    try {
+      if (sessionMeta.mode === 'supabase' && sessionMeta.sb) {
+        const { data: rows, error } = await sessionMeta.sb
+          .from('turma_disciplina_stats')
+          .select('turma_id, turma_nome, semestre, codigo, nome, grupo_equivalente, qtd_alunos, media, menor_nota, maior_nota');
+        if (!error && Array.isArray(rows)) {
+          indexCrossTurmaRows(rows);
+        }
+      } else if (sessionMeta.mode === 'demo' && window.IME_DEMO_TURMAS) {
+        const demoRows = [];
+        Object.entries(window.IME_DEMO_TURMAS).forEach(([tid, ds]) => {
+          const tname = ds?.metadata?.turma || tid;
+          (ds?.disciplinas || []).forEach(d => {
+            demoRows.push({
+              turma_id: tid,
+              turma_nome: tname,
+              semestre: d.semestre,
+              codigo: d.codigo,
+              nome: d.nome,
+              grupo_equivalente: d.grupoEquivalente || d.nome,
+              qtd_alunos: d.qtdAlunos || 0,
+              media: d.media,
+              menor_nota: d.menorNota,
+              maior_nota: d.maiorNota
+            });
+          });
+        });
+        indexCrossTurmaRows(demoRows);
+      }
+    } catch {}
+    crossTurmaStatsState.loading = false;
+    crossTurmaStatsState.loaded = true;
+    if (crossTurmaStatsState.byGroup.size > 0 && state.currentTab === 'disciplinas') {
+      renderDisciplinasTab();
+    }
+  }
+
+  function getCrossTurmaBadgesHtml(d) {
+    const gKey = normDiscGroupKey(d);
+    const list = crossTurmaStatsState.byGroup.get(gKey);
+    if (!list || !list.length) return '';
+    // Deduplica por turma_id (caso haja códigos equivalentes na mesma turma) mantendo maior qtd_alunos
+    const byTurma = new Map();
+    list.forEach(item => {
+      const prev = byTurma.get(item.turma_id);
+      if (!prev || item.qtd_alunos > prev.qtd_alunos) byTurma.set(item.turma_id, item);
+    });
+    const chips = [...byTurma.values()].map(item => {
+      const delta = (d.media !== null && d.media !== undefined) ? (d.media - item.media) : null;
+      const deltaHtml = delta !== null
+        ? ` <span class="${delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${delta >= 0 ? '+' : ''}${delta.toFixed(2)})</span>`
+        : '';
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800/90 border border-slate-700/80 text-[10px] font-mono-numbers text-slate-300" title="${escapeHtml(item.turma_nome)} (${item.qtd_alunos} al. · Min ${fmtNum(item.menor_nota)} / Máx ${fmtNum(item.maior_nota)})">${escapeHtml(item.turma_nome.replace('Turma ', 'T'))}: <strong class="text-slate-100 ml-0.5">${fmtNum(item.media)}</strong>${deltaHtml}</span>`;
+    }).join(' ');
+    return `<div class="flex flex-wrap items-center gap-1 mt-1"><span class="text-[9.5px] text-slate-500 font-semibold">Outras turmas:</span> ${chips}</div>`;
+  }
+
   function renderDisciplinasTab() {
+    if (!crossTurmaStatsState.loaded && !crossTurmaStatsState.loading) {
+      loadCrossTurmaDisciplinaStats();
+    }
     const scoped = getScopedDisciplinas();
     const minQtd = (state.disciplinasCurso === 'ALL' || state.disciplinasCurso === 'COMUM_BASICO' || state.disciplinasCurso === 'MILITAR') ? 5 : 1;
     const topHard = scoped.filter(d => d.media !== null && d.qtdAlunos >= minQtd).slice(0, 10);
@@ -3503,9 +3594,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="w-5 h-5 rounded-md bg-rose-500/20 text-rose-400 font-bold flex items-center justify-center text-[10px] shrink-0 font-mono-numbers">
               ${idx + 1}
             </span>
-            <div class="truncate">
+            <div class="min-w-0">
               <span class="font-bold text-slate-100 block truncate">${d.nome}</span>
               <span class="text-[10px] text-slate-400">${d.codigo} • Sem. ${d.semestre} • ${d.cursoLabel || ''} • ${d.qtdAlunos} al.</span>
+              ${getCrossTurmaBadgesHtml(d)}
             </div>
           </div>
           <div class="text-right shrink-0">
@@ -3525,9 +3617,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <span class="w-5 h-5 rounded-md bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-[10px] shrink-0 font-mono-numbers">
               ${idx + 1}
             </span>
-            <div class="truncate">
+            <div class="min-w-0">
               <span class="font-bold text-slate-100 block truncate">${d.nome}</span>
               <span class="text-[10px] text-slate-400">${d.codigo} • Sem. ${d.semestre} • ${d.cursoLabel || ''} • ${d.qtdAlunos} al.</span>
+              ${getCrossTurmaBadgesHtml(d)}
             </div>
           </div>
           <div class="text-right shrink-0">
@@ -3576,7 +3669,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <tr class="table-hover-row border-b border-slate-800/40">
           <td class="py-2.5 px-3 font-mono-numbers text-slate-400 text-[11px]">${d.codigo}</td>
           <td class="py-2.5 px-4 font-bold text-slate-200">
-            ${d.nome} ${badge32}${vfRiskInfo}
+            ${d.nome} ${badge32}${vfRiskInfo}${getCrossTurmaBadgesHtml(d)}
           </td>
           <td class="py-2.5 px-3 text-[11px] text-slate-300 font-semibold">${d.cursoLabel || '-'}</td>
           <td class="py-2.5 px-3 text-slate-400 font-mono-numbers">${d.semestre}</td>
@@ -3624,6 +3717,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <span>${d.qtdAlunos} al. · DP ${fmtNum(d.desvioPadrao)}</span>
                 <span><span class="text-rose-400">${fmtNum(d.menorNota)}</span> / <span class="text-emerald-400">${fmtNum(d.maiorNota)}</span></span>
               </div>
+              ${getCrossTurmaBadgesHtml(d)}
               ${is32 && d.vfMediaNec !== null ? `<div class="text-[11px] font-mono-numbers ${d.vfEmRisco > 0 ? 'text-amber-300' : 'text-emerald-400'}">VF nec. méd: ${fmtNum(d.vfMediaNec)}${d.vfEmRisco > 0 ? ` · ${d.vfEmRisco} em risco (>5.0)` : ''}</div>` : ''}
             </div>
           `;
@@ -7118,6 +7212,33 @@ document.addEventListener('DOMContentLoaded', () => {
           if (newTs) {
             ACTIVE_TURMA.updated_at = newTs;
             setCachedTurmaDataset(ACTIVE_TURMA.id, newTs, payload);
+          }
+        } catch {}
+        try {
+          const tname = payload.metadata?.turma || ACTIVE_TURMA.nome || ACTIVE_TURMA.id;
+          const nowIso = new Date().toISOString();
+          const statRows = (payload.disciplinas || [])
+            .filter(d => d.semestre && d.codigo)
+            .map(d => ({
+              turma_id: ACTIVE_TURMA.id,
+              turma_nome: tname,
+              semestre: String(d.semestre),
+              codigo: String(d.codigo),
+              nome: String(d.nome || ''),
+              grupo_equivalente: String(d.grupoEquivalente || d.nome || ''),
+              militar: Boolean(d.militar),
+              is_parcial: Boolean(d.isParcial),
+              qtd_alunos: Number(d.qtdAlunos) || 0,
+              media: d.media ?? null,
+              desvio_padrao: d.desvioPadrao ?? null,
+              menor_nota: d.menorNota ?? null,
+              maior_nota: d.maiorNota ?? null,
+              updated_at: nowIso
+            }));
+          if (statRows.length > 0) {
+            await sessionMeta.sb
+              .from('turma_disciplina_stats')
+              .upsert(statRows, { onConflict: 'turma_id,semestre,codigo' });
           }
         } catch {}
         markGestaoDirty(false);

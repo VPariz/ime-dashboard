@@ -154,6 +154,37 @@ def upload_turma_dataset_to_storage(base_url: str, service_key: str, turma_id: s
     except Exception as exc:
         print(f"[AVISO] Não foi possível atualizar turmas.updated_at: {exc}", file=sys.stderr)
 
+    try:
+        parsed = json.loads(raw_bytes.decode("utf-8"))
+        tname = parsed.get("metadata", {}).get("turma") or turma_id
+        discs = parsed.get("disciplinas") or []
+        if discs:
+            stat_rows = [
+                {
+                    "turma_id": turma_id,
+                    "turma_nome": tname,
+                    "semestre": str(d.get("semestre") or ""),
+                    "codigo": str(d.get("codigo") or ""),
+                    "nome": str(d.get("nome") or ""),
+                    "grupo_equivalente": str(d.get("grupoEquivalente") or d.get("nome") or ""),
+                    "militar": bool(d.get("militar")),
+                    "is_parcial": bool(d.get("isParcial")),
+                    "qtd_alunos": int(d.get("qtdAlunos") or 0),
+                    "media": d.get("media"),
+                    "desvio_padrao": d.get("desvioPadrao"),
+                    "menor_nota": d.get("menorNota"),
+                    "maior_nota": d.get("maiorNota"),
+                    "updated_at": now_iso,
+                }
+                for d in discs
+                if d.get("semestre") and d.get("codigo")
+            ]
+            if stat_rows:
+                sb_request(base_url, service_key, "POST", "/rest/v1/turma_disciplina_stats?on_conflict=turma_id,semestre,codigo", stat_rows)
+                print(f"[STATS OK] {len(stat_rows)} matérias publicadas em turma_disciplina_stats ({tname})")
+    except Exception as exc:
+        print(f"[AVISO] Estatísticas cross-turma não enviadas (rode o SQL atualizado se ainda não criou turma_disciplina_stats): {exc}", file=sys.stderr)
+
 
 def cmd_preview(args: argparse.Namespace) -> None:
     alunos = load_alunos(Path(args.file), Path(args.csv) if args.csv else None)

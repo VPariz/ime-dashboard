@@ -615,6 +615,44 @@ insert into public.turmas (id, nome, semestre_atual, storage_path) values
   ('turma_31', 'Turma 31', '1.1', 'turma_31/data.json')
 on conflict (id) do nothing;
 
+-- 15b. Estatísticas agregadas por matéria entre turmas (apenas médias/resumo, zero dado individual de aluno)
+create table if not exists public.turma_disciplina_stats (
+  turma_id text not null references public.turmas(id) on delete cascade,
+  turma_nome text not null,
+  semestre text not null,
+  codigo text not null,
+  nome text not null,
+  grupo_equivalente text not null,
+  militar boolean not null default false,
+  is_parcial boolean not null default false,
+  qtd_alunos integer not null default 0,
+  media numeric(4,2),
+  desvio_padrao numeric(4,2),
+  menor_nota numeric(4,2),
+  maior_nota numeric(4,2),
+  updated_at timestamptz not null default now(),
+  primary key (turma_id, semestre, codigo)
+);
+
+alter table public.turma_disciplina_stats enable row level security;
+
+drop policy if exists "turma_disciplina_stats_select" on public.turma_disciplina_stats;
+create policy "turma_disciplina_stats_select"
+on public.turma_disciplina_stats for select to authenticated
+using (true);
+
+drop policy if exists "turma_disciplina_stats_write" on public.turma_disciplina_stats;
+create policy "turma_disciplina_stats_write"
+on public.turma_disciplina_stats for all to authenticated
+using (
+  public.get_my_role() = 'super_admin'
+  or (public.get_my_role() = 'gestor' and turma_id = public.get_my_turma_id())
+)
+with check (
+  public.get_my_role() = 'super_admin'
+  or (public.get_my_role() = 'gestor' and turma_id = public.get_my_turma_id())
+);
+
 -- 16. Permissões de schema/tabelas/sequences para PostgREST (authenticated & service_role)
 grant usage on schema public to anon, authenticated, service_role;
 grant all on all tables in schema public to authenticated, service_role;
