@@ -862,6 +862,11 @@ document.addEventListener('DOMContentLoaded', () => {
         activeAlunoNumeros = flagRows
           .filter(r => Boolean(r.ativo_no_painel))
           .map(r => Number(r.aluno_numero));
+        if (publicAlunoNumeros.length === 0) {
+          publicAlunoNumeros = flagRows
+            .filter(r => Boolean(r.perfil_publico))
+            .map(r => Number(r.aluno_numero));
+        }
       } else if (Array.isArray(profRows)) {
         activeAlunoNumeros = profRows.map(r => Number(r.aluno_numero));
       }
@@ -990,6 +995,47 @@ document.addEventListener('DOMContentLoaded', () => {
     notConfiguredNote.classList.remove('hidden');
   }
 
+  // Exibir erro caso o retorno do Google OAuth contenha ?error_description ou #error_description
+  try {
+    const qParams = new URLSearchParams(window.location.search || '');
+    const hParams = new URLSearchParams((window.location.hash || '').replace(/^#/, ''));
+    const oauthErrDesc = qParams.get('error_description') || hParams.get('error_description')
+      || qParams.get('error') || hParams.get('error');
+    if (oauthErrDesc) {
+      const decoded = String(oauthErrDesc).replace(/\+/g, ' ');
+      const friendly = /database error saving new user/i.test(decoded)
+        ? 'Conta Google @ime.eb.br ainda não vinculada. Entre primeiro com seu Login (Nome + Turma) e senha para vincular seu @ime.eb.br.'
+        : `Falha no login Google: ${decoded}`;
+      showLoginError(friendly);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  } catch {}
+
+  let isResolvingAuth = false;
+  async function bootFromSupabaseUser(user, rawPwd = '') {
+    if (!user || dashboardBooted || isResolvingAuth) return;
+    isResolvingAuth = true;
+    checkingBanner?.classList.remove('hidden');
+    try {
+      const res = await resolveSupabaseSessionAndLoad(sbClient, user, rawPwd);
+      startDashboard(res.dataset, res.sessionMeta);
+    } catch (err) {
+      showLoginError(err.message || 'Falha ao abrir sessão.');
+    } finally {
+      isResolvingAuth = false;
+      checkingBanner?.classList.add('hidden');
+    }
+  }
+
+  // Captura retorno assíncrono do Google OAuth (PKCE / Hash)
+  if (sbClient && !isDemoOnly) {
+    sbClient.auth.onAuthStateChange((event, session) => {
+      if ((event === 'SIGNED_IN' || event === 'USER_UPDATED') && session?.user && !dashboardBooted) {
+        bootFromSupabaseUser(session.user);
+      }
+    });
+  }
+
   // Tentativa automática de restaurar sessão Supabase
   (async () => {
     if (!sbClient || isDemoOnly) return;
@@ -998,14 +1044,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const { data: sessData } = await sbClient.auth.getSession();
       const session = sessData?.session;
       if (session?.user) {
-        const res = await resolveSupabaseSessionAndLoad(sbClient, session.user);
-        startDashboard(res.dataset, res.sessionMeta);
-        return;
+        await bootFromSupabaseUser(session.user);
       }
     } catch (err) {
       showLoginError(`Sessão encontrada, mas falhou ao abrir dados: ${err.message}`);
     } finally {
-      checkingBanner?.classList.add('hidden');
+      if (!isResolvingAuth) checkingBanner?.classList.add('hidden');
     }
   })();
 
@@ -1391,8 +1435,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const MY_ALUNO_NUM = sessionMeta.alunoNumero ?? null;
     const publicProfileSet = new Set((sessionMeta.publicAlunoNumeros || []).map(Number));
     const activeStudentSet = new Set((sessionMeta.activeAlunoNumeros || []).map(Number));
+    let superAdminViewAs = 'admin'; // 'admin' | 'viewer' (somente para super_admin testar a visão de aluno)
     let demoSelfPublicOptIn = true; // No Modo Demo começa visível, mas pode ser testado no Meu Painel
     let demoCareerViewAs = 'gestor'; // 'gestor' | 'viewer' (apenas Modo Demo)
+
+    function isEffectiveAdminView() {
+      return IS_SUPER_ADMIN && superAdminViewAs === 'admin';
+    }
 
     function isOwnStudentRecord(aluno) {
       if (!aluno) return false;
@@ -1404,7 +1453,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!aluno) return false;
       if (sessionMeta.mode !== 'supabase') return true;
       if (isOwnStudentRecord(aluno)) return true;
-      if (USER_ROLE === 'super_admin') return true;
+      if (isEffectiveAdminView()) return true;
       return activeStudentSet.has(Number(aluno.numero));
     }
 
@@ -1598,7 +1647,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function canUploadAvatarFor(alunoNumero) {
-      if (IS_SUPER_ADMIN || USER_ROLE === 'gestor') return true;
+      if (isEffectiveAdminView() || USER_ROLE === 'gestor') return true;
       if (sessionMeta.mode === 'demo') {
         if (demoCareerViewAs !== 'viewer') return true;
         const target = getPersonalAlunoTarget();
@@ -1775,6 +1824,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const badgeEl = document.getElementById('authSessionBadge');
     const actionLabelEl = document.getElementById('authActionLabel');
     const btnAuthAction = document.getElementById('btnAuthAction');
+    const btnAdminViewToggle = document.getElementById('btnSuperAdminViewToggle');
+
+    if (IS_SUPER_ADMIN && sessionMeta.mode === 'supabase' && btnAdminViewToggle) {
+      const syncAdminViewBtn = () => {
+        const isAdm = isEffectiveAdminView();
+        btnAdminViewToggle.classList.remove('hidden');
+        btnAdminViewToggle.classList.add('inline-flex');
+        btnAdminViewToggle.textContent = isAdm ? '🛡️ Modo Admin' : '👤 Visão Aluno';
+        btnAdminViewToggle.className = isAdm
+          ? 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-purple-500/40 bg-purple-500/15 hover:bg-purple-500/25 text-purple-200 transition'
+          : 'inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-cyan-500/40 bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-200 transition';
+        document.getElementById('navTabGestaoBtn')?.classList.toggle('hidden', !isAdm);
+        document.getElementById('mobileNavGestaoBtn')?.classList.toggle('hidden', !isAdm);
+        updateMobileNavColumns();
+      };
+      syncAdminViewBtn();
+      btnAdminViewToggle.addEventListener('click', () => {
+        superAdminViewAs = (superAdminViewAs === 'admin') ? 'viewer' : 'admin';
+        syncAdminViewBtn();
+        if (!isEffectiveAdminView() && state.currentTab === 'gestao') {
+          switchTab('overview');
+        }
+        applyFilters();
+        if (state.currentTab === 'meu-painel') renderMeuPainelTab();
+      });
+    }
     if (badgeEl) {
       badgeEl.classList.remove('hidden');
       if (sessionMeta.mode === 'supabase') {
@@ -5479,7 +5554,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function canManageCareerSlots() {
     if (sessionMeta.mode === 'demo') return demoCareerViewAs !== 'viewer';
-    return IS_SUPER_ADMIN || USER_ROLE === 'gestor';
+    return isEffectiveAdminView() || USER_ROLE === 'gestor';
   }
 
   function canEditAlunoPrefs(alunoNumero) {
