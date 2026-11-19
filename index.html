@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard Analítico de Desempenho • IME Engenharia</title>
+  <title>Dashboard Analítico de Desempenho • Engenharia</title>
   
   <!-- SVG Favicon -->
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚔️</text></svg>">
@@ -50,12 +50,12 @@
       <div class="flex items-center justify-between gap-3">
         <div class="flex items-center gap-2.5">
           <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-600 p-[1px] shadow-lg shadow-indigo-500/20 flex items-center justify-center shrink-0">
-            <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center font-extrabold text-indigo-400 text-base">
-              IME
+            <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center font-extrabold text-indigo-400 text-sm">
+              ENG
             </div>
           </div>
           <div>
-            <h1 class="font-extrabold text-lg text-white leading-tight">IME Analytics</h1>
+            <h1 class="font-extrabold text-lg text-white leading-tight">Painel Acadêmico</h1>
             <p class="text-[11px] text-slate-400">Acesso Restrito • Dados Protegidos</p>
           </div>
         </div>
@@ -108,6 +108,13 @@
             <span id="btnLoginSubmitText">Entrar no Painel</span>
           </button>
 
+          <button type="button" id="btnGoogleImeLogin" class="w-full py-2.5 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-100 text-sm font-bold transition flex items-center justify-center gap-2" title="Entrar com conta Google institucional">
+            <svg class="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+              <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.2-1.5 3.6-5.4 3.6-3.2 0-5.9-2.7-5.9-6s2.7-6 5.9-6c1.8 0 3.1.8 3.8 1.5l2.6-2.5C16.7 3.1 14.6 2.2 12 2.2 6.6 2.2 2.2 6.6 2.2 12S6.6 21.8 12 21.8c6.9 0 9.5-4.8 9.5-7.3 0-.5-.1-.9-.1-1.3H12z"/>
+            </svg>
+            <span>Entrar com Google institucional</span>
+          </button>
+
           <p class="text-[10.5px] text-slate-500 text-center leading-relaxed">
             🔒 Ao entrar, você concorda com os termos de privacidade. Seu perfil inicia protegido em modo anônimo.
           </p>
@@ -140,7 +147,7 @@
       </div>
 
       <p class="text-center text-[11px] text-slate-500">
-        Painel Acadêmico • Engenharia IME
+        Painel Acadêmico • Engenharia
       </p>
     </div>
   </section>
@@ -208,7 +215,7 @@
 
       <div class="space-y-2.5 max-h-64 overflow-y-auto p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 leading-relaxed">
         <p>
-          <strong class="text-white">1. Iniciativa Independente:</strong> Esta plataforma é uma ferramenta estudantil independente desenvolvida exclusivamente para apoio acadêmico e portfólio open-source, <strong>sem vínculo oficial, institucional ou endosso</strong> do Instituto Militar de Engenharia (IME) ou do Exército Brasileiro.
+          <strong class="text-white">1. Iniciativa Independente:</strong> Esta plataforma é uma ferramenta estudantil independente desenvolvida exclusivamente para apoio acadêmico e portfólio open-source, <strong>sem vínculo oficial, institucional ou endosso</strong> de qualquer instituição de ensino ou autoridade militar.
         </p>
         <p>
           <strong class="text-white">2. Sigilo e Proibição de Redistribuição:</strong> Os dados exibidos neste ambiente autenticado destinam-se exclusivamente ao acompanhamento pessoal e interno dos integrantes autorizados da turma. É <strong>expressamente proibido</strong> capturar telas (prints), exportar, divulgar ou compartilhar notas, classificações ou informações de terceiros fora da turma.
@@ -277,14 +284,14 @@
       <!-- Brand & Title -->
       <div class="flex items-center gap-2 sm:gap-3.5 min-w-0">
         <div class="w-9 h-9 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-emerald-600 p-[1px] shadow-lg shadow-indigo-500/20 flex items-center justify-center shrink-0">
-          <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center font-extrabold text-indigo-400 text-sm sm:text-lg">
-            IME
+          <div class="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center font-extrabold text-indigo-400 text-xs sm:text-base">
+            ENG
           </div>
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-1.5 flex-wrap">
             <h1 class="font-extrabold text-sm sm:text-xl tracking-tight text-white flex items-center gap-1.5 flex-wrap">
-              <span class="whitespace-nowrap">IME Analytics</span>
+              <span class="whitespace-nowrap">Painel Acadêmico</span>
               <span id="headerTurmaBadge" class="text-[10px] sm:text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-semibold whitespace-nowrap">Turma 28</span>
               <select id="selectTurmaHeader" class="hidden text-[11px] bg-slate-900/90 border border-purple-500/40 rounded-full px-2 py-0.5 text-purple-300 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500 max-w-[140px] sm:max-w-none" title="Super Admin: alternar turma"></select>
               <span id="headerSemestreBadge" class="inline-block text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30 font-semibold whitespace-nowrap">Sem. 3.2</span>
@@ -2255,7 +2262,7 @@
       </div>
 
       <div class="p-4 bg-slate-950 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
-        <span>Ficha da Disciplina • Engenharia IME</span>
+        <span>Ficha da Disciplina • Engenharia</span>
         <button id="btnCloseSubjModalFooter" class="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold transition">Fechar</button>
       </div>
     </div>
@@ -2264,10 +2271,10 @@
   <!-- Footer -->
   <footer class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 border-t border-slate-800/80 text-center text-xs text-slate-400 space-y-2 mb-16 md:mb-0">
     <p class="font-semibold text-slate-300">
-      IME Analytics • Iniciativa Estudantil Independente para Apoio Acadêmico &amp; Portfólio Open-Source
+      Painel Acadêmico • Iniciativa Estudantil Independente para Apoio Acadêmico &amp; Portfólio Open-Source
     </p>
     <p class="text-[11px] text-slate-400 max-w-3xl mx-auto leading-relaxed">
-      <strong>Isenção Institucional:</strong> Este projeto não possui vínculo oficial, afiliação ou endosso do Instituto Militar de Engenharia (IME) ou do Exército Brasileiro.
+      <strong>Isenção Institucional:</strong> Este projeto é independente e não possui vínculo oficial, afiliação ou endosso institucional.
     </p>
     <p class="text-[11px] text-slate-500 max-w-3xl mx-auto leading-relaxed">
       <strong>Privacidade &amp; LGPD:</strong> O repositório público utiliza exclusivamente dados sintéticos (<code>demo-data.js</code>). Em ambientes autenticados, dados individuais são restritos por controle de acesso e anonimizados por padrão nas estatísticas agregadas.
@@ -2318,10 +2325,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119t"></script>
+  <script src="supabase-config.js?v=20261119u"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119t"></script>
+  <script src="demo-data.js?v=20261119u"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119t"></script>
+  <script src="app.js?v=20261119u"></script>
 </body>
 </html>
