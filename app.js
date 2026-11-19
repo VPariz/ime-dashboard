@@ -7701,7 +7701,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function loadMeuPainelData(aluno) {
     if (!aluno) return;
-    const curDiscs = (aluno.disciplinas || []).filter(d => d.semestre === CURRENT_SEM && !d.militar);
+    const curDiscs = (aluno.disciplinas || []).filter(d => d.semestre === CURRENT_SEM);
 
     // 1. Subturma (1.1-2.2)
     const allowedSubturmas = getAllowedSubturmasForSemester(CURRENT_SEM);
@@ -7899,7 +7899,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function saveMeuPainelGrades(aluno) {
     if (!aluno) return;
-    const curDiscs = (aluno.disciplinas || []).filter(d => d.semestre === CURRENT_SEM && !d.militar);
+    const curDiscs = (aluno.disciplinas || []).filter(d => d.semestre === CURRENT_SEM);
     const btn = document.getElementById('btnMpSaveGrades');
     if (btn) btn.disabled = true;
     setMpGradesStatus('Salvando...', 'info');
@@ -7943,11 +7943,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (semSpan) semSpan.textContent = CURRENT_SEM;
     if (!container) return;
 
-    const curDiscs = (aluno?.disciplinas || []).filter(d => d.semestre === CURRENT_SEM && !d.militar);
+    const curDiscs = (aluno?.disciplinas || [])
+      .filter(d => d.semestre === CURRENT_SEM)
+      .sort((a, b) => Number(Boolean(a.militar)) - Number(Boolean(b.militar)) || a.nome.localeCompare(b.nome, 'pt-BR'));
     if (!curDiscs.length) {
       container.innerHTML = `
         <div class="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs text-slate-400">
-          Nenhuma disciplina de graduação cadastrada para o semestre <strong>${escapeHtml(CURRENT_SEM)}</strong> ainda. Assim que o Gestor publicar a grade do semestre, seus campos de VE, VC e VF aparecerão aqui automaticamente.
+          Nenhuma disciplina cadastrada para o semestre <strong>${escapeHtml(CURRENT_SEM)}</strong> ainda. Assim que a coordenação publicar a grade do semestre, seus campos de VE, VC e VF aparecerão aqui automaticamente.
         </div>`;
       return;
     }
@@ -7993,7 +7995,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="flex flex-wrap items-center justify-between gap-2">
             <div class="min-w-0">
               <div class="text-xs sm:text-sm font-bold text-slate-100 truncate">${escapeHtml(d.disciplina)}</div>
-              <div class="text-[10.5px] text-slate-400 font-mono-numbers">${codSafe}${d.isPratica ? ' · Prática' : ''}</div>
+              <div class="text-[10.5px] text-slate-400 font-mono-numbers">${codSafe}${d.isPratica ? ' · Prática' : ''}${d.militar ? ' · <span class="text-emerald-400 font-bold">Militar</span>' : ''}</div>
             </div>
             <div class="flex flex-wrap items-center gap-1.5 text-[11px] font-bold">
               <span class="px-2 py-0.5 rounded-lg bg-slate-800 text-cyan-300 font-mono-numbers" data-mp-mve="${codSafe}">MVE: ${summary.mve !== null ? fmtNum(summary.mve) : '-'}</span>
