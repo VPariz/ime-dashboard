@@ -578,20 +578,24 @@
 
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 w-full lg:w-auto">
             <div class="px-3.5 py-2 rounded-xl bg-slate-900/80 border border-blue-500/30 text-center">
-              <div class="text-[10px] font-bold text-blue-400 uppercase">CR Graduação</div>
+              <div class="text-[10px] font-bold text-blue-400 uppercase">CR Grad (Fechado)</div>
               <div id="mpKpiGrad" class="text-lg font-extrabold text-white font-mono-numbers">-</div>
+              <div id="mpKpiGradPrevia" class="text-[10px] font-semibold text-cyan-300 font-mono-numbers mt-0.5">Prévia: -</div>
             </div>
             <div class="px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-              <div class="text-[10px] font-bold text-indigo-400 uppercase">CR Geral</div>
+              <div class="text-[10px] font-bold text-indigo-400 uppercase">CR Geral (Fechado)</div>
               <div id="mpKpiGeral" class="text-lg font-extrabold text-slate-100 font-mono-numbers">-</div>
+              <div id="mpKpiGeralPrevia" class="text-[10px] font-semibold text-indigo-300 font-mono-numbers mt-0.5">Prévia: -</div>
             </div>
             <div class="px-3.5 py-2 rounded-xl bg-slate-900/80 border border-amber-500/30 text-center">
-              <div id="mpKpiCurSemLbl" class="text-[10px] font-bold text-amber-400 uppercase">Média 3.2</div>
+              <div id="mpKpiCurSemLbl" class="text-[10px] font-bold text-amber-400 uppercase">Parcial 3.2</div>
               <div id="mpKpiCurSem" class="text-lg font-extrabold text-amber-300 font-mono-numbers">-</div>
+              <div id="mpKpiCurSemSub" class="text-[10px] font-semibold text-slate-400 mt-0.5">Semestre atual</div>
             </div>
             <div class="px-3.5 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-center">
-              <div class="text-[10px] font-bold text-emerald-400 uppercase">Ranking</div>
+              <div class="text-[10px] font-bold text-emerald-400 uppercase">Posição (Fechado)</div>
               <div id="mpKpiRank" class="text-lg font-extrabold text-emerald-300 font-mono-numbers">-</div>
+              <div id="mpKpiRankPrevia" class="text-[10px] font-semibold text-emerald-300/90 font-mono-numbers mt-0.5">Prévia: -</div>
             </div>
           </div>
         </div>
@@ -1620,13 +1624,16 @@
               <i data-lucide="layers" class="w-3.5 h-3.5 text-purple-400"></i>
               <span>Turmas &amp; Semestre Atual Editável</span>
             </h4>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+            <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end">
               <div class="sm:col-span-2">
                 <label class="block text-[11px] text-slate-400 mb-1">Semestre editável da turma atual</label>
                 <input type="text" id="saSemestreAtualInput" placeholder="Ex: 3.2" class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 font-bold focus:outline-none focus:ring-2 focus:ring-purple-500">
               </div>
               <button id="btnSaSaveSemestre" class="py-2 px-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold transition">
-                Definir Semestre
+                Definir
+              </button>
+              <button id="btnSaAdvanceSemestre" type="button" class="py-2 px-3 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition" title="Fechar semestre atual e avançar para o próximo semestre (ex: 3.2 → 4.1)">
+                Avançar +1 Sem.
               </button>
             </div>
 
@@ -2114,10 +2121,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119g"></script>
+  <script src="supabase-config.js?v=20261119h"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119g"></script>
+  <script src="demo-data.js?v=20261119h"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119g"></script>
+  <script src="app.js?v=20261119h"></script>
 </body>
 </html>

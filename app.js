@@ -2130,12 +2130,14 @@ document.addEventListener('DOMContentLoaded', () => {
           </div>
           <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
             <div>
-              <span class="text-blue-400 text-[10px] uppercase font-bold block">CR Graduação (Principal)</span>
+              <span class="text-blue-400 text-[10px] uppercase font-bold block">CR Grad (Fechado)</span>
               <span class="text-xl font-extrabold text-blue-400 font-mono-numbers">${fmtNum(aluno.mediaGraduacao)}</span>
+              <span class="block text-[10.5px] font-semibold text-cyan-300 font-mono-numbers mt-0.5">Prévia c/ ${escapeHtml(CURRENT_SEM)}: ${fmtNum(aluno.mediaGradPrevia ?? aluno.mediaGraduacao)} (#${aluno.rankGradPrevia ?? aluno.rankGraduacao})</span>
             </div>
             <div class="text-right">
               <span class="text-slate-400 text-[10px] uppercase font-bold block">CR Geral (80/20)</span>
               <span class="text-base font-bold text-slate-300 font-mono-numbers">${fmtNum(aluno.mediaGeral)}</span>
+              <span class="block text-[10.5px] font-semibold text-indigo-300 font-mono-numbers mt-0.5">Prévia: ${fmtNum(aluno.mediaGeralPrevia ?? aluno.mediaGeral)} (#${aluno.rankGeralPrevia ?? aluno.rankGeral})</span>
             </div>
           </div>
         </div>
@@ -3042,8 +3044,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
 
             <div class="text-right shrink-0">
-              <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">CR Grad</span>
+              <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 block">CR Grad (Fechado)</span>
               <span class="text-xl font-black text-blue-400 font-mono-numbers">${fmtNum(aluno.mediaGraduacao)}</span>
+              <span class="block text-[10.5px] font-bold text-cyan-300 font-mono-numbers">Prévia: ${fmtNum(aluno.mediaGradPrevia ?? aluno.mediaGraduacao)} (#${aluno.rankGradPrevia ?? aluno.rankGraduacao} ${formatRankDeltaHtml(aluno.deltaRankGrad)})</span>
             </div>
           </div>
 
@@ -3051,14 +3054,17 @@ document.addEventListener('DOMContentLoaded', () => {
             <div>
               <span class="block text-[10px] text-slate-400 uppercase font-semibold">Geral</span>
               <span class="font-bold text-slate-200 text-xs font-mono-numbers">#${aluno.rankGeral}</span>
+              <span class="block text-[10px] text-indigo-300 font-mono-numbers">Prév: #${aluno.rankGeralPrevia ?? aluno.rankGeral} (${fmtNum(aluno.mediaGeralPrevia ?? aluno.mediaGeral)})</span>
             </div>
             <div>
               <span class="block text-[10px] text-slate-400 uppercase font-semibold">No Curso</span>
               <span class="font-bold text-indigo-400 text-xs font-mono-numbers">#${aluno.rankCurso}</span>
+              <span class="block text-[10px] text-cyan-300 font-mono-numbers">Prév: #${aluno.rankCursoPrevia ?? aluno.rankCurso} ${formatRankDeltaHtml(aluno.deltaRankCurso)}</span>
             </div>
             <div>
-              <span class="block text-[10px] text-slate-400 uppercase font-semibold">CR 3.2 (6º)</span>
+              <span class="block text-[10px] text-slate-400 uppercase font-semibold">Parcial ${escapeHtml(CURRENT_SEM)}</span>
               <span class="font-bold text-amber-400 text-xs font-mono-numbers">${m32}</span>
+              <span class="block text-[10px] text-slate-400 font-mono-numbers">Sem. atual</span>
             </div>
           </div>
 
@@ -3303,13 +3309,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
           <tr class="table-hover-row border-b border-slate-800/40 cursor-pointer" onclick="window.app.openStudentModal(${aluno.numero})">
             <td class="py-3 px-4 font-bold text-white font-mono-numbers">
-              ${rankIcon}#${aluno.rankGraduacao}
+              <div>${rankIcon}#${aluno.rankGraduacao}</div>
+              <div class="text-[10px] font-semibold text-cyan-300">Prév: #${aluno.rankGradPrevia ?? aluno.rankGraduacao} ${formatRankDeltaHtml(aluno.deltaRankGrad)}</div>
             </td>
             <td class="py-3 px-3 text-slate-400 font-mono-numbers">
-              #${aluno.rankGeral}
+              <div>#${aluno.rankGeral}</div>
+              <div class="text-[10px] text-indigo-300">Prév: #${aluno.rankGeralPrevia ?? aluno.rankGeral}</div>
             </td>
             <td class="py-3 px-3 text-slate-400 font-mono-numbers">
-              #${aluno.rankCurso}
+              <div>#${aluno.rankCurso}</div>
+              <div class="text-[10px] text-cyan-300">Prév: #${aluno.rankCursoPrevia ?? aluno.rankCurso}</div>
             </td>
             <td class="py-3 px-4 font-bold text-slate-100 hover:text-blue-400">
               ${aluno.nome}
@@ -3321,10 +3330,12 @@ document.addEventListener('DOMContentLoaded', () => {
               ${getVinculoBadge(aluno.vinculo)}
             </td>
             <td class="py-3 px-4 text-right font-extrabold text-blue-400 font-mono-numbers text-sm">
-              ${fmtNum(aluno.mediaGraduacao)}
+              <div>${fmtNum(aluno.mediaGraduacao)}</div>
+              <div class="text-[10px] font-semibold text-cyan-300">Prév: ${fmtNum(aluno.mediaGradPrevia ?? aluno.mediaGraduacao)}</div>
             </td>
             <td class="py-3 px-4 text-right font-bold text-slate-300 font-mono-numbers">
-              ${fmtNum(aluno.mediaGeral)}
+              <div>${fmtNum(aluno.mediaGeral)}</div>
+              <div class="text-[10px] font-semibold text-indigo-300">Prév: ${fmtNum(aluno.mediaGeralPrevia ?? aluno.mediaGeral)}</div>
             </td>
             <td class="py-3 px-4 text-right font-mono-numbers text-amber-400 font-bold">
               ${m32}
@@ -4190,13 +4201,13 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modalStudentVinculoBadge').className = `text-xs px-2 py-0.5 rounded-full font-bold ${vCls}`;
     document.getElementById('modalStudentVinculoBadge').textContent = aluno.vinculo;
 
-    document.getElementById('modalStudentRanks').textContent = `#${aluno.rankGraduacao} Graduação • #${aluno.rankGeral} Geral • #${aluno.rankCurso} no Curso`;
+    document.getElementById('modalStudentRanks').innerHTML = `Fechado: #${aluno.rankGraduacao} Grad • #${aluno.rankGeral} Geral • #${aluno.rankCurso} Curso <span class="text-cyan-300 font-semibold ml-1">(Prévia c/ ${escapeHtml(CURRENT_SEM)}: #${aluno.rankGradPrevia ?? aluno.rankGraduacao} Grad • #${aluno.rankGeralPrevia ?? aluno.rankGeral} Geral • #${aluno.rankCursoPrevia ?? aluno.rankCurso} Curso)</span>`;
 
     document.getElementById('modalCrGrad').textContent = fmtNum(aluno.mediaGraduacao);
-    document.getElementById('modalRankGradLabel').textContent = `${aluno.rankGraduacao}º de ${DATA.alunos.length} alunos`;
+    document.getElementById('modalRankGradLabel').innerHTML = `Fechado: ${aluno.rankGraduacao}º de ${DATA.alunos.length} <span class="block text-cyan-300 mt-0.5">Prévia c/ ${escapeHtml(CURRENT_SEM)}: ${fmtNum(aluno.mediaGradPrevia ?? aluno.mediaGraduacao)} (#${aluno.rankGradPrevia ?? aluno.rankGraduacao}º ${formatRankDeltaHtml(aluno.deltaRankGrad)})</span>`;
 
     document.getElementById('modalCrGeral').textContent = fmtNum(aluno.mediaGeral);
-    document.getElementById('modalRankGeralLabel').textContent = `${aluno.rankGeral}º de ${DATA.alunos.length} alunos`;
+    document.getElementById('modalRankGeralLabel').innerHTML = `Fechado: ${aluno.rankGeral}º de ${DATA.alunos.length} <span class="block text-indigo-300 mt-0.5">Prévia c/ ${escapeHtml(CURRENT_SEM)}: ${fmtNum(aluno.mediaGeralPrevia ?? aluno.mediaGeral)} (#${aluno.rankGeralPrevia ?? aluno.rankGeral}º ${formatRankDeltaHtml(aluno.deltaRankGeral)})</span>`;
 
     document.getElementById('modalCr32').textContent = fmtNum(aluno.media32);
     document.getElementById('modalDisciplinasCount').textContent = aluno.totalDisciplinas;
@@ -5967,6 +5978,60 @@ document.addEventListener('DOMContentLoaded', () => {
     d.situacao = 'Em Andamento (Parcial)';
   }
 
+  function getNextSemesterCode(sem) {
+    const parts = String(sem || '1.1').split('.');
+    const ano = parseInt(parts[0], 10) || 1;
+    const per = parseInt(parts[1], 10) || 1;
+    if (per === 1) return `${ano}.2`;
+    return `${Math.min(5, ano + 1)}.1`;
+  }
+
+  function formatRankDeltaHtml(delta) {
+    const d = Number(delta) || 0;
+    if (d > 0) return `<span class="text-emerald-400 font-bold" title="Subiu ${d} posição(ões) na prévia">▲+${d}</span>`;
+    if (d < 0) return `<span class="text-rose-400 font-bold" title="Caiu ${Math.abs(d)} posição(ões) na prévia">▼${d}</span>`;
+    return `<span class="text-slate-500 font-semibold" title="Posição mantida na prévia">=</span>`;
+  }
+
+  function computePartialPreviewMetrics() {
+    const avgArr = (arr) => arr.length ? r2(arr.reduce((s, v) => s + v, 0) / arr.length) : null;
+    (DATA.alunos || []).forEach(aluno => {
+      const dis = aluno.disciplinas || [];
+      const gradAll = dis.filter(d => !d.militar && d.notaEfetiva !== null && d.notaEfetiva !== undefined).map(d => Number(d.notaEfetiva));
+      const milAll = dis.filter(d => d.militar && d.notaEfetiva !== null && d.notaEfetiva !== undefined).map(d => Number(d.notaEfetiva));
+      const mGradPrev = avgArr(gradAll) ?? aluno.mediaGraduacao ?? 0;
+      const mMilPrev = avgArr(milAll) ?? aluno.mediaMilitar ?? mGradPrev;
+      aluno.mediaGradPrevia = mGradPrev;
+      aluno.mediaMilPrevia = mMilPrev;
+      aluno.mediaGeralPrevia = aluno.cg ? mGradPrev : r2(0.8 * mGradPrev + 0.2 * mMilPrev);
+    });
+
+    [...(DATA.alunos || [])]
+      .sort((a, b) => (b.mediaGradPrevia - a.mediaGradPrevia) || (b.mediaGraduacao - a.mediaGraduacao))
+      .forEach((a, i) => {
+        a.rankGradPrevia = i + 1;
+        a.deltaRankGrad = (a.rankGraduacao || (i + 1)) - a.rankGradPrevia;
+      });
+
+    [...(DATA.alunos || [])]
+      .sort((a, b) => (b.mediaGeralPrevia - a.mediaGeralPrevia) || (b.mediaGeral - a.mediaGeral))
+      .forEach((a, i) => {
+        a.rankGeralPrevia = i + 1;
+        a.deltaRankGeral = (a.rankGeral || (i + 1)) - a.rankGeralPrevia;
+      });
+
+    const cursos = new Set((DATA.alunos || []).map(a => a.curso).filter(Boolean));
+    cursos.forEach(c => {
+      DATA.alunos
+        .filter(a => a.curso === c)
+        .sort((a, b) => (b.mediaGradPrevia - a.mediaGradPrevia) || (b.mediaGraduacao - a.mediaGraduacao))
+        .forEach((a, i) => {
+          a.rankCursoPrevia = i + 1;
+          a.deltaRankCurso = (a.rankCurso || (i + 1)) - a.rankCursoPrevia;
+        });
+    });
+  }
+
   function recalculateFullDataset({ skipGestaoRender = false } = {}) {
     ensureSemesterInMetadata(CURRENT_SEM);
     const semList = DATA.metadata.semestres;
@@ -6081,12 +6146,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }).filter(ev => ev.qtdDisciplinasSemestre > 0 || ev.semestre === CURRENT_SEM);
     });
 
-    // 4. Ranks globais e por curso
+    // 4. Ranks globais e por curso + Prévia com notas parciais do semestre atual
     [...DATA.alunos].sort((a, b) => b.mediaGraduacao - a.mediaGraduacao).forEach((a, i) => { a.rankGraduacao = i + 1; });
     [...DATA.alunos].sort((a, b) => b.mediaGeral - a.mediaGeral).forEach((a, i) => { a.rankGeral = i + 1; });
     (DATA.metadata.cursos || []).forEach(c => {
       DATA.alunos.filter(a => a.curso === c).sort((a, b) => b.mediaGraduacao - a.mediaGraduacao).forEach((a, i) => { a.rankCurso = i + 1; });
     });
+    computePartialPreviewMetrics();
 
     // 5. Benchmarks de semestre e cursos
     DATA.semestresBenchmark = semList.map(sem => {
@@ -6675,6 +6741,13 @@ document.addEventListener('DOMContentLoaded', () => {
       syncCareerStageTab({ reloadStore: true });
       recalculateFullDataset();
       setGestaoStatus(`Semestre editável da turma atualizado para ${nextSem}!`, 'ok');
+    });
+
+    document.getElementById('btnSaAdvanceSemestre')?.addEventListener('click', () => {
+      const nextSem = getNextSemesterCode(CURRENT_SEM);
+      const inp = document.getElementById('saSemestreAtualInput');
+      if (inp) inp.value = nextSem;
+      document.getElementById('btnSaSaveSemestre')?.click();
     });
 
     document.getElementById('btnSaCreateTurma')?.addEventListener('click', async () => {
@@ -7455,6 +7528,54 @@ document.addEventListener('DOMContentLoaded', () => {
     const avg = vals.length ? (vals.reduce((s, v) => s + v, 0) / vals.length) : aluno?.media32;
     const el = document.getElementById('mpKpiCurSem');
     if (el) el.textContent = avg !== null && avg !== undefined ? fmtNum(avg) : '-';
+    const subCurEl = document.getElementById('mpKpiCurSemSub');
+    if (subCurEl) {
+      subCurEl.textContent = curDiscs.length ? `${vals.length}/${curDiscs.length} matérias c/ nota` : 'Semestre atual';
+    }
+
+    // Calcular prévia ao vivo combinando semestres fechados + notas parciais do aluno no Meu Painel
+    if (!aluno) return;
+    const closedGradVals = (aluno.disciplinas || [])
+      .filter(d => d.semestre !== CURRENT_SEM && !d.militar && d.notaEfetiva !== null && d.notaEfetiva !== undefined)
+      .map(d => Number(d.notaEfetiva));
+    const allGradVals = [...closedGradVals, ...vals];
+    const myGradPrevia = allGradVals.length
+      ? r2(allGradVals.reduce((s, v) => s + v, 0) / allGradVals.length)
+      : (aluno.mediaGradPrevia ?? aluno.mediaGraduacao ?? 0);
+    const myMilPrevia = aluno.mediaMilPrevia ?? aluno.mediaMilitar ?? myGradPrevia;
+    const myGeralPrevia = aluno.cg ? myGradPrevia : r2(0.8 * myGradPrevia + 0.2 * myMilPrevia);
+
+    // Simular posição na turma e no curso com a prévia pessoal ao vivo
+    const rankGradPrev = 1 + (DATA.alunos || []).filter(a => {
+      if (Number(a.numero) === Number(aluno.numero)) return false;
+      const sc = a.mediaGradPrevia ?? a.mediaGraduacao ?? 0;
+      return sc > myGradPrevia || (sc === myGradPrevia && (a.mediaGraduacao || 0) > (aluno.mediaGraduacao || 0));
+    }).length;
+    const rankGeralPrev = 1 + (DATA.alunos || []).filter(a => {
+      if (Number(a.numero) === Number(aluno.numero)) return false;
+      const sc = a.mediaGeralPrevia ?? a.mediaGeral ?? 0;
+      return sc > myGeralPrevia || (sc === myGeralPrevia && (a.mediaGeral || 0) > (aluno.mediaGeral || 0));
+    }).length;
+    const rankCursoPrev = 1 + (DATA.alunos || []).filter(a => {
+      if (Number(a.numero) === Number(aluno.numero) || a.curso !== aluno.curso) return false;
+      const sc = a.mediaGradPrevia ?? a.mediaGraduacao ?? 0;
+      return sc > myGradPrevia || (sc === myGradPrevia && (a.mediaGraduacao || 0) > (aluno.mediaGraduacao || 0));
+    }).length;
+
+    const deltaGrad = (aluno.rankGraduacao || rankGradPrev) - rankGradPrev;
+    const elGradPrev = document.getElementById('mpKpiGradPrevia');
+    const elGeralPrev = document.getElementById('mpKpiGeralPrevia');
+    const elRankPrev = document.getElementById('mpKpiRankPrevia');
+    const subEl = document.getElementById('mpStudentSubtitle');
+
+    if (elGradPrev) elGradPrev.textContent = `Prévia c/ ${CURRENT_SEM}: ${fmtNum(myGradPrevia)}`;
+    if (elGeralPrev) elGeralPrev.textContent = `Prévia c/ ${CURRENT_SEM}: ${fmtNum(myGeralPrevia)}`;
+    if (elRankPrev) {
+      elRankPrev.innerHTML = `Prévia: #${rankGradPrev}º Grad · #${rankCursoPrev}º Curso (${formatRankDeltaHtml(deltaGrad)})`;
+    }
+    if (subEl) {
+      subEl.innerHTML = `Matrícula ${aluno.numero} · ${escapeHtml(aluno.vinculo)} · Fechado: #${aluno.rankGraduacao} Grad (#${aluno.rankGeral} Geral) · <span class="text-cyan-300 font-semibold">Prévia c/ ${escapeHtml(CURRENT_SEM)}: #${rankGradPrev} Grad (#${rankGeralPrev} Geral)</span>`;
+    }
   }
 
   async function loadMeuPainelData(aluno) {
@@ -8114,8 +8235,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const kRank = document.getElementById('mpKpiRank');
     if (kGrad) kGrad.textContent = fmtNum(aluno.mediaGraduacao);
     if (kGeral) kGeral.textContent = fmtNum(aluno.mediaGeral);
-    if (kCurLbl) kCurLbl.textContent = `Média ${CURRENT_SEM}`;
-    if (kRank) kRank.textContent = `#${aluno.rankGraduacao}º`;
+    if (kCurLbl) kCurLbl.textContent = `Parcial ${CURRENT_SEM}`;
+    if (kRank) kRank.textContent = `#${aluno.rankGraduacao}º Grad · #${aluno.rankCurso}º Curso`;
 
     renderMeuPainelGrades(aluno);
     renderMeuPainelCalendar(aluno);
@@ -8246,6 +8367,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (DATA._fromSpreadsheet) {
     recalculateFullDataset({ skipGestaoRender: true });
     delete DATA._fromSpreadsheet;
+  } else {
+    computePartialPreviewMetrics();
   }
   applyDeviceMode('auto');
   syncCareerStageTab();
