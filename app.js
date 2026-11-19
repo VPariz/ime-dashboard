@@ -3574,7 +3574,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const deltaHtml = delta !== null
         ? ` <span class="${delta >= 0 ? 'text-emerald-400' : 'text-rose-400'}">(${delta >= 0 ? '+' : ''}${delta.toFixed(2)})</span>`
         : '';
-      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800/90 border border-slate-700/80 text-[10px] font-mono-numbers text-slate-300" title="${escapeHtml(item.turma_nome)} (${item.qtd_alunos} al. · Min ${fmtNum(item.menor_nota)} / Máx ${fmtNum(item.maior_nota)})">${escapeHtml(item.turma_nome.replace('Turma ', 'T'))}: <strong class="text-slate-100 ml-0.5">${fmtNum(item.media)}</strong>${deltaHtml}</span>`;
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded bg-slate-800/90 border border-slate-700/80 text-[10px] font-mono-numbers text-slate-300" title="${escapeHtml(item.turma_nome)} (${item.qtd_alunos} al. · Min ${fmtNum(item.menor_nota)} / Máx ${fmtNum(item.maior_nota)})">${escapeHtml(item.turma_nome.replace(/^Turma\s+/i, ''))}: <strong class="text-slate-100 ml-0.5">${fmtNum(item.media)}</strong>${deltaHtml}</span>`;
     }).join(' ');
     return `<div class="flex flex-wrap items-center gap-1 mt-1"><span class="text-[9.5px] text-slate-500 font-semibold">Outras turmas:</span> ${chips}</div>`;
   }
