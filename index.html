@@ -85,7 +85,7 @@
         <!-- Login Form -->
         <form id="loginForm" class="space-y-3">
           <div>
-            <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">Login (Nome + Turma) ou E-mail</label>
+            <label for="loginEmail" class="block text-xs font-semibold text-slate-300 mb-1">Login (Nome + Turma)</label>
             <input type="text" id="loginEmail" required autocomplete="username" placeholder="Ex: Pedro Igor 28 ou Papaleo 28" class="w-full px-3.5 py-2.5 text-sm bg-slate-950/90 border border-slate-700/80 rounded-xl text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500">
             <p class="text-[10.5px] text-slate-500 mt-1">1º acesso: senha padrão <code>senha_Nome_Turma</code> (ex.: <code>senha_Pedro_Igor_28</code>). Será solicitada troca por senha forte.</p>
           </div>
@@ -1665,7 +1665,7 @@
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-5 gap-2">
-              <input type="text" id="saWlEmail" placeholder="Pedro Igor 28 ou email@..." class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+              <input type="text" id="saWlEmail" placeholder="Ex: Pedro Igor 28" class="sm:col-span-2 text-xs bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
               <input type="number" id="saWlAlunoNum" placeholder="Nº Matrícula" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2.5 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500" title="Matrícula do aluno na turma (opcional)">
               <select id="saWlRole" class="text-xs bg-slate-950 border border-slate-700 rounded-xl px-2 py-2 text-slate-100 font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 <option value="viewer">Aluno</option>
@@ -1683,7 +1683,7 @@
               </button>
             </div>
             <div id="saBatchBox" class="hidden space-y-2 pt-1">
-              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 por linha: email_ou_login, matricula (ex: Pedro Igor 28, 30142)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
+              <textarea id="saBatchEmailsText" rows="3" placeholder="Cole 1 por linha: login, matricula (ex: Pedro Igor 28, 30142)..." class="w-full text-xs bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"></textarea>
               <button id="btnSaSubmitBatch" type="button" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition">Adicionar em Lote</button>
             </div>
 
@@ -2115,10 +2115,10 @@
   <!-- 1. Supabase SDK, SheetJS (Excel/CSV) & Public Config -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="supabase-config.js?v=20261119i"></script>
+  <script src="supabase-config.js?v=20261119j"></script>
   <!-- 2. Fictitious Portfolio Demo Dataset (Zero real data) -->
-  <script src="demo-data.js?v=20261119i"></script>
+  <script src="demo-data.js?v=20261119j"></script>
   <!-- 3. Application Logic -->
-  <script src="app.js?v=20261119i"></script>
+  <script src="app.js?v=20261119j"></script>
 </body>
 </html>
