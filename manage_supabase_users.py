@@ -17,6 +17,8 @@ Uso:
 
 import argparse
 import csv
+from datetime import datetime, timezone
+import gzip
 import json
 import os
 import re
@@ -110,12 +112,47 @@ def sb_request(base_url: str, service_key: str, method: str, path: str, body: di
 
 
 def require_env() -> tuple[str, str]:
-    url = os.environ.get("SUPABASE_URL", "").strip()
+    url = os.environ.get("SUPABASE_URL", "").strip() or "https://mjquvlhxvwowhdwoykgq.supabase.co"
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "").strip()
     if not url or not key:
-        print("Erro: defina SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY no ambiente.", file=sys.stderr)
+        print("Erro: defina SUPABASE_SERVICE_ROLE_KEY no ambiente.", file=sys.stderr)
         sys.exit(1)
     return url, key
+
+
+def upload_turma_dataset_to_storage(base_url: str, service_key: str, turma_id: str, file_path: Path, bucket: str = "ime-private") -> None:
+    raw_text = file_path.read_text(encoding="utf-8")
+    start = raw_text.find("{")
+    end = raw_text.rfind("}")
+    raw_bytes = raw_text[start : end + 1].encode("utf-8")
+    gz_bytes = gzip.compress(raw_bytes, compresslevel=9)
+
+    for obj_path, payload, ctype in [
+        (f"{turma_id}/data.json.gz", gz_bytes, "application/gzip"),
+        (f"{turma_id}/data.json", raw_bytes, "application/json"),
+    ]:
+        storage_url = f"{base_url.rstrip('/')}/storage/v1/object/{bucket}/{obj_path}"
+        headers = {
+            "apikey": service_key,
+            "Authorization": f"Bearer {service_key}",
+            "Content-Type": ctype,
+            "x-upsert": "true",
+        }
+        req = urllib.request.Request(storage_url, data=payload, headers=headers, method="POST")
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                resp.read()
+            print(f"[STORAGE OK] {bucket}/{obj_path} ({len(payload) / 1024:.1f} KB)")
+        except urllib.error.HTTPError as e:
+            err_text = e.read().decode("utf-8", errors="replace")
+            print(f"[STORAGE ERRO] {bucket}/{obj_path}: HTTP {e.code} {err_text}", file=sys.stderr)
+
+    now_iso = datetime.now(timezone.utc).isoformat()
+    try:
+        sb_request(base_url, service_key, "PATCH", f"/rest/v1/turmas?id=eq.{urllib.parse.quote(turma_id)}", {"updated_at": now_iso})
+        print(f"[CACHE BUMP OK] turmas.updated_at atualizado para {turma_id} ({now_iso})")
+    except Exception as exc:
+        print(f"[AVISO] Não foi possível atualizar turmas.updated_at: {exc}", file=sys.stderr)
 
 
 def cmd_preview(args: argparse.Namespace) -> None:
@@ -193,6 +230,12 @@ def cmd_provision(args: argparse.Namespace) -> None:
             print(f"[SKIP] Nº {a['numero']} {a['nome']}: {exc}", file=sys.stderr)
 
     print(f"Concluído: {created} criado(s), {skipped} ignorado(s).")
+    upload_turma_dataset_to_storage(url, key, args.turma, Path(args.file))
+
+
+def cmd_publish(args: argparse.Namespace) -> None:
+    url, key = require_env()
+    upload_turma_dataset_to_storage(url, key, args.turma, Path(args.file))
 
 
 def cmd_reset(args: argparse.Namespace) -> None:
@@ -228,11 +271,16 @@ def main() -> None:
     p_prev.add_argument("--out-csv", help="Salvar prévia em CSV local")
     p_prev.set_defaults(func=cmd_preview)
 
-    p_prov = sub.add_parser("provision", help="Criar contas reais no Supabase Auth + user_roles")
+    p_prov = sub.add_parser("provision", help="Criar contas reais no Supabase Auth + user_roles e publicar dataset no Storage")
     p_prov.add_argument("--turma", required=True, help="Ex: turma_28")
     p_prov.add_argument("--file", required=True, help="Caminho para data.json ou data.js")
     p_prov.add_argument("--csv", help="CSV opcional (Matricula,NomeCompleto)")
     p_prov.set_defaults(func=cmd_provision)
+
+    p_pub = sub.add_parser("publish", help="Publicar data.json (.gz) da turma no Storage e atualizar cache")
+    p_pub.add_argument("--turma", required=True, help="Ex: turma_29")
+    p_pub.add_argument("--file", required=True, help="Caminho para data.json")
+    p_pub.set_defaults(func=cmd_publish)
 
     p_res = sub.add_parser("reset", help="Resetar senha de um aluno (volta para senha padrão ou definida)")
     p_res.add_argument("--login", required=True, help='Login (ex: "Pedro Silva 29" ou "Papaleo 28") ou e-mail')
